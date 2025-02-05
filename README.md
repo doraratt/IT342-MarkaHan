@@ -1,4 +1,5 @@
 # IT342-MarkaHan
+<<<<<<< HEAD
 
 # TEAM MEMBERS:
 
@@ -9,3 +10,5 @@
 # I'm 22 and I'm still on the verge of finding out what I really want.
 # The people who guide me and inspire me are the ones I'm thankful for.
 # This year will surely challenge my self.
+=======
+>>>>>>> 7b5a1e96ae5f31a69e907efcf9720c1a5cdaa402
