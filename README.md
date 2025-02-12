@@ -18,3 +18,8 @@
         I'm 21 and I'm passionate about exploring various fields in IT that spark my creativity.
         The people who guide me and inspire me are the ones I'm thankful for.
         I'm excited for the challenges this year will bring and the opportunities to innovate.
+
+### Member 3
+    **Name**: Mike Francis Alon
+    **Course and Year**: BSIT 3 🔥
+        Hi, I'm Mike. I'm an easygoing and dependable person who enjoys playing mobile and ball games. Watching movies is one of my favorite ways to unwind in my free time. As an IT student, I'm passionate about technology and always eager to learn new skills. I'm excited to grow in the field and make an impact in the tech world!
