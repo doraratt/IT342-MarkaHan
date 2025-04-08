@@ -18,13 +18,20 @@ import PeopleIcon from '@mui/icons-material/People';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import GradingIcon from '@mui/icons-material/Grading';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 import Journal from './Journal';
 import Calendar from './Calendar';
 import Students from './Students';
+import Grades from './Grades';
+import Attendance from './Attendance';
 
 const NAVIGATION = [
+  {
+    segment: "dashboard",
+    title: "Dashboard",
+    icon: <DashboardIcon />,
+  },
   {
     segment: "calendar",
     title: "Calendar",
@@ -53,32 +60,35 @@ const NAVIGATION = [
 ];
 
 function DemoPageContent({ activeSegment }) {
+  const location = window.location.pathname;
+  const studentIdMatch = location.match(/\/grades\/(\d+)/);
+  const studentId = studentIdMatch ? studentIdMatch[1] : null;
+
   let content;
   
   switch (activeSegment) {
-    case "calendar":
-        content = <Calendar />;
-        break;
-    case "students":
-        content = <Students />;
-        break;
-    case "attendance":
+    case "dashboard":
       content = (
         <Box sx={{ padding: 3 }}>
-          <Typography variant="h5">Attendance Coming Soon</Typography>
+          <Typography variant="h5">Dashboard Coming Soon</Typography>
         </Box>
       );
+      break;
+    case "calendar":
+      content = <Calendar />;
+      break;
+    case "students":
+      content = <Students />;
+      break;
+    case "attendance":
+      content = <Attendance />;
       break;
     case "grades":
-      content = (
-        <Box sx={{ padding: 3 }}>
-          <Typography variant="h5">Grades Coming Soon</Typography>
-        </Box>
-      );
+      content = <Grades />;
       break;
     case "journal":
-        content = <Journal />;
-        break;
+      content = <Journal />;
+      break;
     default:
       content = <Typography variant="h6">Select a segment to view content.</Typography>;
   }
@@ -177,7 +187,7 @@ function Sidebar({ onNavigate, activeSegment }) {
 function DashboardLayout() {
   const navigate = useNavigate();
   const [activeSegment, setActiveSegment] = useState(() => {
-    return localStorage.getItem("activeSegment") || "calendar";
+    return localStorage.getItem("activeSegment") || "dashboard";
   });
   const [isModalOpen, setModalOpen] = useState(false);
 
