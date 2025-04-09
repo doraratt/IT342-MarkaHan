@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -11,27 +10,167 @@ import AddIcon from "@mui/icons-material/Add";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import CloseIcon from "@mui/icons-material/Close";
+import axios from 'axios';
+import { useUser } from '../UserContext';
+import { Navigate } from 'react-router-dom';
+
+// EntryModal component (unchanged)
+const EntryModal = ({ open, onClose, title, entry, onSave, buttonText, onContentChange, onDateChange }) => (
+  <Modal
+    open={open}
+    onClose={onClose}
+    aria-labelledby={`${title.toLowerCase()}-journal-modal`}
+  >
+    <Box sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 400,
+      bgcolor: 'background.paper',
+      borderRadius: 2,
+      boxShadow: 24,
+      p: 4,
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2
+      }}>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        <IconButton 
+          onClick={onClose}
+          size="small"
+          sx={{ color: 'text.secondary' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Entry
+      </Typography>
+      <TextField
+        multiline
+        rows={4}
+        fullWidth
+        value={entry.content}
+        onChange={onContentChange}
+        sx={{ mb: 3 }}
+        autoComplete="off"
+      />
+
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Date
+      </Typography>
+      <TextField
+        type="date"
+        fullWidth
+        value={entry.date}
+        onChange={onDateChange}
+        sx={{ mb: 3 }}
+      />
+
+      <Button
+        fullWidth
+        variant="contained"
+        onClick={onSave}
+        sx={{
+          backgroundColor: '#1f295a',
+          '&:hover': {
+            backgroundColor: '#4259c1',
+          },
+          textTransform: 'none',
+        }}
+      >
+        {buttonText}
+      </Button>
+    </Box>
+  </Modal>
+);
+
+// DeleteConfirmationModal component (unchanged)
+const DeleteConfirmationModal = ({ open, onClose, onConfirm }) => (
+  <Modal
+    open={open}
+    onClose={onClose}
+    aria-labelledby="delete-journal-modal"
+  >
+    <Box sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 400,
+      bgcolor: 'background.paper',
+      borderRadius: 2,
+      boxShadow: 24,
+      p: 3,
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2
+      }}>
+        <Typography variant="h6" component="h2">
+          Delete Journal Entry
+        </Typography>
+        <IconButton 
+          onClick={onClose}
+          size="small"
+          sx={{ color: 'text.secondary' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        Are you sure you want to delete this journal entry?
+      </Typography>
+
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end',
+        gap: 1
+      }}>
+        <Button
+          variant="contained"
+          onClick={onConfirm}
+          sx={{
+            backgroundColor: '#dc3545',
+            '&:hover': {
+              backgroundColor: '#c82333',
+            },
+            textTransform: 'none',
+          }}
+        >
+          Delete
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            backgroundColor: '#6c757d',
+            '&:hover': {
+              backgroundColor: '#5a6268',
+            },
+            textTransform: 'none',
+          }}
+        >
+          Cancel
+        </Button>
+      </Box>
+    </Box>
+  </Modal>
+);
 
 function Journal() {
-  const [entries, setEntries] = useState([
-    {
-      id: 1,
-      content: 'Lorem ipsum dolor amet, consectetur adipiscing elit. Lectus blandit magna tempor vel sprient. Aliquet nulla venenatis neque, malesuada blandit. Suspendisse lectus blandit, viverra mattis inceptos sodales, amet venenatis amet. Justo leo varius mi suspendisse porta id egestas consula. Proin sociosqu nibh ut hendrerit vivamus fringilla. Elit sprient mauris morbi risus laoreet mescetur porttitor mus non.',
-      date: '2024-10-31'
-    },
-    {
-      id: 2,
-      content: 'Lorem ipsum dolor amet, consectetur adipiscing elit. Lectus blandit magna tempor vel sprient. Aliquet nulla venenatis neque, malesuada blandit. Suspendisse lectus blandit, viverra mattis inceptos sodales, amet venenatis amet.',
-      date: 'Oct. 31, 2024 12:05PM'
-    },
-    {
-      id: 3,
-      content: 'Lorem ipsum dolor amet, consectetur adipiscing elit. Lectus blandit magna tempor vel sprient. Aliquet nulla venenatis neque, malesuada blandit.',
-      date: 'Oct. 31, 2024 12:05PM'
-    },
-  ]);
-
-  // States for add/edit modals
+  const { user } = useUser();
+  const [entries, setEntries] = useState([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [newEntry, setNewEntry] = useState({
@@ -41,6 +180,33 @@ function Journal() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState(null);
+  const [error, setError] = useState('');
+
+  // Redirect to 404 if no user is logged in
+  if (!user) {
+    return <Navigate to="/404" replace />;
+  }
+
+  useEffect(() => {
+    if (user) {
+      const fetchEntries = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8080/api/journal/getJournalsByUser?userId=${user.userId}`);
+          setEntries(response.data.map(entry => ({
+            id: entry.journalId,
+            content: entry.entry,
+            date: entry.date
+          })));
+        } catch (error) {
+          console.error('Error fetching journal entries:', error.response?.data || error.message);
+        }
+      };
+
+      fetchEntries();
+    } else {
+      console.log('No user logged in');
+    }
+  }, [user]);
 
   // Add Entry Handlers
   const handleAddOpen = () => setAddModalOpen(true);
@@ -49,18 +215,44 @@ function Journal() {
     setNewEntry({ content: '', date: new Date().toISOString().split('T')[0] });
   };
 
-  const handleAddEntry = () => {
-    const entry = {
-      id: Date.now(), // Simple way to generate unique id
-      ...newEntry
+  const handleAddEntry = async () => {
+    if (!newEntry.content || !newEntry.date) {
+      setError('Content and date are required');
+      return;
+    }
+    if (!user) {
+      setError('User not logged in');
+      return;
+    }
+
+    const entryData = {
+      entry: newEntry.content,
+      date: newEntry.date,
+      user: { userId: user.userId }
     };
-    setEntries([...entries, entry]);
-    handleAddClose();
+
+    try {
+      const response = await axios.post('http://localhost:8080/api/journal/post', entryData);
+      setEntries((prevEntries) => [...prevEntries, {
+        id: response.data.journalId,
+        content: response.data.entry,
+        date: response.data.date
+      }]);
+      handleAddClose();
+      setError('');
+    } catch (error) {
+      setError('Error adding journal entry: ' + (error.response?.data || error.message));
+      console.error('Add error:', error);
+    }
   };
 
   // Edit Entry Handlers
   const handleEditOpen = (entry) => {
-    setEditingEntry(entry);
+    setEditingEntry({
+      id: entry.id,
+      content: entry.content,
+      date: entry.date
+    });
     setEditModalOpen(true);
   };
 
@@ -69,13 +261,40 @@ function Journal() {
     setEditingEntry(null);
   };
 
-  const handleEditEntry = () => {
-    if (!editingEntry) return;
-    
-    setEntries(entries.map(entry => 
-      entry.id === editingEntry.id ? editingEntry : entry
-    ));
-    handleEditClose();
+  const handleEditEntry = async () => {
+    if (!editingEntry || !editingEntry.content || !editingEntry.date) {
+      setError('Content and date are required');
+      return;
+    }
+    if (!user) {
+      setError('User not logged in');
+      return;
+    }
+
+    const entryData = {
+      entry: editingEntry.content,
+      date: editingEntry.date,
+      user: { userId: user.userId }
+    };
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/journal/update/${editingEntry.id}`,
+        entryData
+      );
+      setEntries((prevEntries) => prevEntries.map((entry) =>
+        entry.id === editingEntry.id ? {
+          id: response.data.journalId,
+          content: response.data.entry,
+          date: response.data.date
+        } : entry
+      ));
+      handleEditClose();
+      setError('');
+    } catch (error) {
+      setError('Error updating journal entry: ' + (error.response?.data || error.message));
+      console.error('Edit error:', error);
+    }
   };
 
   // Delete Entry Handlers
@@ -89,170 +308,25 @@ function Journal() {
     setEntryToDelete(null);
   };
 
-  const handleDeleteEntry = () => {
+  const handleDeleteEntry = async () => {
     if (!entryToDelete) return;
-    setEntries(entries.filter(entry => entry.id !== entryToDelete.id));
-    handleDeleteClose();
+
+    try {
+      await axios.delete(`http://localhost:8080/api/journal/delete/${entryToDelete.id}`);
+      setEntries((prevEntries) => prevEntries.filter((entry) => entry.id !== entryToDelete.id));
+      handleDeleteClose();
+      setError('');
+    } catch (error) {
+      setError('Error deleting journal entry: ' + (error.response?.data || error.message));
+      console.error('Delete error:', error);
+    }
   };
 
-  // Modal Component for both Add and Edit
-  const EntryModal = ({ open, onClose, title, entry, onSave, buttonText }) => (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby={`${title.toLowerCase()}-journal-modal`}
-    >
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: 24,
-        p: 4,
-      }}>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mb: 2
-        }}>
-          <Typography variant="h6" component="h2">
-            {title}
-          </Typography>
-          <IconButton 
-            onClick={onClose}
-            size="small"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Entry
-        </Typography>
-        <TextField
-          multiline
-          rows={4}
-          fullWidth
-          value={entry.content}
-          onChange={(e) => title === 'Edit Journal Entry' 
-            ? setEditingEntry({ ...editingEntry, content: e.target.value })
-            : setNewEntry({ ...newEntry, content: e.target.value })
-          }
-          sx={{ mb: 3 }}
-        />
-
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Date
-        </Typography>
-        <TextField
-          type="date"
-          fullWidth
-          value={entry.date}
-          onChange={(e) => title === 'Edit Journal Entry'
-            ? setEditingEntry({ ...editingEntry, date: e.target.value })
-            : setNewEntry({ ...newEntry, date: e.target.value })
-          }
-          sx={{ mb: 3 }}
-        />
-
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={onSave}
-          sx={{
-            backgroundColor: '#1f295a',
-            '&:hover': {
-              backgroundColor: '#4259c1',
-            },
-            textTransform: 'none',
-          }}
-        >
-          {buttonText}
-        </Button>
-      </Box>
-    </Modal>
-  );
-
-  // Delete Confirmation Modal Component
-  const DeleteConfirmationModal = ({ open, onClose, onConfirm }) => (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="delete-journal-modal"
-    >
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: 24,
-        p: 3,
-      }}>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mb: 2
-        }}>
-          <Typography variant="h6" component="h2">
-            Delete Journal Entry
-          </Typography>
-          <IconButton 
-            onClick={onClose}
-            size="small"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          Are you sure you want to delete this journal entry?
-        </Typography>
-
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end',
-          gap: 1
-        }}>
-          <Button
-            variant="contained"
-            onClick={onConfirm}
-            sx={{
-              backgroundColor: '#dc3545',
-              '&:hover': {
-                backgroundColor: '#c82333',
-              },
-              textTransform: 'none',
-            }}
-          >
-            Delete
-          </Button>
-          <Button
-            variant="contained"
-            onClick={onClose}
-            sx={{
-              backgroundColor: '#6c757d',
-              '&:hover': {
-                backgroundColor: '#5a6268',
-              },
-              textTransform: 'none',
-            }}
-          >
-            Cancel
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
-  );
+  // Handlers for EntryModal input changes
+  const handleAddContentChange = (e) => setNewEntry({ ...newEntry, content: e.target.value });
+  const handleAddDateChange = (e) => setNewEntry({ ...newEntry, date: e.target.value });
+  const handleEditContentChange = (e) => setEditingEntry({ ...editingEntry, content: e.target.value });
+  const handleEditDateChange = (e) => setEditingEntry({ ...editingEntry, date: e.target.value });
 
   return (
     <Box sx={{ 
@@ -261,7 +335,8 @@ function Journal() {
       maxWidth: '1200px',
       margin: '0 auto'
     }}>
-      {/* Add Journal Entry Button */}
+      {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'flex-end',
@@ -287,7 +362,6 @@ function Journal() {
         </Button>
       </Box>
 
-      {/* Add Modal */}
       <EntryModal
         open={addModalOpen}
         onClose={handleAddClose}
@@ -295,9 +369,10 @@ function Journal() {
         entry={newEntry}
         onSave={handleAddEntry}
         buttonText="Add Journal Entry"
+        onContentChange={handleAddContentChange}
+        onDateChange={handleAddDateChange}
       />
 
-      {/* Edit Modal */}
       <EntryModal
         open={editModalOpen}
         onClose={handleEditClose}
@@ -305,16 +380,16 @@ function Journal() {
         entry={editingEntry || { content: '', date: '' }}
         onSave={handleEditEntry}
         buttonText="Edit Journal Entry"
+        onContentChange={handleEditContentChange}
+        onDateChange={handleEditDateChange}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         open={deleteModalOpen}
         onClose={handleDeleteClose}
         onConfirm={handleDeleteEntry}
       />
 
-      {/* Journal Entries List */}
       {entries.map((entry) => (
         <Paper
           key={entry.id}
@@ -329,15 +404,6 @@ function Journal() {
             gap: 2,
           }}
         >
-          <Checkbox 
-            sx={{
-              mt: 1,
-              '& .MuiSvgIcon-root': {
-                fontSize: 20,
-              }
-            }}
-          />
-          
           <Box sx={{ flexGrow: 1 }}>
             <Typography
               variant="body1"
@@ -358,7 +424,7 @@ function Journal() {
                 mt: 1
               }}
             >
-              Due: {entry.date}
+              Date: {entry.date}
             </Typography>
           </Box>
 

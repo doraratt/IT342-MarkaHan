@@ -25,6 +25,12 @@ public class JournalController {
         return ResponseEntity.ok(journalService.getAllJournals());
     }
 
+    // New endpoint to get journals by user ID
+    @GetMapping("/getJournalsByUser")
+    public ResponseEntity<List<JournalEntity>> getJournalsByUser(@RequestParam int userId) {
+        return ResponseEntity.ok(journalService.getJournalsByUserId(userId));
+    }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<JournalEntity> updateJournal(@PathVariable int id, @RequestBody JournalEntity updatedJournal) {
         return ResponseEntity.ok(journalService.putJournal(id, updatedJournal));
@@ -35,4 +41,3 @@ public class JournalController {
         return ResponseEntity.ok(journalService.deleteJournal(id));
     }
 }
-

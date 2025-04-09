@@ -1,6 +1,7 @@
 package edu.cit.markahan.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,10 @@ public class GradeService {
     private UserRepository userRepository;
 
     public GradeEntity postGrade(GradeEntity grade) {
-        // Ensure the student exists
         StudentEntity student = studentRepository.findById(grade.getStudent().getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         grade.setStudent(student);
 
-        // Ensure the user exists
         UserEntity user = userRepository.findById(grade.getUser().getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         grade.setUser(user);
@@ -40,21 +39,28 @@ public class GradeService {
 
     @Transactional(readOnly = true)
     public List<GradeEntity> getAllGrades() {
-        return gradeRepository.findAll();
+        return gradeRepository.findAll().stream()
+            .filter(grade -> grade.getStudent() != null)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GradeEntity> getGradesByUserId(int userId) {
+        return gradeRepository.findByUserUserId(userId).stream()
+            .filter(grade -> grade.getStudent() != null)
+            .collect(Collectors.toList());
     }
 
     public GradeEntity putGrade(int gradeId, GradeEntity newGradeDetails) {
         GradeEntity grade = gradeRepository.findById(gradeId)
                 .orElseThrow(() -> new RuntimeException("Grade not found"));
         
-        // Update student if provided
         if (newGradeDetails.getStudent() != null) {
             StudentEntity student = studentRepository.findById(newGradeDetails.getStudent().getStudentId())
                     .orElseThrow(() -> new RuntimeException("Student not found"));
             grade.setStudent(student);
         }
         
-        // Update user if provided
         if (newGradeDetails.getUser() != null) {
             UserEntity user = userRepository.findById(newGradeDetails.getUser().getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found"));

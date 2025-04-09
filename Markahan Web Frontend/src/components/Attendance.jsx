@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -12,9 +12,13 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import axios from 'axios';
+import { useUser } from '../UserContext';
+import { Navigate } from 'react-router-dom';
 
 function Attendance() {
-  const [selectedSection, setSelectedSection] = useState('G1');
+  const { user } = useUser();
+  const [selectedSection, setSelectedSection] = useState('');
   const [selectedView, setSelectedView] = useState('mark');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [markAttendanceModal, setMarkAttendanceModal] = useState(false);
@@ -26,50 +30,116 @@ function Attendance() {
     lastName: '',
     section: ''
   });
+  const [students, setStudents] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [error, setError] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-  const students = [
-    { id: 1, name: 'Gaylord Tuwid' },
-    { id: 2, name: 'Kally Vhangon' },
-    { id: 3, name: 'Bugart Batongbakal Jr.' },
-    { id: 4, name: 'Wy Lee Guo' },
-    { id: 5, name: 'Raoul Philipi' },
-    { id: 6, name: 'Balmond Alucard' },
-    { id: 7, name: 'Bessie Cooper' },
-  ];
+  // Redirect to 404 if no user is logged in
+  if (!user) {
+    return <Navigate to="/404" replace />;
+  }
 
-  // Sample attendance data structure for future reference (commented out)
-  /*
-  const attendanceData = {
-    'Gaylord Tuwid': ['P', 'P', 'P', 'L', 'P', 'A', 'P', 'P', 'A', 'L', 'P', 'P'],
-    'Kally Vhangon': ['P', 'P', 'P', 'P', 'P', 'A', 'P', 'P', 'A', 'P', 'P', 'P'],
-    // ... other students
-  };
-  */
+  useEffect(() => {
+    if (user) {
+      const fetchStudents = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+          console.log('Fetched students:', response.data);
+          setStudents(response.data);
+          const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
+          setSelectedSection(uniqueSections[0] || '');
+          setError('');
+        } catch (error) {
+          setError('Error fetching students: ' + (error.response?.data || error.message));
+          console.error('Fetch students error:', error);
+        }
+      };
 
-  // Empty attendance data for initial state
-  const emptyAttendanceData = {};
-  students.forEach(student => {
-    emptyAttendanceData[student.name] = Array(12).fill('--');
-  });
+      const fetchAttendance = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`);
+          console.log('Fetched attendance:', response.data);
+          setAttendanceRecords(response.data);
+          setError('');
+        } catch (error) {
+          setError('Error fetching attendance: ' + (error.response?.data || error.message));
+          console.error('Fetch attendance error:', error);
+        }
+      };
 
-  // Keep the status color function for future reference
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'P':
-        return { bgcolor: '#90EE90', color: '#000' }; // Light green
-      case 'L':
-        return { bgcolor: '#FFD700', color: '#000' }; // Gold
-      case 'A':
-        return { bgcolor: '#FFB6C1', color: '#000' }; // Light red
-      default:
-        return { bgcolor: '#f5f5f5', color: '#666' }; // Gray for empty state
+      fetchStudents();
+      fetchAttendance();
+    }
+  }, [user]);
+
+  const handleSaveAttendance = async () => {
+    if (!user) {
+      setError('User not logged in');
+      return;
+    }
+    if (!selectedStudent) {
+      setError('No student selected');
+      return;
+    }
+
+    const attendanceDataToSend = {
+      student: { studentId: selectedStudent.studentId },
+      user: { userId: user.userId },
+      date: selectedDate,
+      status: attendanceStatus
+    };
+
+    try {
+      console.log('Sending attendance data:', attendanceDataToSend);
+      const response = await axios.post('http://localhost:8080/api/attendance/postAttendance', attendanceDataToSend);
+      console.log('Response:', response.data);
+      setAttendanceRecords(prev => [
+        ...prev.filter(r => r.date !== selectedDate || (r.student && r.student.studentId !== selectedStudent.studentId)),
+        response.data
+      ]);
+      setMarkAttendanceModal(false);
+      setSelectedStudent(null);
+      setAttendanceStatus('present');
+      setError('');
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+      setError('Error saving attendance: ' + errorMessage);
+      console.error('Full error details:', error.response || error);
     }
   };
 
-  const sections = ['G1', 'G2', 'G3', 'G4', 'G5'];
-  const days = [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 15, 16];
+  const getStatusColor = (status) => {
+    switch (status?.charAt(0).toUpperCase()) {
+      case 'P':
+        return { bgcolor: '#90EE90', color: '#000' };
+      case 'L':
+        return { bgcolor: '#FFD700', color: '#000' };
+      case 'A':
+        return { bgcolor: '#FFB6C1', color: '#000' };
+      default:
+        return { bgcolor: '#f5f5f5', color: '#666' };
+    }
+  };
 
-  // Render the mark attendance view
+  const sections = [...new Set(students.map(student => student.section))].sort();
+
+  const getWeekdaysInMonth = (year, month) => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const weekdays = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        weekdays.push(day);
+      }
+    }
+    return weekdays;
+  };
+
+  const weekdays = getWeekdaysInMonth(currentYear, currentMonth);
+
   const renderMarkAttendanceView = () => (
     <Box sx={{ 
       backgroundColor: 'white',
@@ -77,7 +147,6 @@ function Attendance() {
       overflow: 'hidden',
       width: '100%',
     }}>
-      {/* Table Header */}
       <Box sx={{ 
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -88,178 +157,199 @@ function Attendance() {
         <Typography fontWeight="500">Attendance</Typography>
       </Box>
 
-      {/* Students List */}
-      {students.map((student, index) => (
-        <Box
-          key={student.id}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            padding: '16px 24px',
-            backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
-            '&:hover': {
-              backgroundColor: '#f5f5f5',
-            },
-          }}
-        >
-          <Typography>{student.name}</Typography>
-          <Button
-            onClick={() => {
-              setSelectedStudent(student);
-              setMarkAttendanceModal(true);
-            }}
+      {students
+        .filter(student => student.section === selectedSection)
+        .map((student, index) => (
+          <Box
+            key={student.studentId}
             sx={{
-              color: '#0D5CAB',
-              textTransform: 'none',
-              justifyContent: 'flex-start',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              padding: '16px 24px',
+              backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
               '&:hover': {
-                backgroundColor: 'transparent',
-                textDecoration: 'underline',
+                backgroundColor: '#f5f5f5',
               },
             }}
           >
-            Mark Attendance
-          </Button>
-        </Box>
-      ))}
+            <Typography>{`${student.firstName} ${student.lastName}`}</Typography>
+            <Button
+              onClick={() => {
+                setSelectedStudent(student);
+                setMarkAttendanceModal(true);
+              }}
+              sx={{
+                color: '#0D5CAB',
+                textTransform: 'none',
+                justifyContent: 'flex-start',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Mark Attendance
+            </Button>
+          </Box>
+        ))}
     </Box>
   );
 
-  // Modify the renderAttendanceTableView function
-  const renderAttendanceTableView = () => (
-    <Box sx={{ 
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      width: '100%',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-    }}>
-      {/* Header Row */}
+  const renderAttendanceTableView = () => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const filteredStudents = students.filter(student => student.section === selectedSection);
+
+    return (
       <Box sx={{ 
-        display: 'grid',
-        gridTemplateColumns: '250px repeat(12, 1fr)',
-        bgcolor: '#f0f0f0',
-        borderBottom: '1px solid #ddd',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        width: '100%',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
       }}>
-        <Box sx={{ p: 2, borderRight: '1px solid #ddd' }}>
-          <Typography fontWeight="500">Students</Typography>
-        </Box>
+        {/* Header */}
         <Box sx={{ 
-          gridColumn: '2 / -1',
-          p: 2,
           display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <IconButton size="small">
-            <ChevronLeftIcon />
-          </IconButton>
-          <Typography fontWeight="500">Month: June</Typography>
-          <IconButton size="small">
-            <ChevronRightIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {/* Days Row */}
-      <Box sx={{ 
-        display: 'grid',
-        gridTemplateColumns: '250px repeat(12, 1fr)',
-        bgcolor: '#f0f0f0',
-        borderBottom: '1px solid #ddd',
-      }}>
-        <Box sx={{ p: 2, borderRight: '1px solid #ddd' }}></Box>
-        {days.map((day) => (
-          <Box key={day} sx={{ 
-            p: 2, 
-            textAlign: 'center',
-            borderRight: '1px solid #ddd'
-          }}>
-            <Typography>{day}</Typography>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Student Rows */}
-      {students.map((student) => (
-        <Box key={student.id} sx={{ 
-          display: 'grid',
-          gridTemplateColumns: '250px repeat(12, 1fr)',
+          bgcolor: '#f0f0f0',
           borderBottom: '1px solid #ddd',
-          '&:nth-of-type(odd)': {
-            bgcolor: '#f9f9f9'
-          }
+          p: 2
         }}>
-          <Box sx={{ 
-            p: 2, 
-            borderRight: '1px solid #ddd',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <Typography>{student.name}</Typography>
+          <Box sx={{ width: '200px', flexShrink: 0 }}>
+            <Typography fontWeight="500">Student</Typography>
           </Box>
-          {emptyAttendanceData[student.name].map((status, dayIndex) => (
-            <Box 
-              key={dayIndex}
-              sx={{ 
-                p: 2,
-                textAlign: 'center',
-                borderRight: '1px solid #ddd',
-                ...getStatusColor(status),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton 
+              size="small"
+              onClick={() => {
+                if (currentMonth === 0) {
+                  setCurrentMonth(11);
+                  setCurrentYear(prev => prev - 1);
+                } else {
+                  setCurrentMonth(prev => prev - 1);
+                }
+                fetchAttendance(); // Refetch for new month
               }}
             >
-              <Typography sx={{ 
-                color: '#666',
-                fontSize: '14px'
-              }}>
-                --
-              </Typography>
+              <ChevronLeftIcon />
+            </IconButton>
+            <Typography fontWeight="500">
+              Month: {monthNames[currentMonth]} {currentYear}
+            </Typography>
+            <IconButton 
+              size="small"
+              onClick={() => {
+                if (currentMonth === 11) {
+                  setCurrentMonth(0);
+                  setCurrentYear(prev => prev + 1);
+                } else {
+                  setCurrentMonth(prev => prev + 1);
+                }
+                fetchAttendance(); // Refetch for new month
+              }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Table Header */}
+        <Box sx={{ 
+          display: 'flex',
+          bgcolor: '#f5f5f5',
+          borderBottom: '1px solid #ddd'
+        }}>
+          <Box sx={{ width: '200px', p: 1, flexShrink: 0 }} />
+          {weekdays.map(day => (
+            <Box 
+              key={day}
+              sx={{ 
+                width: '40px',
+                textAlign: 'center',
+                p: 1,
+                borderRight: '1px solid #ddd'
+              }}
+            >
+              <Typography variant="caption">{day}</Typography>
             </Box>
           ))}
         </Box>
-      ))}
 
-      {/* Legend for future reference */}
-      <Box sx={{ 
-        p: 2, 
-        borderTop: '1px solid #ddd',
-        display: 'flex',
-        gap: 3,
-        bgcolor: '#f9f9f9'
-      }}>
-        <Typography sx={{ fontSize: '14px', color: '#666' }}>
-          Legend (for future implementation):
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Box sx={{ 
-            bgcolor: '#90EE90', 
-            px: 1, 
-            borderRadius: 1,
-            fontSize: '14px'
-          }}>P - Present</Box>
-          <Box sx={{ 
-            bgcolor: '#FFD700', 
-            px: 1, 
-            borderRadius: 1,
-            fontSize: '14px'
-          }}>L - Late</Box>
-          <Box sx={{ 
-            bgcolor: '#FFB6C1', 
-            px: 1, 
-            borderRadius: 1,
-            fontSize: '14px'
-          }}>A - Absent</Box>
+        {/* Table Body */}
+        <Box sx={{ overflowX: 'auto' }}>
+          {filteredStudents.map((student, index) => (
+            <Box 
+              key={student.studentId}
+              sx={{ 
+                display: 'flex',
+                borderBottom: '1px solid #ddd',
+                bgcolor: index % 2 === 0 ? '#fafafa' : 'white'
+              }}
+            >
+              <Box sx={{ 
+                width: '200px',
+                p: 1,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <Typography variant="body2">{`${student.firstName} ${student.lastName}`}</Typography>
+              </Box>
+              {weekdays.map(day => {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const record = attendanceRecords.find(r => 
+                  r.student?.studentId === student.studentId && 
+                  r.date === dateStr
+                );
+                const status = record 
+                  ? (record.status === 'present' ? 'P' : record.status.charAt(0).toUpperCase())
+                  : '--';
+
+                return (
+                  <Box
+                    key={day}
+                    sx={{
+                      width: '40px',
+                      p: 1,
+                      textAlign: 'center',
+                      borderRight: '1px solid #ddd',
+                      ...getStatusColor(status)
+                    }}
+                  >
+                    <Typography variant="body2">{status}</Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Legend */}
+        <Box sx={{ 
+          p: 2,
+          borderTop: '1px solid #ddd',
+          display: 'flex',
+          gap: 2,
+          bgcolor: '#f9f9f9'
+        }}>
+          <Typography variant="caption" color="text.secondary">Legend:</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ ...getStatusColor('P'), px: 1, borderRadius: 1 }}>P</Box>
+            <Box sx={{ ...getStatusColor('L'), px: 1, borderRadius: 1 }}>L</Box>
+            <Box sx={{ ...getStatusColor('A'), px: 1, borderRadius: 1 }}>A</Box>
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
+    );
+  };
 
   return (
     <Box sx={{ width: '100%', p: 3 }}>
-      {/* Header with Sections and View Buttons */}
+      {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+      
       <Box sx={{ mb: 4 }}>
         <Typography sx={{ mb: 2 }}>Sections</Typography>
         <Box sx={{ 
@@ -267,7 +357,6 @@ function Attendance() {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          {/* Sections Buttons */}
           <Box sx={{ display: 'flex', gap: '2px' }}>
             {sections.map((section) => (
               <Button
@@ -297,9 +386,7 @@ function Attendance() {
             ))}
           </Box>
 
-          {/* View Selection and Filter Buttons */}
           <Box sx={{ display: 'flex', gap: 2 }}>
-            {/* View Selection Buttons */}
             <Box sx={{ display: 'flex', gap: '2px' }}>
               <Button
                 onClick={() => setSelectedView('mark')}
@@ -337,7 +424,6 @@ function Attendance() {
               </Button>
             </Box>
 
-            {/* Filter Button - Separated */}
             <Button
               onClick={() => setFilterModalOpen(true)}
               sx={{
@@ -357,10 +443,8 @@ function Attendance() {
         </Box>
       </Box>
 
-      {/* Render the appropriate view */}
       {selectedView === 'mark' ? renderMarkAttendanceView() : renderAttendanceTableView()}
 
-      {/* Filter Modal */}
       <Modal
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
@@ -433,7 +517,6 @@ function Attendance() {
         </Box>
       </Modal>
 
-      {/* Mark Attendance Modal */}
       <Modal
         open={markAttendanceModal}
         onClose={() => setMarkAttendanceModal(false)}
@@ -469,7 +552,7 @@ function Attendance() {
 
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
-              Student: {selectedStudent?.name}
+              Student: {selectedStudent ? `${selectedStudent.firstName} ${selectedStudent.lastName}` : ''}
             </Typography>
             
             <TextField
@@ -524,7 +607,7 @@ function Attendance() {
           </FormControl>
 
           <Button
-            onClick={() => setMarkAttendanceModal(false)}
+            onClick={handleSaveAttendance}
             fullWidth
             sx={{
               mt: 3,

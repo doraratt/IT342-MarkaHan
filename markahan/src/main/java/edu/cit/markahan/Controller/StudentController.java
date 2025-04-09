@@ -25,6 +25,12 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getAllStudents());
     }
 
+    // New endpoint to get students by user ID
+    @GetMapping("/getStudentsByUser")
+    public ResponseEntity<List<StudentEntity>> getStudentsByUser(@RequestParam int userId) {
+        return ResponseEntity.ok(studentService.getStudentsByUserId(userId));
+    }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<StudentEntity> updateStudent(@PathVariable int id, @RequestBody StudentEntity updatedStudent) {
         return ResponseEntity.ok(studentService.updateStudent(id, updatedStudent));
