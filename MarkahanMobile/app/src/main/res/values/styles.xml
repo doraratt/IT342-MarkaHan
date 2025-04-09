@@ -1,0 +1,7 @@
+<resources>
+    <style name="DrawerMenuItemTextStyle">
+        <item name="android:fontFamily">@font/lexend_med</item> <!-- Custom font -->
+        <item name="android:textColor">#fff</item>  <!-- Text color (optional) -->
+        <item name="android:textSize">16sp</item> <!-- Font size (optional) -->
+    </style>
+</resources>
