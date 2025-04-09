@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -12,6 +13,8 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
+import axios from 'axios';
+import { useUser } from '../UserContext'; // Ensure path is correct
 import GoogleButton from './GoogleButton';
 
 function CustomEmailField({ onChange }) {
@@ -50,7 +53,7 @@ function CustomPasswordField({ onChange }) {
     <FormControl sx={{ my: 1 }} fullWidth variant="outlined">
       <InputLabel size="small" htmlFor="outlined-adornment-password">
         Password
-      </InputLabel> 
+      </InputLabel>
       <OutlinedInput
         id="outlined-adornment-password"
         type={showPassword ? 'text' : 'password'}
@@ -108,19 +111,37 @@ function SignUpLink() {
 
 const Login = () => {
   const theme = useTheme();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt with:', formData);
+    setError(''); // Reset error
+    setSuccess(''); // Reset success
+
+    try {
+      const response = await axios.post('http://localhost:8080/api/user/login', {
+        email: formData.email, // Changed from username to email to match UserEntity
+        password: formData.password,
+      });
+      setUser(response.data); // Save user in context
+      setSuccess('Login successful!');
+      setError('');
+      console.log('Login successful:', response.data);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Login failed: ' + (err.response?.status === 401 ? 'Invalid credentials' : 'Unknown error'));
+      setSuccess('');
+      console.error('Login error:', err);
+    }
   };
 
   return (
@@ -173,10 +194,13 @@ const Login = () => {
           </Box>
 
           <CustomEmailField onChange={handleChange} />
-          <CustomPasswordField onChange={handleChange} name="password" label="Password" />
+          <CustomPasswordField onChange={handleChange} />
           <CustomButton />
           <GoogleButton />
           <SignUpLink />
+
+          {error && <Typography color="error" sx={{ mt: 2 }} align="center">{error}</Typography>}
+          {success && <Typography color="primary" sx={{ mt: 2 }} align="center">{success}</Typography>}
         </Box>
       </Box>
 
@@ -195,7 +219,7 @@ const Login = () => {
         }}
       >
         <Typography variant="h4" sx={{ color: 'white', mb: 2 }}>
-          Your Logo Here
+          MarkaHan
         </Typography>
       </Box>
     </Box>

@@ -25,16 +25,21 @@ public class AttendanceService {
     private UserRepository userRepository;
 
     public AttendanceEntity postAttendance(AttendanceEntity attendance) {
-        // Ensure the student exists
         StudentEntity student = studentRepository.findById(attendance.getStudent().getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
-        attendance.setStudent(student);
-
-        // Ensure the user exists
         UserEntity user = userRepository.findById(attendance.getUser().getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        attendance.setUser(user);
 
+        // Check for existing record
+        AttendanceEntity existing = attendanceRepository.findByStudentAndDate(student, attendance.getDate());
+        if (existing != null) {
+            existing.setStatus(attendance.getStatus());
+            existing.setUser(user);
+            return attendanceRepository.save(existing);
+        }
+
+        attendance.setStudent(student);
+        attendance.setUser(user);
         return attendanceRepository.save(attendance);
     }
 
@@ -65,6 +70,12 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<AttendanceEntity> getAllAttendance() {
         return attendanceRepository.findAll();
+    }
+
+    // New method to get attendance by user ID
+    @Transactional(readOnly = true)
+    public List<AttendanceEntity> getAttendanceByUserId(int userId) {
+        return attendanceRepository.findByUserUserId(userId);
     }
 
     public String deleteAttendance(int attendanceId) {

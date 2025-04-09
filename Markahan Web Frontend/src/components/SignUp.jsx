@@ -11,8 +11,10 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import GoogleButton from './GoogleButton';
+import axios from 'axios'; // Added axios import
+import { useUser } from '../UserContext'; // Added UserContext import
 
 function CustomFirstNameField({ onChange }) {
   return (
@@ -94,6 +96,7 @@ function CustomPasswordField({ onChange, name, label }) {
         type={showPassword ? 'text' : 'password'}
         name={name}
         size="small"
+        required
         onChange={onChange}
         endAdornment={
           <InputAdornment position="end">
@@ -104,15 +107,12 @@ function CustomPasswordField({ onChange, name, label }) {
               edge="end"
               size="small"
             >
-              {showPassword ? (
-                <VisibilityOff fontSize="inherit" />
-              ) : (
-                <Visibility fontSize="inherit" />
-              )}
+              {showPassword ? <VisibilityOff fontSize="inherit" /> : <Visibility fontSize="inherit" />}
             </IconButton>
           </InputAdornment>
         }
         label={label}
+        autoComplete={name === 'password' ? 'new-password' : 'off'}
       />
     </FormControl>
   );
@@ -146,6 +146,8 @@ function SignInLink() {
 
 const SignUp = () => {
   const theme = useTheme();
+  const navigate = useNavigate(); // Added navigation
+  const { setUser } = useUser(); // Added user context
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -153,19 +155,61 @@ const SignUp = () => {
     password: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'confirmPassword') {
       setConfirmPassword(value);
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Signup attempt with:', formData);
+    setError('');
+    setSuccess('');
+
+    // Password validation
+    if (formData.password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    const passwordValidation = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!passwordValidation.test(formData.password)) {
+      setError('Password must be at least 8 characters long and contain at least one special character');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:8080/api/user/signup', formData); // Updated to use axios
+      console.log('Response data:', response.data);
+      setUser(response.data); // Set user in context
+      setSuccess('Account created successfully!');
+      setError(null);
+      
+      // Clear form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+      });
+      setConfirmPassword('');
+      
+      navigate('/dashboard'); // Redirect to home page
+    } catch (err) {
+      console.error('Signup error:', err);
+      if (err.response) {
+        setError('Signup failed: ' + (err.response.data?.message || 'Server error'));
+      } else {
+        setError('Signup failed: ' + err.message);
+      }
+      setSuccess(null);
+    }
   };
 
   return (
@@ -192,23 +236,8 @@ const SignUp = () => {
           backgroundColor: '#d6e1f7',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            paddingBottom: 5,
-            paddingLeft: 5,
-            paddingRight: 5,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              mb: 4,
-            }}
-          >
+        <Box sx={{ display: 'flex', flexDirection: 'column', paddingBottom: 5, paddingLeft: 5, paddingRight: 5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
             <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
               Welcome User
             </Typography>
@@ -222,6 +251,10 @@ const SignUp = () => {
           <CustomEmailField onChange={handleChange} />
           <CustomPasswordField onChange={handleChange} name="password" label="Password" />
           <CustomPasswordField onChange={handleChange} name="confirmPassword" label="Confirm Password" />
+          
+          {error && <Typography color="error" align="center">{error}</Typography>}
+          {success && <Typography color="success.main" align="center">{success}</Typography>}
+          
           <CustomButton />
           <GoogleButton />
           <SignInLink />
@@ -243,11 +276,11 @@ const SignUp = () => {
         }}
       >
         <Typography variant="h4" sx={{ color: 'white', mb: 2 }}>
-          Your Logo Here
+          Markahan
         </Typography>
       </Box>
     </Box>
   );
 };
 
-export default SignUp; 
+export default SignUp;

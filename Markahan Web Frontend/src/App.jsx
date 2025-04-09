@@ -5,9 +5,11 @@ import DashboardLayout from './components/DashboardLayout';
 import Grades from './components/Grades';
 import Attendance from './components/Attendance';
 import './App.css';
+import { UserProvider } from './UserContext';
 
 function App() {
   return (
+    <UserProvider> 
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -18,6 +20,7 @@ function App() {
         <Route path="/attendace" element={<Attendance/>}/>
       </Routes>
     </Router>
+    </UserProvider>
   );
 }
 
