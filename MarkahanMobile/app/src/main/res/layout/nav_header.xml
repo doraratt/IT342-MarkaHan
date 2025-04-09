@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#0A588C">
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="40dp"
+        android:src="@drawable/mh"
+        android:scaleType="centerCrop"
+        android:layout_gravity="left"/>
+
+<!--    <TextView-->
+<!--        android:id="@+id/header_email"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Welcome, Teacher Cathy"-->
+<!--        android:textColor="#fff"-->
+<!--        android:textSize="12sp"-->
+<!--        android:layout_marginBottom="15dp"-->
+<!--        android:layout_marginLeft="17dp"-->
+<!--        android:layout_gravity="left"-->
+<!--        android:fontFamily="@font/lexend_bold"/>-->
+</LinearLayout>
