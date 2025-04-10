@@ -51,7 +51,7 @@ public class CalendarController {
         return eventCalendarService.getTasksByUserId(userId);
     }
 
-     @GetMapping("/getAllEvent")
+    @GetMapping("/getAllEvent")
     public List<CalendarEntity> getAllTasks() {
         return eventCalendarService.getAllTasks();
     }
@@ -71,8 +71,8 @@ public class CalendarController {
         return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 
-    @PutMapping("/updateEventCal")
-    public ResponseEntity<?> updateTask(@RequestParam int calendarId, @RequestBody CalendarEntity taskCalendar) {
+    @PutMapping("/updateEventCal/{calendarId}")
+    public ResponseEntity<?> updateTask(@PathVariable int calendarId, @RequestBody CalendarEntity taskCalendar) {
         if (taskCalendar.getUser() != null && taskCalendar.getUser().getUserId() != 0) {
             try {
                 UserEntity user = userRepo.findById(taskCalendar.getUser().getUserId())

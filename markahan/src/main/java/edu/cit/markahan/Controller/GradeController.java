@@ -29,15 +29,11 @@ public class GradeController {
 
     @PostMapping("/postGrade")
     public ResponseEntity<GradeEntity> postGrade(@RequestBody GradeEntity grade) {
-        // Retrieve the student based on student_id
         StudentEntity student = studentRepository.findById(grade.getStudent().getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        // Retrieve the user based on user_id from the request
         UserEntity user = userRepository.findById(grade.getUser().getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Set the student and user for the grade record
         grade.setStudent(student);
         grade.setUser(user);
         
@@ -48,6 +44,11 @@ public class GradeController {
     @GetMapping("/getAllGrades")
     public List<GradeEntity> getAllGrades() {
         return gradeService.getAllGrades();
+    }
+
+    @GetMapping("/getGradesByUser")
+    public ResponseEntity<List<GradeEntity>> getGradesByUser(@RequestParam int userId) {
+        return ResponseEntity.ok(gradeService.getGradesByUserId(userId));
     }
 
     @PutMapping("/putGrade/{id}")

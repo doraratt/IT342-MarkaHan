@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".fragments.ForgotPassActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset Password"
+        android:textSize="32sp"
+        android:textColor="#333"
+        android:fontFamily="@font/lexend_bold"
+        android:layout_marginTop="150dp"
+        android:layout_marginLeft="30dp"/>
+
+    <TextView
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="Please enter your new password and confirm the password"
+        android:textSize="15sp"
+        android:textColor="#787979"
+        android:fontFamily="@font/lexend_med"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="30dp"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp">
+
+        <EditText
+            android:id="@+id/new_pass"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/border_transpa"
+            android:hint="New Password"
+            android:fontFamily="@font/lexend_reg"
+            android:textSize="16sp"
+            android:inputType="textPassword"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:minHeight="50dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"/>
+
+        <EditText
+            android:id="@+id/confirmnew_pass"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/border_transpa"
+            android:hint="Confirm New Password"
+            android:fontFamily="@font/lexend_reg"
+            android:textSize="16sp"
+            android:inputType="textPassword"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:minHeight="50dp"
+            android:layout_below="@id/new_pass"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"/>
+
+        <!-- Checkboxes for New Password and Confirm New Password -->
+        <CheckBox
+            android:id="@+id/checkbox_show_new_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="330dp"/>
+
+        <CheckBox
+            android:id="@+id/checkbox_show_confirm_new_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
+            android:layout_marginLeft="330dp" />
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/recover_password"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_blu"
+        android:text="Update"
+        android:textSize="16sp"
+        android:textColor="#fff"
+        android:fontFamily="@font/lexend_reg"
+        android:layout_marginTop="35dp"
+        android:layout_gravity="center"/>
+
+
+</LinearLayout>

@@ -3,6 +3,7 @@ package edu.cit.markahan.Entity;
 import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -26,6 +27,7 @@ public class AttendanceEntity {
     private UserEntity user;
 
     @Column(nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 
     @Column(nullable = false)
