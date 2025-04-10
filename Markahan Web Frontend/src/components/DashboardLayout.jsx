@@ -18,13 +18,21 @@ import PeopleIcon from '@mui/icons-material/People';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import GradingIcon from '@mui/icons-material/Grading';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import { useUser } from '../UserContext'; // Added useUser import
 
 import Journal from './Journal';
 import Calendar from './Calendar';
 import Students from './Students';
+import Grades from './Grades';
+import Attendance from './Attendance';
 
 const NAVIGATION = [
+  {
+    segment: "dashboard",
+    title: "Dashboard",
+    icon: <DashboardIcon />,
+  },
   {
     segment: "calendar",
     title: "Calendar",
@@ -52,33 +60,38 @@ const NAVIGATION = [
   },
 ];
 
-function DemoPageContent({ activeSegment }) {
+function DemoPageContent({ activeSegment, user }) { // Added user prop
+  const location = window.location.pathname;
+  const studentIdMatch = location.match(/\/grades\/(\d+)/);
+  const studentId = studentIdMatch ? studentIdMatch[1] : null;
+
   let content;
   
   switch (activeSegment) {
-    case "calendar":
-        content = <Calendar />;
-        break;
-    case "students":
-        content = <Students />;
-        break;
-    case "attendance":
+    case "dashboard":
       content = (
         <Box sx={{ padding: 3 }}>
-          <Typography variant="h5">Attendance Coming Soon</Typography>
+          <Typography variant="h5">
+            {user ? `Welcome, ${user.firstName} ${user.lastName}!` : "Dashboard Coming Soon"}
+          </Typography>
         </Box>
       );
+      break;
+    case "calendar":
+      content = <Calendar user={user} />; // Pass user to Calendar
+      break;
+    case "students":
+      content = <Students user={user} />; // Pass user to Students
+      break;
+    case "attendance":
+      content = <Attendance user={user} />; // Pass user to Attendance
       break;
     case "grades":
-      content = (
-        <Box sx={{ padding: 3 }}>
-          <Typography variant="h5">Grades Coming Soon</Typography>
-        </Box>
-      );
+      content = <Grades user={user} />; // Pass user to Grades
       break;
     case "journal":
-        content = <Journal />;
-        break;
+      content = <Journal user={user} />; // Pass user to Journal
+      break;
     default:
       content = <Typography variant="h6">Select a segment to view content.</Typography>;
   }
@@ -99,7 +112,7 @@ function DemoPageContent({ activeSegment }) {
   );
 }
 
-function Sidebar({ onNavigate, activeSegment }) {
+function Sidebar({ onNavigate, activeSegment, user }) { // Added user prop
   return (
     <Box sx={{
       maxWidth: "320px",
@@ -120,7 +133,7 @@ function Sidebar({ onNavigate, activeSegment }) {
           alignItems: "center",
           padding: 3,
           cursor: "pointer",
-        }} onClick={() => onNavigate("board")}>
+        }} onClick={() => onNavigate("dashboard")}> {/* Changed to "dashboard" */}
           <Typography variant="h4" sx={{ color: "white" }}>MarkaHan</Typography>
         </Box>
 
@@ -177,11 +190,20 @@ function Sidebar({ onNavigate, activeSegment }) {
 function DashboardLayout() {
   const navigate = useNavigate();
   const [activeSegment, setActiveSegment] = useState(() => {
-    return localStorage.getItem("activeSegment") || "calendar";
+    return localStorage.getItem("activeSegment") || "dashboard";
   });
   const [isModalOpen, setModalOpen] = useState(false);
+  const { user, setUser } = useUser(); // Added useUser hook
+
+  // Redirect to login if no user is present
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const handleLogout = () => {
+    setUser(null); // Clear user from context
     localStorage.removeItem("activeSegment");
     navigate("/login");
   };
@@ -250,7 +272,7 @@ function DashboardLayout() {
       overflow: "hidden",
       width: "100%",
     }}>
-      <Sidebar onNavigate={handleNavigation} activeSegment={activeSegment} />
+      <Sidebar onNavigate={handleNavigation} activeSegment={activeSegment} user={user} /> {/* Pass user */}
       <Box sx={{
         flexGrow: 1,
         display: "flex",
@@ -296,13 +318,13 @@ function DashboardLayout() {
           <Box sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
             <UserIcon />
             <Typography variant="body1" sx={{ marginLeft: 1 }}>
-              User
+              {user ? `${user.firstName} ${user.lastName}` : "User"} {/* Display user's full name */}
             </Typography>
           </Box>
         </Box>
 
         <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-          <DemoPageContent activeSegment={activeSegment} />
+          <DemoPageContent activeSegment={activeSegment} user={user} /> {/* Pass user */}
         </Box>
       </Box>
       <LogoutConfirmationModal

@@ -3,8 +3,9 @@ package edu.cit.markahan.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import edu.cit.markahan.Entity.GradeEntity;
+import java.util.List;
 
 @Repository
 public interface GradeRepository extends JpaRepository<GradeEntity, Integer> {
-    // You can add custom query methods here if needed
+    List<GradeEntity> findByUserUserId(int userId); // Fetch grades by userId
 }

@@ -29,15 +29,11 @@ public class AttendanceController {
 
     @PostMapping("/postAttendance")
     public ResponseEntity<AttendanceEntity> postAttendance(@RequestBody AttendanceEntity attendance) {
-        // Retrieve the student based on student_id
         StudentEntity student = studentRepository.findById(attendance.getStudent().getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        // Retrieve the user based on user_id from the request
         UserEntity user = userRepository.findById(attendance.getUser().getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Set the student and user for the attendance record
         attendance.setStudent(student);
         attendance.setUser(user);
 
@@ -48,6 +44,12 @@ public class AttendanceController {
     @GetMapping("/getAllAttendance")
     public List<AttendanceEntity> getAllAttendance() {
         return attendanceService.getAllAttendance();
+    }
+
+    // New endpoint to get attendance by user ID
+    @GetMapping("/getAttendanceByUser")
+    public ResponseEntity<List<AttendanceEntity>> getAttendanceByUser(@RequestParam int userId) {
+        return ResponseEntity.ok(attendanceService.getAttendanceByUserId(userId));
     }
 
     @PutMapping("/putAttendance/{id}")
