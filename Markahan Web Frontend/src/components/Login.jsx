@@ -16,6 +16,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
 import { useUser } from '../UserContext'; // Ensure path is correct
 import GoogleButton from './GoogleButton';
+import { AppProvider } from '@toolpad/core/AppProvider';
 
 function CustomEmailField({ onChange }) {
   return (
@@ -145,6 +146,7 @@ const Login = () => {
   };
 
   return (
+    <AppProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -223,6 +225,7 @@ const Login = () => {
         </Typography>
       </Box>
     </Box>
+    </AppProvider>
   );
 };
 

@@ -72,7 +72,7 @@ function DemoPageContent({ activeSegment, user }) { // Added user prop
       content = (
         <Box sx={{ padding: 3 }}>
           <Typography variant="h5">
-            {user ? `Welcome, ${user.firstName} ${user.lastName}!` : "Dashboard Coming Soon"}
+            {user ? `Welcome, Teacher ${user.firstName}!` : "Dashboard Coming Soon"}
           </Typography>
         </Box>
       );
@@ -101,8 +101,8 @@ function DemoPageContent({ activeSegment, user }) { // Added user prop
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      textAlign: "left",
-      flexGrow: 1,
+        textAlign: "left",
+        flexGrow: 1,
       overflowY: "hidden",
       minHeight: "100%",
       width: "100%",
