@@ -1,0 +1,49 @@
+<!-- item_attendance.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/txtStudentName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:text="Student Name"
+        android:textColor="#000"
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <CheckBox
+            android:id="@+id/cbPresent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="P"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cbLate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="L"
+            android:textSize="12sp"
+            android:layout_marginLeft="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbAbsent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="A"
+            android:textSize="12sp"
+            android:layout_marginLeft="8dp" />
+    </LinearLayout>
+</LinearLayout>

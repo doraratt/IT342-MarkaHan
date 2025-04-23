@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id ("kotlin-parcelize")
 }
 
 android {
@@ -51,18 +52,16 @@ android {
 
 dependencies {
 
-    implementation(libs.androidx.core.ktx)
+//    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,6 +69,19 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //date
+    implementation ("com.google.android.material:material:1.6.0")
+
+    //recycle
+    implementation ("androidx.recyclerview:recyclerview:1.2.1") // or latest version
+
+    //card
+    implementation ("androidx.cardview:cardview:1.0.0")
+    implementation ("androidx.activity:activity-ktx:1.8.0")
+
+    implementation ("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core:1.12.0")
 
     //navigation drawer
     implementation(libs.material)
