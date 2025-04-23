@@ -6,9 +6,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.Toast
-import com.example.markahanmobile.R
 import com.example.markahanmobile.utils.toast
+import com.example.markahanmobile.R
 
 class ResetPassActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
