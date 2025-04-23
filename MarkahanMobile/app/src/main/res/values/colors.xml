@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="colorPrimary">#0A588C</color>
+    <color name="colorPrimaryDark">#05314B</color>
+    <color name="colorAccent">#05A9C8</color>
+
+    <color name="present">#4CAF50</color>  <!-- Green for Present -->
+    <color name="absent">#F44336</color>   <!-- Red for Absent -->
+    <color name="late">#FFC107</color>     <!-- Yellow for Late -->
+    <color name="light_gray">#F5F5F5</color> <!-- For alternating rows -->
 </resources>

@@ -13,74 +13,114 @@
         android:theme="@style/Theme.MarkahanMobile"
         tools:targetApi="31">
         <activity
-            android:name=".fragments.GradesActivity"
+            android:name="com.example.markahanmobile.fragments.EditGradesActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
-            android:name=".fragments.JournalActivity"
+            android:name="com.example.markahanmobile.fragments.StudentGradesActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
-            android:name=".fragments.AttendanceActivity"
+            android:name="com.example.markahanmobile.fragments.AttendanceSheetActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.intent.action.MAIN" />-->
+
+        <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+        <!--            </intent-filter>-->
+        <!--        </activity>-->
         <activity
-            android:name=".fragments.StudentsListActivity"
+            android:name="com.example.markahanmobile.fragments.GradesActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.intent.action.MAIN" />-->
+
+        <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+        <!--            </intent-filter>-->
+        <!--        </activity>-->
         <activity
-            android:name=".fragments.CalendarActivity"
+            android:name="com.example.markahanmobile.fragments.JournalActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
+        <activity
+            android:name="com.example.markahanmobile.fragments.AttendanceActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.intent.action.MAIN" />-->
+
+        <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+        <!--            </intent-filter>-->
+        <!--        </activity>-->
         <activity
-            android:name=".fragments.DashboardActivity"
+            android:name="com.example.markahanmobile.fragments.StudentsListActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
         <activity
-            android:name=".fragments.ResetPassActivity"
+            android:name="com.example.markahanmobile.fragments.CalendarActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
+        <activity
+            android:name="com.example.markahanmobile.fragments.DashboardActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
+        <activity
+            android:name="com.example.markahanmobile.fragments.ResetPassActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".fragments.CheckEmailActivity"
+            android:name="com.example.markahanmobile.fragments.CheckEmailActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".fragments.ForgotPassActivity"
+            android:name="com.example.markahanmobile.fragments.ForgotPassActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".fragments.VerificationActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:exported="true" />
-<!--        <intent-filter>-->
-<!--            <action android:name="android.intent.action.MAIN" />-->
-<!--            <category android:name="android.intent.category.LAUNCHER" />-->
-<!--        </intent-filter>-->
-<!--        </activity>-->
+            android:name="com.example.markahanmobile.fragments.VerificationActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
         <activity
-            android:name=".fragments.RegisterActivity"
+            android:name="com.example.markahanmobile.fragments.RegisterActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".fragments.PreRegisterActivity"
+            android:name="com.example.markahanmobile.fragments.PreRegisterActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".fragments.SplashActivity"
+            android:name="com.example.markahanmobile.fragments.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
             <intent-filter>
-                 <action android:name="android.intent.action.MAIN" />
-                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".fragments.LoginActivity"
+            android:name="com.example.markahanmobile.fragments.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>
