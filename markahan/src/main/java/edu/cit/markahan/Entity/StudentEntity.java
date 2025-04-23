@@ -1,6 +1,10 @@
 package edu.cit.markahan.Entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -30,6 +34,15 @@ public class StudentEntity {
     @JsonBackReference
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private UserEntity user;
+    
+ // Add OneToMany relationships
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AttendanceEntity> attendanceRecords = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<GradeEntity> grades = new ArrayList<>();
 
     public StudentEntity() {
         super();
@@ -90,5 +103,42 @@ public class StudentEntity {
 
     public void setUser(UserEntity user) {
         this.user = user;
+    }
+    
+ // Add getters and setters for the new relationships
+    public List<AttendanceEntity> getAttendanceRecords() {
+        return attendanceRecords;
+    }
+
+    public void setAttendanceRecords(List<AttendanceEntity> attendanceRecords) {
+        this.attendanceRecords = attendanceRecords;
+    }
+    
+    public void addAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.add(attendance);
+        attendance.setStudent(this);
+    }
+    
+    public void removeAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.remove(attendance);
+        attendance.setStudent(null);
+    }
+    
+    public List<GradeEntity> getGrades() {
+        return grades;
+    }
+
+    public void setGrades(List<GradeEntity> grades) {
+        this.grades = grades;
+    }
+    
+    public void addGrade(GradeEntity grade) {
+        grades.add(grade);
+        grade.setStudent(this);
+    }
+    
+    public void removeGrade(GradeEntity grade) {
+        grades.remove(grade);
+        grade.setStudent(null);
     }
 }
