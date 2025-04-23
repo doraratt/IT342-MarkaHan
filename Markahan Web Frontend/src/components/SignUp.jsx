@@ -15,6 +15,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import GoogleButton from './GoogleButton';
 import axios from 'axios'; // Added axios import
 import { useUser } from '../UserContext'; // Added UserContext import
+import { AppProvider } from '@toolpad/core/AppProvider';
 
 function CustomFirstNameField({ onChange }) {
   return (
@@ -213,6 +214,7 @@ const SignUp = () => {
   };
 
   return (
+    <AppProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -280,6 +282,7 @@ const SignUp = () => {
         </Typography>
       </Box>
     </Box>
+    </AppProvider>
   );
 };
 

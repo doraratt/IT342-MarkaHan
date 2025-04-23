@@ -31,8 +31,10 @@ function Attendance() {
     section: ''
   });
   const [students, setStudents] = useState([]);
+  const [originalStudents, setOriginalStudents] = useState([]); // Store original students for filter reset
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
@@ -41,34 +43,43 @@ function Attendance() {
     return <Navigate to="/404" replace />;
   }
 
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+      setStudents(response.data);
+      setOriginalStudents(response.data); // Store original list
+      const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
+      setSelectedSection(uniqueSections[0] || '');
+      setError('');
+    } catch (error) {
+      setError('Error fetching students: ' + (error.response?.data || error.message));
+      console.error('Fetch students error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAttendance = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`);
+      const filteredRecords = response.data.filter(record => {
+        const recordDate = new Date(record.date);
+        return recordDate.getFullYear() === currentYear && recordDate.getMonth() === currentMonth;
+      });
+      setAttendanceRecords(filteredRecords);
+      setError('');
+    } catch (error) {
+      setError('Error fetching attendance: ' + (error.response?.data || error.message));
+      console.error('Fetch attendance error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      const fetchStudents = async () => {
-        try {
-          const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
-          console.log('Fetched students:', response.data);
-          setStudents(response.data);
-          const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
-          setSelectedSection(uniqueSections[0] || '');
-          setError('');
-        } catch (error) {
-          setError('Error fetching students: ' + (error.response?.data || error.message));
-          console.error('Fetch students error:', error);
-        }
-      };
-
-      const fetchAttendance = async () => {
-        try {
-          const response = await axios.get(`http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`);
-          console.log('Fetched attendance:', response.data);
-          setAttendanceRecords(response.data);
-          setError('');
-        } catch (error) {
-          setError('Error fetching attendance: ' + (error.response?.data || error.message));
-          console.error('Fetch attendance error:', error);
-        }
-      };
-
       fetchStudents();
       fetchAttendance();
     }
@@ -84,6 +95,7 @@ function Attendance() {
       return;
     }
 
+    // Backend expects `student.studentId` and `user.userId`
     const attendanceDataToSend = {
       student: { studentId: selectedStudent.studentId },
       user: { userId: user.userId },
@@ -92,11 +104,10 @@ function Attendance() {
     };
 
     try {
-      console.log('Sending attendance data:', attendanceDataToSend);
       const response = await axios.post('http://localhost:8080/api/attendance/postAttendance', attendanceDataToSend);
-      console.log('Response:', response.data);
       setAttendanceRecords(prev => [
-        ...prev.filter(r => r.date !== selectedDate || (r.student && r.student.studentId !== selectedStudent.studentId)),
+        // Filter out existing record for the same student and date
+        ...prev.filter(r => r.date !== selectedDate || (r.student ? r.student.studentId !== selectedStudent.studentId : r.user?.userId !== selectedStudent.studentId)),
         response.data
       ]);
       setMarkAttendanceModal(false);
@@ -211,7 +222,6 @@ function Attendance() {
         width: '100%',
         boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
       }}>
-        {/* Header */}
         <Box sx={{ 
           display: 'flex',
           bgcolor: '#f0f0f0',
@@ -231,7 +241,7 @@ function Attendance() {
                 } else {
                   setCurrentMonth(prev => prev - 1);
                 }
-                fetchAttendance(); // Refetch for new month
+                fetchAttendance();
               }}
             >
               <ChevronLeftIcon />
@@ -248,7 +258,7 @@ function Attendance() {
                 } else {
                   setCurrentMonth(prev => prev + 1);
                 }
-                fetchAttendance(); // Refetch for new month
+                fetchAttendance();
               }}
             >
               <ChevronRightIcon />
@@ -256,7 +266,6 @@ function Attendance() {
           </Box>
         </Box>
 
-        {/* Table Header */}
         <Box sx={{ 
           display: 'flex',
           bgcolor: '#f5f5f5',
@@ -278,7 +287,6 @@ function Attendance() {
           ))}
         </Box>
 
-        {/* Table Body */}
         <Box sx={{ overflowX: 'auto' }}>
           {filteredStudents.map((student, index) => (
             <Box 
@@ -301,7 +309,8 @@ function Attendance() {
               {weekdays.map(day => {
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const record = attendanceRecords.find(r => 
-                  r.student?.studentId === student.studentId && 
+                  // Prefer student.studentId if available, fallback to user.userId
+                  (r.student ? r.student.studentId === student.studentId : r.user?.userId === student.studentId) && 
                   r.date === dateStr
                 );
                 const status = record 
@@ -327,7 +336,6 @@ function Attendance() {
           ))}
         </Box>
 
-        {/* Legend */}
         <Box sx={{ 
           p: 2,
           borderTop: '1px solid #ddd',
@@ -348,7 +356,13 @@ function Attendance() {
 
   return (
     <Box sx={{ width: '100%', p: 3 }}>
-      {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+      {isLoading && <Typography>Loading...</Typography>}
+      {error && (
+        <Box sx={{ mb: 2 }}>
+          <Typography color="error">{error}</Typography>
+          <Button onClick={() => { fetchStudents(); fetchAttendance(); }}>Retry</Button>
+        </Box>
+      )}
       
       <Box sx={{ mb: 4 }}>
         <Typography sx={{ mb: 2 }}>Sections</Typography>
@@ -497,22 +511,50 @@ function Attendance() {
               value={filterData.section}
               onChange={(e) => setFilterData({ ...filterData, section: e.target.value })}
             />
-            <Button
-              onClick={() => {
-                setFilterModalOpen(false);
-              }}
-              sx={{
-                mt: 1,
-                backgroundColor: '#0B5394',
-                color: '#fff',
-                '&:hover': {
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                onClick={() => {
+                  setFilterModalOpen(false);
+                  setStudents(originalStudents.filter(student =>
+                    student.firstName.toLowerCase().includes(filterData.firstName.toLowerCase()) &&
+                    student.lastName.toLowerCase().includes(filterData.lastName.toLowerCase()) &&
+                    (filterData.section ? student.section === filterData.section : true)
+                  ));
+                }}
+                sx={{
+                  mt: 1,
                   backgroundColor: '#0B5394',
-                },
-                textTransform: 'none',
-              }}
-            >
-              Apply Filter
-            </Button>
+                  color: '#fff',
+                  '&:hover': {
+                    backgroundColor: '#0B5394',
+                  },
+                  textTransform: 'none',
+                  flex: 1
+                }}
+              >
+                Apply Filter
+              </Button>
+              <Button
+                onClick={() => {
+                  setFilterModalOpen(false);
+                  setFilterData({ firstName: '', lastName: '', section: '' });
+                  setStudents(originalStudents);
+                }}
+                sx={{
+                  mt: 1,
+                  backgroundColor: '#fff',
+                  color: '#000',
+                  border: '1px solid #0B5394',
+                  '&:hover': {
+                    backgroundColor: '#f5f5f5',
+                  },
+                  textTransform: 'none',
+                  flex: 1
+                }}
+              >
+                Reset Filter
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Modal>
