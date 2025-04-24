@@ -21,7 +21,10 @@
     "date-fns": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.4.1"
+    "react-router-dom": "^7.4.1",
+    "react-scroll": "^1.9.3",
+    "react-slick": "^0.30.3",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
