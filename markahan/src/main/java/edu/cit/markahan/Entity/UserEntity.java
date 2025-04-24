@@ -1,5 +1,6 @@
 package edu.cit.markahan.Entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,21 +36,24 @@ public class UserEntity {
     @Column(nullable=false)
     private String password;
     
+    @Column
+    private String oauthId;
+    
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @JsonIgnore
-    private List<StudentEntity> students;
+    private List<StudentEntity> students = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @JsonIgnore
-    private List<JournalEntity> journals;
+    private List<JournalEntity> journals = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @JsonIgnore
-    private List<AttendanceEntity> attendanceRecords;
+    private List<AttendanceEntity> attendanceRecords = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
     @JsonIgnore
-    private List<GradeEntity> grades;
+    private List<GradeEntity> grades = new ArrayList<>();
 
     public UserEntity() {
         super();
@@ -109,6 +113,14 @@ public class UserEntity {
         this.password = password;
     }
     
+    public String getOauthId() {
+        return oauthId;
+    }
+
+    public void setOauthId(String oauthId) {
+        this.oauthId = oauthId;
+    }
+    
     // Add getters and setters for collections if needed
     public List<StudentEntity> getStudents() {
         return students;
@@ -141,4 +153,37 @@ public class UserEntity {
     public void setGrades(List<GradeEntity> grades) {
         this.grades = grades;
     }
+    
+    // Helper methods for managing relationships
+    public void addStudent(StudentEntity student) {
+        students.add(student);
+        student.setUser(this);
+    }
+    
+    public void removeStudent(StudentEntity student) {
+        students.remove(student);
+        student.setUser(null);
+    }
+    
+    public void addAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.add(attendance);
+        attendance.setUser(this);
+    }
+    
+    public void removeAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.remove(attendance);
+        attendance.setUser(null);
+    }
+    
+    public void addGrade(GradeEntity grade) {
+        grades.add(grade);
+        grade.setUser(this);
+    }
+    
+    public void removeGrade(GradeEntity grade) {
+        grades.remove(grade);
+        grade.setUser(null);
+    }
+    
+    
 }

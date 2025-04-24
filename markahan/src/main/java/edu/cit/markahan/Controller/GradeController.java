@@ -37,6 +37,9 @@ public class GradeController {
         grade.setStudent(student);
         grade.setUser(user);
         
+        // Calculate final grade before saving
+        grade.calculateFinalGrade();
+        
         GradeEntity createdGrade = gradeService.postGrade(grade);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
     }

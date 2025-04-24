@@ -34,6 +34,9 @@ public class GradeService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         grade.setUser(user);
         
+        // Calculate final grade based on all subjects
+        grade.calculateFinalGrade();
+        
         return gradeRepository.save(grade);
     }
 
@@ -67,8 +70,19 @@ public class GradeService {
             grade.setUser(user);
         }
         
-        grade.setSubjectName(newGradeDetails.getSubjectName());
-        grade.setFinalGrade(newGradeDetails.getFinalGrade());
+        // Update individual subject grades
+        grade.setFilipino(newGradeDetails.getFilipino());
+        grade.setEnglish(newGradeDetails.getEnglish());
+        grade.setMathematics(newGradeDetails.getMathematics());
+        grade.setScience(newGradeDetails.getScience());
+        grade.setAp(newGradeDetails.getAp());
+        grade.setEsp(newGradeDetails.getEsp());
+        grade.setMapeh(newGradeDetails.getMapeh());
+        grade.setComputer(newGradeDetails.getComputer());
+        
+        // Recalculate final grade
+        grade.calculateFinalGrade();
+        
         grade.setRemarks(newGradeDetails.getRemarks());
         
         return gradeRepository.save(grade);
