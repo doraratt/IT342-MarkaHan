@@ -4,6 +4,8 @@ import SignUp from './components/Signup';
 import DashboardLayout from './components/DashboardLayout';
 import Grades from './components/Grades';
 import Attendance from './components/Attendance';
+import Landing from './components/Landing'
+import NotFound from './components/404';
 import './App.css';
 import { UserProvider } from './UserContext';
 
@@ -12,12 +14,14 @@ function App() {
     <UserProvider> 
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<DashboardLayout />} />
-        <Route path="grades" element={<Grades />} />
+        <Route path="/grades" element={<Grades />} />
         <Route path="/attendace" element={<Attendance/>}/>
+        <Route path="*" element={<NotFound />} />
+        <Route path="/404" element={<NotFound />} />
       </Routes>
     </Router>
     </UserProvider>
