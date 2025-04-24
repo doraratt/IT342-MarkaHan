@@ -6,6 +6,7 @@ import Grades from './components/Grades';
 import Attendance from './components/Attendance';
 import './App.css';
 import { UserProvider } from './UserContext';
+import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />} />
         <Route path="grades" element={<Grades />} />
         <Route path="/attendace" element={<Attendance/>}/>
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       </Routes>
     </Router>
     </UserProvider>
