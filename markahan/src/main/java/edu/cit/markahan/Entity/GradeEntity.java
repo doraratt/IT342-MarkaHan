@@ -1,29 +1,28 @@
 package edu.cit.markahan.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Grade")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "gradeId")
 public class GradeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int gradeId;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", referencedColumnName = "studentId", nullable = false)
-    @JsonBackReference
     private StudentEntity student;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties({"students", "journals", "attendanceRecords", "grades", "hibernateLazyInitializer", "handler"})
     private UserEntity user;
 
-    // Individual subject grades
     @Column
     private double filipino;
 
@@ -75,6 +74,7 @@ public class GradeEntity {
         this.remarks = remarks;
     }
 
+    // Getters and setters
     public int getGradeId() {
         return gradeId;
     }
@@ -83,7 +83,6 @@ public class GradeEntity {
         this.gradeId = gradeId;
     }
 
-    // Getters and setters for individual subjects
     public double getFilipino() {
         return filipino;
     }
@@ -164,7 +163,6 @@ public class GradeEntity {
         this.remarks = remarks;
     }
     
-    // Add getters and setters for student and user
     public StudentEntity getStudent() {
         return student;
     }
@@ -181,7 +179,6 @@ public class GradeEntity {
         this.user = user;
     }
     
-    // Helper method to calculate final grade based on all subjects
     public void calculateFinalGrade() {
         this.finalGrade = (filipino + english + mathematics + science + ap + esp + mapeh + computer) / 8.0;
     }
