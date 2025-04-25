@@ -31,14 +31,13 @@ function Attendance() {
     section: ''
   });
   const [students, setStudents] = useState([]);
-  const [originalStudents, setOriginalStudents] = useState([]); // Store original students for filter reset
+  const [originalStudents, setOriginalStudents] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-  // Redirect to 404 if no user is logged in
   if (!user) {
     return <Navigate to="/404" replace />;
   }
@@ -48,7 +47,7 @@ function Attendance() {
     try {
       const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
       setStudents(response.data);
-      setOriginalStudents(response.data); // Store original list
+      setOriginalStudents(response.data);
       const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
       setSelectedSection(uniqueSections[0] || '');
       setError('');
@@ -63,16 +62,23 @@ function Attendance() {
   const fetchAttendance = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching attendance for userId:', user.userId, 'month:', currentMonth + 1, 'year:', currentYear);
       const response = await axios.get(`http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`);
+      console.log('Fetched attendance records:', response.data);
       const filteredRecords = response.data.filter(record => {
         const recordDate = new Date(record.date);
         return recordDate.getFullYear() === currentYear && recordDate.getMonth() === currentMonth;
       });
+      console.log('Filtered attendance records:', filteredRecords);
       setAttendanceRecords(filteredRecords);
       setError('');
     } catch (error) {
-      setError('Error fetching attendance: ' + (error.response?.data || error.message));
+      const errorMessage = error.response?.status === 500
+        ? 'Server error: Unable to fetch attendance records. Please try again later or contact support.'
+        : `Error fetching attendance: ${error.response?.data?.message || error.message}`;
+      setError(errorMessage);
       console.error('Fetch attendance error:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +89,7 @@ function Attendance() {
       fetchStudents();
       fetchAttendance();
     }
-  }, [user]);
+  }, [user, currentMonth, currentYear]);
 
   const handleSaveAttendance = async () => {
     if (!user) {
@@ -95,7 +101,6 @@ function Attendance() {
       return;
     }
 
-    // Backend expects `student.studentId` and `user.userId`
     const attendanceDataToSend = {
       student: { studentId: selectedStudent.studentId },
       user: { userId: user.userId },
@@ -106,8 +111,7 @@ function Attendance() {
     try {
       const response = await axios.post('http://localhost:8080/api/attendance/postAttendance', attendanceDataToSend);
       setAttendanceRecords(prev => [
-        // Filter out existing record for the same student and date
-        ...prev.filter(r => r.date !== selectedDate || (r.student ? r.student.studentId !== selectedStudent.studentId : r.user?.userId !== selectedStudent.studentId)),
+        ...prev.filter(r => r.date !== selectedDate || r.student.studentId !== selectedStudent.studentId),
         response.data
       ]);
       setMarkAttendanceModal(false);
@@ -241,7 +245,6 @@ function Attendance() {
                 } else {
                   setCurrentMonth(prev => prev - 1);
                 }
-                fetchAttendance();
               }}
             >
               <ChevronLeftIcon />
@@ -258,7 +261,6 @@ function Attendance() {
                 } else {
                   setCurrentMonth(prev => prev + 1);
                 }
-                fetchAttendance();
               }}
             >
               <ChevronRightIcon />
@@ -308,18 +310,20 @@ function Attendance() {
               </Box>
               {weekdays.map(day => {
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const record = attendanceRecords.find(r => 
-                  // Prefer student.studentId if available, fallback to user.userId
-                  (r.student ? r.student.studentId === student.studentId : r.user?.userId === student.studentId) && 
-                  r.date === dateStr
-                );
+                const record = attendanceRecords.find(r => {
+                  if (!r.student) {
+                    console.warn('Attendance record missing student field:', r);
+                    return false;
+                  }
+                  return r.student.studentId === student.studentId && r.date === dateStr;
+                });
                 const status = record 
-                  ? (record.status === 'present' ? 'P' : record.status.charAt(0).toUpperCase())
+                  ? (record.status.charAt(0).toUpperCase() === 'P' ? 'P' : record.status.charAt(0).toUpperCase())
                   : '--';
 
                 return (
                   <Box
-                    key={day}
+                    key={dateStr}
                     sx={{
                       width: '40px',
                       p: 1,

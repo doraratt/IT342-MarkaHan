@@ -64,4 +64,10 @@ public class GradeController {
     public String deleteGrade(@PathVariable int id) {
         return gradeService.deleteGrade(id);
     }
+
+    @GetMapping("/getGradesByStudent")
+    public ResponseEntity<GradeEntity> getGradesByStudent(@RequestParam int studentId) {
+        GradeEntity grade = gradeService.getGradesByStudentId(studentId);
+        return grade != null ? ResponseEntity.ok(grade) : ResponseEntity.notFound().build();
+    }
 }
