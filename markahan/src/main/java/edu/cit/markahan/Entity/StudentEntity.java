@@ -30,6 +30,9 @@ public class StudentEntity {
 
     @Column(nullable = false)
     private String gradeLevel;
+
+    @Column(nullable = false)
+    private String gender;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
@@ -48,13 +51,14 @@ public class StudentEntity {
         super();
     }
 
-    public StudentEntity(int studentId, String firstName, String lastName, String section, String gradeLevel) {
+    public StudentEntity(int studentId, String firstName, String lastName, String section, String gradeLevel, String gender) {
         super();
         this.studentId = studentId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.section = section;
         this.gradeLevel = gradeLevel;
+        this.gender = gender;
     }
 
     public int getStudentId() {
@@ -95,6 +99,14 @@ public class StudentEntity {
 
     public void setGradeLevel(String gradeLevel) {
         this.gradeLevel = gradeLevel;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
     
     public UserEntity getUser() {
