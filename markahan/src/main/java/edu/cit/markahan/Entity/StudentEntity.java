@@ -3,14 +3,16 @@ package edu.cit.markahan.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Student")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "studentId")
 public class StudentEntity {
 
     @Id
@@ -29,13 +31,11 @@ public class StudentEntity {
     @Column(nullable = false)
     private String gradeLevel;
     
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="user_id",referencedColumnName="userId",nullable=false)
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private UserEntity user;
     
- // Add OneToMany relationships
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<AttendanceEntity> attendanceRecords = new ArrayList<>();
@@ -105,7 +105,6 @@ public class StudentEntity {
         this.user = user;
     }
     
- // Add getters and setters for the new relationships
     public List<AttendanceEntity> getAttendanceRecords() {
         return attendanceRecords;
     }

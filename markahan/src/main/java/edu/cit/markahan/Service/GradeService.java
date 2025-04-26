@@ -49,7 +49,7 @@ public class GradeService {
 
     @Transactional(readOnly = true)
     public List<GradeEntity> getGradesByUserId(int userId) {
-        return gradeRepository.findByUserUserId(userId).stream()
+        return gradeRepository.findByUserUserIdWithFetch(userId).stream()
             .filter(grade -> grade.getStudent() != null)
             .collect(Collectors.toList());
     }
@@ -95,5 +95,10 @@ public class GradeService {
         } else {
             return "Grade not found.";
         }
+    }
+
+    @Transactional(readOnly = true)
+    public GradeEntity getGradesByStudentId(int studentId) {
+        return gradeRepository.findByStudentStudentIdWithFetch(studentId);
     }
 }

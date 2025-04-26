@@ -6,7 +6,6 @@ import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
@@ -14,6 +13,7 @@ import { Navigate } from 'react-router-dom';
 function Grades() {
   const { user } = useUser();
   const [selectedSection, setSelectedSection] = useState('');
+  const [openGradesModal, setOpenGradesModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [openFilterModal, setOpenFilterModal] = useState(false);
   const [filterData, setFilterData] = useState({
@@ -51,7 +51,7 @@ function Grades() {
       const fetchGrades = async () => {
         try {
           const response = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
-          console.log('Fetched grades:', response.data);
+          console.log('Fetched grades:', response.data); // Debug log
           setGrades(response.data);
           setError('');
         } catch (error) {
@@ -74,48 +74,49 @@ function Grades() {
   };
 
   const handleFilter = () => {
-    console.log('Filtering with:', filterData);
     setOpenFilterModal(false);
   };
 
-  const handleViewGrades = async (student) => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
-      console.log('Fetched grades for student view:', response.data);
-      const studentGrades = response.data.filter(g => g.student?.studentId === student.studentId);
-      const subjects = studentGrades.length > 0 ? studentGrades.map(g => ({
-        name: g.subjectName,
-        grade: g.finalGrade,
-        remarks: g.remarks
-      })) : [
-        { name: 'Filipino', grade: '--', remarks: 'Not Set' },
-        { name: 'English', grade: '--', remarks: 'Not Set' },
-        { name: 'Mathematics', grade: '--', remarks: 'Not Set' },
-        { name: 'Science', grade: '--', remarks: 'Not Set' },
-        { name: 'AP', grade: '--', remarks: 'Not Set' },
-        { name: 'ESP', grade: '--', remarks: 'Not Set' },
-        { name: 'MAPEH', grade: '--', remarks: 'Not Set' },
-        { name: 'Computer', grade: '--', remarks: 'Not Set' },
-      ];
-
-      setGrades(response.data); // Update global grades state
-      setSelectedStudent({
-        ...student,
-        year: '2425',
-        subjects
-      });
+  const handleViewGrades = (student) => {
+    console.log('Viewing grades for student ID:', student.studentId);
+    const studentGrade = grades.find(g => {
+      if (!g.student) {
+        console.warn('Grade record missing student field:', g);
+        return false;
+      }
+      return g.student.studentId === student.studentId;
+    });
+    console.log('Student grade found:', studentGrade);
+    if (!studentGrade) {
+      setError('No grades have been recorded for this student yet. Click "Edit Grade" to add grades.');
+    } else {
       setError('');
-    } catch (error) {
-      setError('Error fetching grades: ' + (error.response?.data || error.message));
-      console.error('Fetch grades error:', error);
     }
+    const subjects = [
+      { name: 'Filipino', grade: studentGrade?.filipino || '--', remarks: studentGrade?.filipino ? (studentGrade.filipino >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'English', grade: studentGrade?.english || '--', remarks: studentGrade?.english ? (studentGrade.english >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'Mathematics', grade: studentGrade?.mathematics || '--', remarks: studentGrade?.mathematics ? (studentGrade.mathematics >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'Science', grade: studentGrade?.science || '--', remarks: studentGrade?.science ? (studentGrade.science >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'AP', grade: studentGrade?.ap || '--', remarks: studentGrade?.ap ? (studentGrade.ap >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'ESP', grade: studentGrade?.esp || '--', remarks: studentGrade?.esp ? (studentGrade.esp >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'MAPEH', grade: studentGrade?.mapeh || '--', remarks: studentGrade?.mapeh ? (studentGrade.mapeh >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+      { name: 'Computer', grade: studentGrade?.computer || '--', remarks: studentGrade?.computer ? (studentGrade.computer >= 75 ? 'Passed' : 'Failed') : 'Not Set' },
+    ];
+  
+    setSelectedStudent({
+      ...student,
+      year: '2425',
+      subjects,
+      gradeId: studentGrade?.gradeId
+    });
+    setOpenGradesModal(true);
   };
 
   const handleGradeChange = (subjectName, newValue) => {
-    const numValue = newValue === '--' ? '--' : parseInt(newValue) || 0;
+    const numValue = newValue === '--' ? '--' : parseFloat(newValue) || 0;
     setEditedGrades(prev => ({
       ...prev,
-      [subjectName]: {
+      [subjectName.toLowerCase()]: {
         grade: numValue,
         remarks: numValue === '--' ? 'Not Set' : numValue >= 75 ? 'Passed' : 'Failed'
       }
@@ -123,112 +124,99 @@ function Grades() {
   };
 
   const handleStartEdit = () => {
-    const initialGrades = {};
-    selectedStudent.subjects.forEach(subject => {
-      initialGrades[subject.name] = {
-        grade: subject.grade,
-        remarks: subject.remarks
-      };
-    });
+    const initialGrades = {
+      filipino: { grade: selectedStudent.subjects.find(s => s.name === 'Filipino').grade, remarks: selectedStudent.subjects.find(s => s.name === 'Filipino').remarks },
+      english: { grade: selectedStudent.subjects.find(s => s.name === 'English').grade, remarks: selectedStudent.subjects.find(s => s.name === 'English').remarks },
+      mathematics: { grade: selectedStudent.subjects.find(s => s.name === 'Mathematics').grade, remarks: selectedStudent.subjects.find(s => s.name === 'Mathematics').remarks },
+      science: { grade: selectedStudent.subjects.find(s => s.name === 'Science').grade, remarks: selectedStudent.subjects.find(s => s.name === 'Science').remarks },
+      ap: { grade: selectedStudent.subjects.find(s => s.name === 'AP').grade, remarks: selectedStudent.subjects.find(s => s.name === 'AP').remarks },
+      esp: { grade: selectedStudent.subjects.find(s => s.name === 'ESP').grade, remarks: selectedStudent.subjects.find(s => s.name === 'ESP').remarks },
+      mapeh: { grade: selectedStudent.subjects.find(s => s.name === 'MAPEH').grade, remarks: selectedStudent.subjects.find(s => s.name === 'MAPEH').remarks },
+      computer: { grade: selectedStudent.subjects.find(s => s.name === 'Computer').grade, remarks: selectedStudent.subjects.find(s => s.name === 'Computer').remarks },
+    };
     setEditedGrades(initialGrades);
     setIsEditing(true);
   };
 
   const handleConfirmEdit = async () => {
-    if (!user) {
-      setError('User not logged in');
-      return;
-    }
-    if (!selectedStudent) {
-      setError('No student selected');
+    if (!user || !selectedStudent) {
+      setError('User or student not selected');
       return;
     }
 
     try {
-      const updatedGrades = [];
-      for (const [subjectName, data] of Object.entries(editedGrades)) {
-        if (data.grade === '--') continue;
+      const gradeData = {
+        student: { studentId: selectedStudent.studentId },
+        user: { userId: user.userId },
+        filipino: editedGrades.filipino.grade === '--' ? 0 : editedGrades.filipino.grade,
+        english: editedGrades.english.grade === '--' ? 0 : editedGrades.english.grade,
+        mathematics: editedGrades.mathematics.grade === '--' ? 0 : editedGrades.mathematics.grade,
+        science: editedGrades.science.grade === '--' ? 0 : editedGrades.science.grade,
+        ap: editedGrades.ap.grade === '--' ? 0 : editedGrades.ap.grade,
+        esp: editedGrades.esp.grade === '--' ? 0 : editedGrades.esp.grade,
+        mapeh: editedGrades.mapeh.grade === '--' ? 0 : editedGrades.mapeh.grade,
+        computer: editedGrades.computer.grade === '--' ? 0 : editedGrades.computer.grade,
+        remarks: editedGrades.filipino.grade >= 75 && editedGrades.english.grade >= 75 && 
+                 editedGrades.mathematics.grade >= 75 && editedGrades.science.grade >= 75 &&
+                 editedGrades.ap.grade >= 75 && editedGrades.esp.grade >= 75 &&
+                 editedGrades.mapeh.grade >= 75 && editedGrades.computer.grade >= 75 ? 'Passed' : 'Failed'
+      };
 
-        const existingGrade = grades.find(g => 
-          g.student?.studentId === selectedStudent.studentId && 
-          g.subjectName === subjectName
+      let response;
+      if (selectedStudent.gradeId) {
+        response = await axios.put(
+          `http://localhost:8080/api/grade/putGrade/${selectedStudent.gradeId}`,
+          gradeData
         );
-
-        const gradeData = {
-          student: { studentId: selectedStudent.studentId },
-          user: { userId: user.userId },
-          subjectName,
-          finalGrade: data.grade,
-          remarks: data.remarks
-        };
-
-        if (existingGrade) {
-          const response = await axios.put(
-            `http://localhost:8080/api/grade/putGrade/${existingGrade.gradeId}`,
-            gradeData
-          );
-          updatedGrades.push(response.data);
-        } else {
-          const response = await axios.post(
-            'http://localhost:8080/api/grade/postGrade',
-            gradeData
-          );
-          updatedGrades.push(response.data);
-        }
+      } else {
+        response = await axios.post(
+          'http://localhost:8080/api/grade/postGrade',
+          gradeData
+        );
       }
 
-      // Fetch the latest grades after saving
-      const response = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
-      setGrades(response.data);
+      const updatedGrades = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
+      setGrades(updatedGrades.data);
+      
+      const updatedSubjects = [
+        { name: 'Filipino', grade: response.data.filipino, remarks: response.data.filipino >= 75 ? 'Passed' : 'Failed' },
+        { name: 'English', grade: response.data.english, remarks: response.data.english >= 75 ? 'Passed' : 'Failed' },
+        { name: 'Mathematics', grade: response.data.mathematics, remarks: response.data.mathematics >= 75 ? 'Passed' : 'Failed' },
+        { name: 'Science', grade: response.data.science, remarks: response.data.science >= 75 ? 'Passed' : 'Failed' },
+        { name: 'AP', grade: response.data.ap, remarks: response.data.ap >= 75 ? 'Passed' : 'Failed' },
+        { name: 'ESP', grade: response.data.esp, remarks: response.data.esp >= 75 ? 'Passed' : 'Failed' },
+        { name: 'MAPEH', grade: response.data.mapeh, remarks: response.data.mapeh >= 75 ? 'Passed' : 'Failed' },
+        { name: 'Computer', grade: response.data.computer, remarks: response.data.computer >= 75 ? 'Passed' : 'Failed' },
+      ];
+
       setSelectedStudent({
         ...selectedStudent,
-        year: '2425',
-        subjects: updatedGrades.length > 0 ? updatedGrades.map(g => ({
-          name: g.subjectName,
-          grade: g.finalGrade,
-          remarks: g.remarks
-        })) : selectedStudent.subjects
+        subjects: updatedSubjects,
+        gradeId: response.data.gradeId
       });
+      
       setIsEditing(false);
       setEditedGrades(null);
       setOpenConfirmModal(false);
       setError('');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.response?.data || error.message;
-      setError('Error saving grades: ' + errorMessage);
-      console.error('Full error details:', error.response || error);
+      setError('Error saving grades: ' + (error.response?.data || error.message));
+      console.error('Save grades error:', error);
     }
   };
 
-  const handleBack = () => {
-    setSelectedStudent(null);
-    setIsEditing(false);
-    setEditedGrades(null);
-    setError('');
-  };
+  const sections = [...new Set(students.map(student => student.section))].sort();
 
-  if (selectedStudent) {
-    const generalAverage = selectedStudent.subjects.reduce((acc, subject) => {
-      const grade = editedGrades ? editedGrades[subject.name].grade : subject.grade;
-      return grade === '--' ? acc : acc + parseInt(grade);
+  const renderGradesContent = () => {
+    const generalAverage = selectedStudent?.subjects.reduce((acc, subject) => {
+      const grade = editedGrades ? editedGrades[subject.name.toLowerCase()]?.grade : subject.grade;
+      return grade === '--' ? acc : acc + parseFloat(grade);
     }, 0) / selectedStudent.subjects.filter(s => s.grade !== '--').length || 0;
 
     return (
       <Box sx={{ width: '100%', p: 4 }}>
         {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
-          sx={{
-            color: '#0D5CAB',
-            textTransform: 'none',
-            mb: 3,
-            '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-          }}
-        >
-          Back to Grades
-        </Button>
-
+        
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -282,21 +270,21 @@ function Grades() {
                 <TextField
                   size="small"
                   type="text"
-                  defaultValue={editedGrades[subject.name].grade}
+                  defaultValue={editedGrades[subject.name.toLowerCase()].grade}
                   onChange={(e) => handleGradeChange(subject.name, e.target.value)}
                   inputProps={{ min: 0, max: 100 }}
                   sx={{ width: '80px', justifySelf: 'center' }}
                 />
               ) : (
                 <Typography align="center">
-                  {editedGrades ? editedGrades[subject.name].grade : subject.grade}
+                  {editedGrades ? editedGrades[subject.name.toLowerCase()].grade : subject.grade}
                 </Typography>
               )}
               <Typography 
                 align="center" 
-                sx={{ color: (editedGrades ? editedGrades[subject.name].grade : subject.grade) >= 75 ? '#4CAF50' : '#f44336' }}
+                sx={{ color: (editedGrades ? editedGrades[subject.name.toLowerCase()].grade : subject.grade) >= 75 ? '#4CAF50' : '#f44336' }}
               >
-                {editedGrades ? editedGrades[subject.name].remarks : subject.remarks}
+                {editedGrades ? editedGrades[subject.name.toLowerCase()].remarks : subject.remarks}
               </Typography>
             </Box>
           ))}
@@ -339,59 +327,9 @@ function Grades() {
             )}
           </Box>
         </Box>
-
-        <Modal
-          open={openConfirmModal}
-          onClose={() => setOpenConfirmModal(false)}
-        >
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            p: 3,
-          }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Edit Grade</Typography>
-              <IconButton onClick={() => setOpenConfirmModal(false)} size="small">
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <Typography sx={{ mb: 3 }}>Are you sure you want to edit this grade?</Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-              <Button
-                variant="contained"
-                onClick={handleConfirmEdit}
-                sx={{
-                  backgroundColor: '#4CAF50',
-                  '&:hover': { backgroundColor: '#45a049' },
-                  textTransform: 'none',
-                }}
-              >
-                Confirm
-              </Button>
-              <Button
-                onClick={() => setOpenConfirmModal(false)}
-                sx={{
-                  backgroundColor: '#9e9e9e',
-                  color: 'white',
-                  '&:hover': { backgroundColor: '#757575' },
-                  textTransform: 'none',
-                }}
-              >
-                Cancel
-              </Button>
-            </Box>
-          </Box>
-        </Modal>
       </Box>
     );
-  }
-
-  const sections = [...new Set(students.map(student => student.section))].sort();
+  };
 
   return (
     <Box sx={{ width: '100%', p: 3 }}>
@@ -447,10 +385,12 @@ function Grades() {
           students
             .filter(student => student.section === selectedSection)
             .map((student, index) => {
-              const studentGrades = grades.filter(g => g.student?.studentId === student.studentId);
-              const overallRemark = studentGrades.length > 0
-                ? studentGrades.every(g => g.finalGrade >= 75) ? 'Passed' : 'Failed'
-                : '--';
+              const studentGrade = grades.find(g => g.student?.studentId === student.studentId);
+              const overallRemark = studentGrade ? 
+                (studentGrade.filipino >= 75 && studentGrade.english >= 75 && 
+                 studentGrade.mathematics >= 75 && studentGrade.science >= 75 &&
+                 studentGrade.ap >= 75 && studentGrade.esp >= 75 &&
+                 studentGrade.mapeh >= 75 && studentGrade.computer >= 75 ? 'Passed' : 'Failed') : '--';
 
               return (
                 <Box
@@ -552,6 +492,94 @@ function Grades() {
               }}
             >
               Apply Filter
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      <Modal
+        open={openGradesModal}
+        onClose={() => {
+          setOpenGradesModal(false);
+          setSelectedStudent(null);
+          setIsEditing(false);
+          setEditedGrades(null);
+        }}
+      >
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '90%',
+          maxWidth: 800,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          p: 3,
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Student Grades</Typography>
+            <IconButton 
+              onClick={() => {
+                setOpenGradesModal(false);
+                setSelectedStudent(null);
+                setIsEditing(false);
+                setEditedGrades(null);
+              }} 
+              size="small"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          {selectedStudent && renderGradesContent()}
+        </Box>
+      </Modal>
+
+      <Modal
+        open={openConfirmModal}
+        onClose={() => setOpenConfirmModal(false)}
+      >
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          p: 3,
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Edit Grade</Typography>
+            <IconButton onClick={() => setOpenConfirmModal(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Typography sx={{ mb: 3 }}>Are you sure you want to edit this grade?</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button
+              variant="contained"
+              onClick={handleConfirmEdit}
+              sx={{
+                backgroundColor: '#4CAF50',
+                '&:hover': { backgroundColor: '#45a049' },
+                textTransform: 'none',
+              }}
+            >
+              Confirm
+            </Button>
+            <Button
+              onClick={() => setOpenConfirmModal(false)}
+              sx={{
+                backgroundColor: '#9e9e9e',
+                color: 'white',
+                '&:hover': { backgroundColor: '#757575' },
+                textTransform: 'none',
+              }}
+            >
+              Cancel
             </Button>
           </Box>
         </Box>

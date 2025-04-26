@@ -20,6 +20,7 @@ import GradingIcon from '@mui/icons-material/Grading';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useUser } from '../UserContext'; // Added useUser import
+import logo1 from "../assets/logo2.png"
 
 import Journal from './Journal';
 import Calendar from './Calendar';
@@ -134,7 +135,15 @@ function Sidebar({ onNavigate, activeSegment, user }) { // Added user prop
           padding: 3,
           cursor: "pointer",
         }} onClick={() => onNavigate("dashboard")}> {/* Changed to "dashboard" */}
-          <Typography variant="h4" sx={{ color: "white" }}>MarkaHan</Typography>
+          <img src={logo1} alt="Logo" style={{ height: '150px', marginBottom: '20px', alignSelf: 'center' }} />
+          <Box sx={{ padding: 1,
+                  backgroundColor: "#6577C5",
+                  borderRadius: "8px",
+          }}>
+          <Typography variant="h6" sx={{color: "#eeeeee", marginLeft: 2}}>
+            {user ? `Welcome, Teacher ${user.firstName}!` : "Dashboard Coming Soon"}
+          </Typography>
+        </Box>
         </Box>
 
         {NAVIGATION.map((item) => (
@@ -198,14 +207,14 @@ function DashboardLayout() {
   // Redirect to login if no user is present
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      navigate("/");
     }
   }, [user, navigate]);
 
   const handleLogout = () => {
     setUser(null); // Clear user from context
     localStorage.removeItem("activeSegment");
-    navigate("/login");
+    navigate("/");
   };
 
   const handleNavigation = (segment) => {
@@ -318,7 +327,7 @@ function DashboardLayout() {
           <Box sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
             <UserIcon />
             <Typography variant="body1" sx={{ marginLeft: 1 }}>
-              {user ? `${user.firstName} ${user.lastName}` : "User"} {/* Display user's full name */}
+              {user ? `${user.firstName} ${user.lastName}` : "User"} {/* Display user's name */}
             </Typography>
           </Box>
         </Box>

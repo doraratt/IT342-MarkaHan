@@ -24,6 +24,7 @@ public class AttendanceService {
     @Autowired
     private UserRepository userRepository;
 
+    @Transactional
     public AttendanceEntity postAttendance(AttendanceEntity attendance) {
         StudentEntity student = studentRepository.findById(attendance.getStudent().getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -31,7 +32,7 @@ public class AttendanceService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check for existing record
-        AttendanceEntity existing = attendanceRepository.findByStudentAndDate(student, attendance.getDate());
+        AttendanceEntity existing = attendanceRepository.findByStudentAndDateWithFetch(student, attendance.getDate());
         if (existing != null) {
             existing.setStatus(attendance.getStatus());
             existing.setUser(user);
@@ -43,6 +44,7 @@ public class AttendanceService {
         return attendanceRepository.save(attendance);
     }
 
+    @Transactional
     public AttendanceEntity putAttendance(int attendanceId, AttendanceEntity newAttendanceDetails) {
         AttendanceEntity attendance = attendanceRepository.findById(attendanceId)
                 .orElseThrow(() -> new RuntimeException("Attendance not found"));
@@ -69,15 +71,15 @@ public class AttendanceService {
 
     @Transactional(readOnly = true)
     public List<AttendanceEntity> getAllAttendance() {
-        return attendanceRepository.findAll();
+        return attendanceRepository.findAllWithFetch();
     }
 
-    // New method to get attendance by user ID
     @Transactional(readOnly = true)
     public List<AttendanceEntity> getAttendanceByUserId(int userId) {
-        return attendanceRepository.findByUserUserId(userId);
+        return attendanceRepository.findByUserUserIdWithFetch(userId);
     }
 
+    @Transactional
     public String deleteAttendance(int attendanceId) {
         if (attendanceRepository.existsById(attendanceId)) {
             attendanceRepository.deleteById(attendanceId);
