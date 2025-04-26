@@ -2,14 +2,16 @@ package edu.cit.markahan.Entity;
 
 import java.time.LocalDate;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Attendance")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "attendanceId")
 public class AttendanceEntity {
 
     @Id
@@ -18,7 +20,7 @@ public class AttendanceEntity {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", referencedColumnName = "studentId", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties({"attendanceRecords", "grades", "user", "hibernateLazyInitializer", "handler"})
     private StudentEntity student;
 
     @ManyToOne(fetch = FetchType.LAZY)

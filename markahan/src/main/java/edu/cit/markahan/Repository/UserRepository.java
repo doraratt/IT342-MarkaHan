@@ -9,4 +9,5 @@ import edu.cit.markahan.Entity.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     // Method to find a user by username
     UserEntity findByEmail(String email);
+    UserEntity findByOauthId(String oauthId);
 }

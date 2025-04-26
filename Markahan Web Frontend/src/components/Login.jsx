@@ -16,6 +16,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
 import { useUser } from '../UserContext'; // Ensure path is correct
 import GoogleButton from './GoogleButton';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import logo2 from "../assets/logo1.png";
+import logo1 from "../assets/logo2.png"
 
 function CustomEmailField({ onChange }) {
   return (
@@ -145,6 +148,7 @@ const Login = () => {
   };
 
   return (
+    <AppProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -177,6 +181,7 @@ const Login = () => {
             paddingRight: 5,
           }}
         >
+          <img src={logo2} alt="Logo" style={{ height: '130px', marginBottom: '20px', alignSelf: 'center' }} />
           <Box
             sx={{
               display: 'flex',
@@ -218,11 +223,10 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Typography variant="h4" sx={{ color: 'white', mb: 2 }}>
-          MarkaHan
-        </Typography>
+      <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
       </Box>
     </Box>
+    </AppProvider>
   );
 };
 

@@ -15,6 +15,8 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import GoogleButton from './GoogleButton';
 import axios from 'axios'; // Added axios import
 import { useUser } from '../UserContext'; // Added UserContext import
+import { AppProvider } from '@toolpad/core/AppProvider';
+import logo1 from "../assets/logo2.png"
 
 function CustomFirstNameField({ onChange }) {
   return (
@@ -213,6 +215,7 @@ const SignUp = () => {
   };
 
   return (
+    <AppProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -237,11 +240,11 @@ const SignUp = () => {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', paddingBottom: 5, paddingLeft: 5, paddingRight: 5 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', mb: 3 , mt: 2}}>
             <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
               Welcome User
             </Typography>
-            <Typography align="left" sx={{ mb: 2 }}>
+            <Typography align="left">
               Create your account.
             </Typography>
           </Box>
@@ -275,11 +278,10 @@ const SignUp = () => {
           alignItems: 'center',
         }}
       >
-        <Typography variant="h4" sx={{ color: 'white', mb: 2 }}>
-          Markahan
-        </Typography>
+      <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
       </Box>
     </Box>
+    </AppProvider>
   );
 };
 

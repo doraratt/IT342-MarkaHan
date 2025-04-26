@@ -4,6 +4,10 @@ import Typography from '@mui/material/Typography';
 import googleLogo from '../assets/Google-Symbol.png';
 
 const GoogleButton = () => {
+  const handleGoogleLogin = () => {
+    // Redirect to your Spring Boot OAuth2 authorization endpoint
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
   return (
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>

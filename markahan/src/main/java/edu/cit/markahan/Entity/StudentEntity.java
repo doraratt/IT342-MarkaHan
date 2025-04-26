@@ -1,12 +1,18 @@
 package edu.cit.markahan.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Student")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "studentId")
 public class StudentEntity {
 
     @Id
@@ -25,11 +31,18 @@ public class StudentEntity {
     @Column(nullable = false)
     private String gradeLevel;
     
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="user_id",referencedColumnName="userId",nullable=false)
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private UserEntity user;
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AttendanceEntity> attendanceRecords = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<GradeEntity> grades = new ArrayList<>();
 
     public StudentEntity() {
         super();
@@ -90,5 +103,41 @@ public class StudentEntity {
 
     public void setUser(UserEntity user) {
         this.user = user;
+    }
+    
+    public List<AttendanceEntity> getAttendanceRecords() {
+        return attendanceRecords;
+    }
+
+    public void setAttendanceRecords(List<AttendanceEntity> attendanceRecords) {
+        this.attendanceRecords = attendanceRecords;
+    }
+    
+    public void addAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.add(attendance);
+        attendance.setStudent(this);
+    }
+    
+    public void removeAttendanceRecord(AttendanceEntity attendance) {
+        attendanceRecords.remove(attendance);
+        attendance.setStudent(null);
+    }
+    
+    public List<GradeEntity> getGrades() {
+        return grades;
+    }
+
+    public void setGrades(List<GradeEntity> grades) {
+        this.grades = grades;
+    }
+    
+    public void addGrade(GradeEntity grade) {
+        grades.add(grade);
+        grade.setStudent(this);
+    }
+    
+    public void removeGrade(GradeEntity grade) {
+        grades.remove(grade);
+        grade.setStudent(null);
     }
 }
