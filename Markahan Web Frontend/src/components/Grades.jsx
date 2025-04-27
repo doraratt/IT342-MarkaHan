@@ -51,7 +51,7 @@ function Grades() {
       const fetchGrades = async () => {
         try {
           const response = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
-          console.log('Fetched grades:', response.data); // Debug log
+          console.log('Fetched grades:', response.data);
           setGrades(response.data);
           setError('');
         } catch (error) {
@@ -331,6 +331,23 @@ function Grades() {
     );
   };
 
+  // Filter and sort students by section and gender
+  const filteredStudents = students.filter(student => student.section === selectedSection);
+  const maleStudents = filteredStudents
+    .filter(student => student.gender === 'Male')
+    .sort((a, b) => {
+      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
+      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  const femaleStudents = filteredStudents
+    .filter(student => student.gender === 'Female')
+    .sort((a, b) => {
+      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
+      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
   return (
     <Box sx={{ width: '100%', p: 3 }}>
       {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
@@ -381,10 +398,13 @@ function Grades() {
           <Typography fontWeight="500"></Typography>
         </Box>
 
-        {students.length > 0 ? (
-          students
-            .filter(student => student.section === selectedSection)
-            .map((student, index) => {
+        {/* Male Students Section */}
+        {maleStudents.length > 0 && (
+          <>
+            <Box sx={{ backgroundColor: '#e0e0e0', padding: '8px 24px' }}>
+              <Typography fontWeight="bold">Male Students</Typography>
+            </Box>
+            {maleStudents.map((student, index) => {
               const studentGrade = grades.find(g => g.student?.studentId === student.studentId);
               const overallRemark = studentGrade ? 
                 (studentGrade.filipino >= 75 && studentGrade.english >= 75 && 
@@ -403,7 +423,7 @@ function Grades() {
                     '&:hover': { backgroundColor: '#f5f5f5' },
                   }}
                 >
-                  <Typography>{student.firstName} {student.lastName}</Typography>
+                  <Typography>{`${student.lastName}, ${student.firstName}`}</Typography>
                   <Typography>{overallRemark}</Typography>
                   <Button
                     onClick={() => handleViewGrades(student)}
@@ -418,8 +438,56 @@ function Grades() {
                   </Button>
                 </Box>
               );
-            })
-        ) : (
+            })}
+          </>
+        )}
+
+        {/* Female Students Section */}
+        {femaleStudents.length > 0 && (
+          <>
+            <Box sx={{ backgroundColor: '#e0e0e0', padding: '8px 24px' }}>
+              <Typography fontWeight="bold">Female Students</Typography>
+            </Box>
+            {femaleStudents.map((student, index) => {
+              const studentGrade = grades.find(g => g.student?.studentId === student.studentId);
+              const overallRemark = studentGrade ? 
+                (studentGrade.filipino >= 75 && studentGrade.english >= 75 && 
+                 studentGrade.mathematics >= 75 && studentGrade.science >= 75 &&
+                 studentGrade.ap >= 75 && studentGrade.esp >= 75 &&
+                 studentGrade.mapeh >= 75 && studentGrade.computer >= 75 ? 'Passed' : 'Failed') : '--';
+
+              return (
+                <Box
+                  key={student.studentId}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 120px',
+                    padding: '16px 24px',
+                    backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
+                    '&:hover': { backgroundColor: '#f5f5f5' },
+                  }}
+                >
+                  <Typography>{`${student.lastName}, ${student.firstName}`}</Typography>
+                  <Typography>{overallRemark}</Typography>
+                  <Button
+                    onClick={() => handleViewGrades(student)}
+                    sx={{
+                      color: '#0D5CAB',
+                      textTransform: 'none',
+                      justifyContent: 'flex-end',
+                      '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+                    }}
+                  >
+                    View Grades
+                  </Button>
+                </Box>
+              );
+            })}
+          </>
+        )}
+
+        {/* Display message if no students in the section */}
+        {maleStudents.length === 0 && femaleStudents.length === 0 && (
           <Box sx={{ padding: '16px 24px' }}>
             <Typography>No students available.</Typography>
           </Box>

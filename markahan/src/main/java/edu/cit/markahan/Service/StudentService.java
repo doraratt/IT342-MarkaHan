@@ -41,6 +41,7 @@ public class StudentService {
         student.setLastName(newStudentDetails.getLastName());
         student.setSection(newStudentDetails.getSection());
         student.setGradeLevel(newStudentDetails.getGradeLevel());
+        student.setGender(newStudentDetails.getGender());
         // User is not updated here to prevent changing ownership
 
         return studentRepository.save(student);
