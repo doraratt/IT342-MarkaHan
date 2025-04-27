@@ -52,29 +52,38 @@
         android:textColor="#000"
         android:layout_marginTop="10dp" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_gravity="end"
-        android:layout_marginTop="20dp"
+    <Spinner
+        android:id="@+id/inputGender"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right">
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="20dp"
+        android:padding="10dp"
+        android:entries="@array/gender_options" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
         <Button
             android:id="@+id/btnCancelStudent"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Cancel"
-            android:background="#0A588C"
-            android:textColor="@color/white"/>
+            android:background="#d6e1f7"
+            android:textColor="#1f295a"/>
 
         <Button
             android:id="@+id/btnSubmitStudent"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Add Student"
             android:layout_marginStart="10dp"
-            android:background="#0A588C"
+            android:background="#1f295a"
             android:textColor="@color/white"/>
     </LinearLayout>
 </LinearLayout>

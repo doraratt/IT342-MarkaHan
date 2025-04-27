@@ -5,28 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.markahanmobile.fragments.LoginActivity">
+    tools:context=".fragments.LoginActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Welcome back,"
-        android:textSize="32sp"
-        android:textColor="#333"
+        android:textSize="34sp"
+        android:textColor="#1f295a"
         android:fontFamily="@font/lexend_bold"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="120dp"
         android:layout_marginLeft="30dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Good to see you again"
-        android:textSize="16sp"
-        android:textColor="#787979"
+        android:textSize="18sp"
+        android:textColor="#5163aa"
         android:fontFamily="@font/lexend_med"
         android:layout_marginTop="8dp"
         android:layout_marginLeft="30dp"/>
-
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -40,7 +39,7 @@
             android:background="@drawable/border_transpa"
             android:hint="Full Name"
             android:fontFamily="@font/lexend_reg"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:inputType="textPersonName"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
@@ -56,12 +55,12 @@
             android:background="@drawable/border_transpa"
             android:hint="Email"
             android:fontFamily="@font/lexend_reg"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:inputType="textEmailAddress"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:minHeight="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_below="@id/edit_name"
             android:layout_centerHorizontal="true"/>
 
@@ -73,12 +72,12 @@
             android:background="@drawable/border_transpa"
             android:hint="Phone number"
             android:fontFamily="@font/lexend_reg"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:inputType="phone"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:minHeight="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_below="@id/edit_email"
             android:layout_centerHorizontal="true"/>
 
@@ -90,12 +89,12 @@
             android:background="@drawable/border_transpa"
             android:hint="Password"
             android:fontFamily="@font/lexend_reg"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:inputType="textPassword"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:minHeight="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_below="@id/edit_phone"
             android:layout_centerHorizontal="true"/>
 
@@ -107,12 +106,12 @@
             android:background="@drawable/border_transpa"
             android:hint="Confirm Password"
             android:fontFamily="@font/lexend_reg"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:inputType="textPassword"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:minHeight="50dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_below="@id/edit_password"
             android:layout_centerHorizontal="true"/>
 
@@ -121,14 +120,14 @@
             android:id="@+id/checkbox_show_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="220dp"
+            android:layout_marginTop="250dp"
             android:layout_marginLeft="330dp" />
 
         <CheckBox
             android:id="@+id/checkbox_show_confirm_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="280dp"
+            android:layout_marginTop="320dp"
             android:layout_marginLeft="330dp" />
     </RelativeLayout>
 
@@ -140,7 +139,7 @@
         android:paddingEnd="20dp"
         android:minHeight="50dp"
         android:gravity="center"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="40dp"
         android:layout_gravity="center"
         android:orientation="horizontal">
 
@@ -163,15 +162,16 @@
 
     <Button
         android:id="@+id/btn_signup"
-        android:layout_width="300dp"
+        android:layout_width="350dp"
         android:layout_height="wrap_content"
         android:background="@drawable/border_blu"
         android:text="Sign up"
         android:textSize="16sp"
         android:textColor="#fff"
         android:fontFamily="@font/lexend_reg"
-        android:layout_marginTop="20dp"
-        android:layout_gravity="center"/>
+        android:layout_marginTop="35dp"
+        android:layout_gravity="center"
+        android:textAllCaps="false"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -185,7 +185,7 @@
             android:layout_height="wrap_content"
             android:text="By registering you agree to "
             android:textSize="12sp"
-            android:textColor="@color/black"
+            android:textColor="#5163aa"
             android:fontFamily="@font/lexend_light"
             android:layout_marginTop="20dp"/>
 
@@ -195,7 +195,7 @@
             android:layout_height="wrap_content"
             android:text="Terms and Conditions and "
             android:textSize="12sp"
-            android:textColor="#0A588C"
+            android:textColor="#1f295a"
             android:fontFamily="@font/lexend_med"
             android:layout_marginTop="20dp"/>
     </LinearLayout>
@@ -205,7 +205,7 @@
         android:layout_height="wrap_content"
         android:text="Privacy Policy of Markahan "
         android:textSize="12sp"
-        android:textColor="#0A588C"
+        android:textColor="#1f295a"
         android:fontFamily="@font/lexend_med"
         android:layout_marginTop="2dp"
         android:layout_gravity="center"/>

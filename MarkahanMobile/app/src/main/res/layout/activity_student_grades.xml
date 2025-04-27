@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_marginTop="40dp">
 
         <!-- Student Info Header -->
         <LinearLayout
@@ -23,7 +22,7 @@
                 android:id="@+id/studentName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="20sp"
                 android:fontFamily="@font/lexend_bold"/>
 
@@ -66,18 +65,19 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="1.7"
                 android:text="LEARNING AREAS"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"/>
+                android:fontFamily="@font/lexend_bold"
+                android:layout_marginLeft="10dp"/>
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="FINAL GRADE"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="14sp"
                 android:fontFamily="@font/lexend_bold"
                 android:gravity="end"/>
@@ -87,9 +87,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="REMARKS"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="14sp"
                 android:fontFamily="@font/lexend_bold"
+                android:layout_marginRight="8dp"
                 android:gravity="end"/>
         </LinearLayout>
 
@@ -132,18 +133,19 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="1.7"
                 android:text="AVERAGE"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"/>
+                android:fontFamily="@font/lexend_bold"
+                android:layout_marginLeft="8dp"/>
 
             <TextView
                 android:id="@+id/txtAverageGrade"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="14sp"
                 android:fontFamily="@font/lexend_bold"
                 android:gravity="end"/>
@@ -164,7 +166,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="100dp">
 
             <Button
                 android:id="@+id/btnEditGrades"
@@ -173,8 +175,9 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
                 android:text="Edit Grade"
-                android:textColor="#0A588C"
-                android:backgroundTint="#E3F2FD"
+                android:textColor="#1f295a"
+                android:fontFamily="@font/lexend_reg"
+                android:backgroundTint="#d6e1f7"
                 android:textAllCaps="false"
                 android:drawablePadding="8dp"/>
 
@@ -185,7 +188,8 @@
                 android:layout_weight="1"
                 android:text="Print Grade"
                 android:textColor="#FFFFFF"
-                android:backgroundTint="#0A588C"
+                android:fontFamily="@font/lexend_reg"
+                android:backgroundTint="#1f295a"
                 android:textAllCaps="false"
                 android:drawablePadding="8dp"
                 android:drawableTint="#FFFFFF"/>

@@ -1,4 +1,3 @@
-<!-- item_attendance.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,10 +6,10 @@
     android:gravity="center_vertical">
 
     <TextView
-        android:id="@+id/txtStudentName"
+        android:id="@+id/studentName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.5"
+        android:layout_weight="1.1"
         android:text="Student Name"
         android:textColor="#000"
         android:textSize="14sp"
@@ -24,26 +23,29 @@
         android:gravity="center">
 
         <CheckBox
-            android:id="@+id/cbPresent"
+            android:id="@+id/radioPresent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="P"
-            android:textSize="12sp" />
+            android:textSize="14sp"
+            android:fontFamily="@font/lexend_reg" />
 
         <CheckBox
-            android:id="@+id/cbLate"
+            android:id="@+id/radioLate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="L"
-            android:textSize="12sp"
-            android:layout_marginLeft="8dp" />
+            android:textSize="14sp"
+            android:layout_marginLeft="8dp"
+            android:fontFamily="@font/lexend_reg" />
 
         <CheckBox
-            android:id="@+id/cbAbsent"
+            android:id="@+id/radioAbsent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="A"
-            android:textSize="12sp"
-            android:layout_marginLeft="8dp" />
+            android:textSize="14sp"
+            android:layout_marginLeft="8dp"
+            android:fontFamily="@font/lexend_reg" />
     </LinearLayout>
 </LinearLayout>

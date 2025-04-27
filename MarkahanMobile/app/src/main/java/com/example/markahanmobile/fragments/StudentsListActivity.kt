@@ -7,6 +7,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -15,11 +16,13 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.helper.SectionAdapter
 import com.example.markahanmobile.helper.StudentAdapter
 import com.example.markahanmobile.utils.toast
 import com.example.markahanmobile.R
+import com.example.markahanmobile.helper.GenderSpinnerAdapter
 import com.google.android.material.navigation.NavigationView
 
 class StudentsListActivity : AppCompatActivity() {
@@ -54,27 +57,8 @@ class StudentsListActivity : AppCompatActivity() {
 
         // Navigation setup
         setupNavigation()
-
-        // Initialize RecyclerViews
-        val sectionRecyclerView = findViewById<RecyclerView>(R.id.recyclerViewSections)
-        sectionRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        sectionAdapter = SectionAdapter(sectionList) { section ->
-            selectedSection = section
-            filterStudentsBySection(section)
-        }
-        sectionRecyclerView.adapter = sectionAdapter
-
-        val studentRecyclerView = findViewById<RecyclerView>(R.id.studentRecyclerView)
-        studentRecyclerView.layoutManager = LinearLayoutManager(this)
-        studentAdapter = StudentAdapter(studentList, ::editStudent, ::archiveStudent)
-        studentRecyclerView.adapter = studentAdapter
-
-        // Initialize buttons
-        iconAddStudent = findViewById(R.id.iconAddStudent)
-        iconSearchStudent = findViewById(R.id.iconSearchStudent)
-
-        iconAddStudent.setOnClickListener { showAddStudentDialog() }
-        iconSearchStudent.setOnClickListener { showSearchStudentDialog() }
+        setupRecyclerViews()
+        setupButtons()
 
         // Load data
         loadSections()
@@ -115,21 +99,39 @@ class StudentsListActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupRecyclerViews() {
+        val sectionRecyclerView = findViewById<RecyclerView>(R.id.recyclerViewSections)
+        sectionRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        sectionAdapter = SectionAdapter(sectionList) { section ->
+            selectedSection = section
+            filterStudentsBySection(section)
+        }
+        sectionRecyclerView.adapter = sectionAdapter
+
+        val studentRecyclerView = findViewById<RecyclerView>(R.id.studentRecyclerView)
+        studentRecyclerView.layoutManager = LinearLayoutManager(this)
+        studentAdapter = StudentAdapter(studentList, ::editStudent, ::archiveStudent)
+        studentRecyclerView.adapter = studentAdapter
+    }
+
+    private fun setupButtons() {
+        iconAddStudent = findViewById(R.id.iconAddStudent)
+        iconSearchStudent = findViewById(R.id.iconSearchStudent)
+
+        iconAddStudent.setOnClickListener { showAddStudentDialog() }
+        iconSearchStudent.setOnClickListener { showSearchStudentDialog() }
+    }
+
     private fun filterStudentsBySection(section: String) {
         findViewById<TextView>(R.id.sectionsLabel).text = "Sections"
         studentList.clear()
-        if(section == SectionAdapter.ALL_SECTIONS){
-            studentList.addAll(allStudents)
-        } else {
-            studentList.addAll(allStudents.filter {
-                it.section == section
-            })
-        }
+        studentList.addAll(DataStore.getStudents(section))
         studentAdapter.updateList(studentList)
 
         val position = sectionList.indexOf(section)
-        if(position != -1)
+        if (position != -1) {
             sectionAdapter.setSelectedPosition(position)
+        }
     }
 
     private fun editStudent(student: Student) {
@@ -141,13 +143,13 @@ class StudentsListActivity : AppCompatActivity() {
             .setTitle("Confirm Archive")
             .setMessage("Are you sure you want to archive this student?")
             .setPositiveButton("Yes") { _, _ ->
-                allStudents.remove(student)
-                filterStudentsBySection(selectedSection)
-
-                // Remove section if no more students in it
-                if (allStudents.none { it.section == student.section }) {
-                    sectionList.remove(student.section)
-                    sectionAdapter.updateSections(sectionList)
+                try {
+                    DataStore.archiveStudent(student.studentID)
+                    loadSections()
+                    filterStudentsBySection(selectedSection)
+                    toast("Student archived succesfully")
+                } catch (e: IllegalArgumentException) {
+                    toast(e.message ?: "Failed to archive student")
                 }
             }
             .setNegativeButton("No", null)
@@ -161,11 +163,21 @@ class StudentsListActivity : AppCompatActivity() {
         val lastNameEditText = dialogView.findViewById<EditText>(R.id.inputLastName)
         val sectionEditText = dialogView.findViewById<EditText>(R.id.inputSection)
         val gradeLevelEditText = dialogView.findViewById<EditText>(R.id.inputGradeLevel)
+        val genderSpinner = dialogView.findViewById<Spinner>(R.id.inputGender)
         val submitButton = dialogView.findViewById<Button>(R.id.btnSubmitStudent)
+
+        val genderAdapter = GenderSpinnerAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            resources.getStringArray(R.array.gender_options).toList()
+        )
+        genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        genderSpinner.adapter = genderAdapter
 
         if (student == null) {
             dialogTitle.text = "Add Student"
             submitButton.text = "Add Student"
+            genderSpinner.setSelection(0) // Default to "Select Gender"
         } else {
             dialogTitle.text = "Edit Student"
             submitButton.text = "Apply Changes"
@@ -173,6 +185,11 @@ class StudentsListActivity : AppCompatActivity() {
             lastNameEditText.setText(student.lastName)
             sectionEditText.setText(student.section)
             gradeLevelEditText.setText(student.gradeLevel)
+            genderSpinner.setSelection(
+                if (student.gender == "Male") 1
+                else if (student.gender == "Female") 2
+                else 0
+            )
         }
 
         val dialog = AlertDialog.Builder(this)
@@ -187,18 +204,34 @@ class StudentsListActivity : AppCompatActivity() {
             val firstName = firstNameEditText.text.toString().trim()
             val lastName = lastNameEditText.text.toString().trim()
             val section = sectionEditText.text.toString().trim()
-            val gradeLevel = gradeLevelEditText.text.toString().trim() // Get gradeLevel value
+            val gradeLevel = gradeLevelEditText.text.toString().trim()
+            val gender = genderSpinner.selectedItem.toString()
+
+            if (gender == "Select Gender") {
+                toast("Please select a gender")
+                return@setOnClickListener
+            }
 
             // Pass all parameters including gradeLevel
             if (validateInput(firstName, lastName, section, gradeLevel)) {
                 if (student == null) {
-                    addStudent(Student(
-                        firstName = firstName,
-                        lastName = lastName,
-                        section = section,
-                        gradeLevel = gradeLevel
-                    ))
-                    dialog.dismiss()
+                   val newStudent = Student (
+                       studentID = System.currentTimeMillis().toString(),
+                       firstName = firstName,
+                       lastName = lastName,
+                       section = section,
+                       gradeLevel = gradeLevel,
+                       gender = gender
+                   )
+                    try {
+                        DataStore.addStudent(newStudent)
+                        loadSections()
+                        filterStudentsBySection(section)
+                        dialog.dismiss()
+                        toast("Student added succesfully")
+                    } catch (e:IllegalArgumentException) {
+                        toast(e.message ?: "Failed to add student")
+                    }
                 } else {
                     showUpdateConfirmationDialog(
                         originalStudent = student,
@@ -206,6 +239,7 @@ class StudentsListActivity : AppCompatActivity() {
                         newLastName = lastName,
                         newSection = section,
                         newGradeLevel = gradeLevel,
+                        newGender = gender,
                         parentDialog = dialog
                     )
                 }
@@ -220,6 +254,7 @@ class StudentsListActivity : AppCompatActivity() {
         newLastName: String,
         newSection: String,
         newGradeLevel: String,
+        newGender: String,
         parentDialog: AlertDialog
     ) {
         AlertDialog.Builder(this)
@@ -230,10 +265,18 @@ class StudentsListActivity : AppCompatActivity() {
                     firstName = newFirstName,
                     lastName = newLastName,
                     section = newSection,
-                    gradeLevel = newGradeLevel
+                    gradeLevel = newGradeLevel,
+                    gender = newGender
                 )
-                updateStudent(updatedStudent)
-                parentDialog.dismiss()
+                try {
+                    DataStore.updateStudent(updatedStudent)
+                    loadSections()
+                    filterStudentsBySection(selectedSection)
+                    parentDialog.dismiss()
+                    toast("Student updated successfully")
+                } catch (e: IllegalArgumentException) {
+                    toast(e.message ?: "Failed to update student")
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -243,7 +286,8 @@ class StudentsListActivity : AppCompatActivity() {
         firstName: String,
         lastName: String,
         section: String,
-        gradeLevel: String): Boolean {
+        gradeLevel: String
+    ): Boolean {
         return when {
             firstName.isEmpty() -> { toast("Please enter first name"); false }
             lastName.isEmpty() -> { toast("Please enter last name"); false }
@@ -283,11 +327,11 @@ class StudentsListActivity : AppCompatActivity() {
     }
     private fun performSearch(query: String) {
         if (query.isNotBlank()) {
-            val filtered = allStudents.filter {
-                "${it.firstName} ${it.lastName}".contains(query, true)
+            val filtered = DataStore.getStudents().filter {
+                "${it.lastName}, ${it.firstName}".contains(query, true)
             }
             studentList.clear()
-            studentList.addAll(filtered)
+            studentList.addAll(filtered.sortedWith(compareBy({ it.gender != "Male" }, { it.lastName }, { it.firstName })))
             studentAdapter.updateList(studentList)
 
             // Show search state in UI
@@ -297,37 +341,14 @@ class StudentsListActivity : AppCompatActivity() {
     }
 
     private fun loadSections() {
-        sectionList.addAll(listOf(SectionAdapter.ALL_SECTIONS, "Faith", "Hope"))
+        sectionList.clear()
+        sectionList.addAll(DataStore.getSections())
         sectionAdapter.updateSections(sectionList)
     }
 
     private fun loadStudents() {
-        allStudents.addAll(listOf(
-            Student("1", "John", "Doe", "Faith", "4"),
-            Student("2", "Jane", "Smith", "Hope", "4"),
-            Student("3", "Emily", "Johnson", "Faith", "4")
-        ))
+        allStudents.clear()
+        allStudents.addAll(DataStore.getStudents())
         filterStudentsBySection(selectedSection)
-    }
-
-    private fun addStudent(student: Student) {
-        val newStudent = student.copy(studentID = System.currentTimeMillis().toString())
-        allStudents.add(newStudent)
-        if (!sectionList.contains(newStudent.section)) {
-            sectionList.add(newStudent.section)
-            sectionAdapter.updateSections(sectionList)
-        }
-        filterStudentsBySection(newStudent.section)
-    }
-
-    private fun updateStudent(updatedStudent: Student) {
-        val index = allStudents.indexOfFirst {
-           it.studentID == updatedStudent.studentID
-        }
-        if (index != -1) {
-            allStudents[index] = updatedStudent
-            filterStudentsBySection(selectedSection)
-            toast("Student updated successfully")
-        }
     }
 }
