@@ -6,21 +6,21 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.markahanmobile.fragments.AttendanceActivity">
+    tools:context=".fragments.AttendanceActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#d6e1f7">
 
         <!-- Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#fff"
+            android:background="#d6e1f7"
             app:title="Attendance"
-            app:titleTextColor="#000"
+            app:titleTextColor="#1f295a"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
         <!-- Sections Header -->
@@ -29,8 +29,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sections"
-            android:textColor="#0A588C"
-            android:textSize="22sp"
+            android:textColor="#1f295a"
+            android:textSize="26sp"
             android:fontFamily="@font/lexend_bold"
             android:layout_below="@id/toolbar"
             android:layout_marginTop="20dp"
@@ -60,7 +60,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="05/10/22"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="16sp"
                 android:fontFamily="@font/lexend_med"
                 android:layout_marginStart="16dp"
@@ -73,7 +73,7 @@
                 android:layout_height="24dp"
                 android:src="@drawable/sheet"
                 android:layout_marginStart="8dp"
-                android:tint="#0A588C"/>
+                android:tint="#1f295a"/>
         </LinearLayout>
 
         <!-- Column Headers -->
@@ -87,20 +87,20 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.5"
+                android:layout_weight="1.25"
                 android:text="Student"
-                android:textColor="#0A588C"
-                android:textSize="14sp"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
                 android:fontFamily="@font/lexend_bold"
-                android:layout_marginLeft="25dp"/>
+                android:layout_marginLeft="24dp"/>
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Status"
-                android:textColor="#0A588C"
-                android:textSize="14sp"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
                 android:fontFamily="@font/lexend_bold"/>
         </LinearLayout>
 
@@ -110,21 +110,24 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/sectionRow"
-            android:layout_marginTop="35dp"
+            android:layout_marginTop="40dp"
             android:padding="16dp"
             android:clipToPadding="false" />
 
         <!-- Submit Button at bottom -->
         <Button
             android:id="@+id/btnSubmitAttendance"
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:text="Submit"
             android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
             android:background="@drawable/border_blu"
-            android:layout_marginLeft="270dp"
-            android:layout_marginBottom="25dp"/>
+            android:layout_marginLeft="230dp"
+            android:layout_marginBottom="25dp"
+            android:textAllCaps="false"/>
     </RelativeLayout>
 
     <!-- Navigation Drawer -->
@@ -137,5 +140,20 @@
         app:menu="@menu/drawer_menu"
         app:headerLayout="@layout/nav_header"
         app:itemTextAppearance="@style/DrawerMenuItemTextStyle"
-        app:itemIconTint="#fff"/>
+        app:itemIconTint="#fff">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <include layout="@layout/nav_logout" />
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>

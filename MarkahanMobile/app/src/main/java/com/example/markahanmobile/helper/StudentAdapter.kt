@@ -10,29 +10,71 @@ import com.example.markahanmobile.R
 import com.example.markahanmobile.data.Student
 
 class StudentAdapter(
-    private var students: List<Student>,
+    private var items: List<Any>,
     private val onEdit: (Student) -> Unit,
     private val onArchive: (Student) -> Unit,
-) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_student, parent, false)
-        return StudentViewHolder(view)
+    companion object {
+        private const val VIEW_TYPE_HEADER = 0
+        private const val VIEW_TYPE_STUDENT = 1
     }
 
-    override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
-        val student = students[position]
-        holder.fullName.text = "${student.firstName} ${student.lastName}"
-        holder.section.text = student.section
-        holder.gradeLevel.text = student.gradeLevel
-        holder.editButton.setOnClickListener { onEdit(student) }
-        holder.archiveButton.setOnClickListener { onArchive(student) }
+    override fun getItemViewType(position: Int): Int {
+        return if (items[position] is String) VIEW_TYPE_HEADER else VIEW_TYPE_STUDENT
     }
 
-    override fun getItemCount(): Int = students.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VIEW_TYPE_HEADER) {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_header, parent, false)
+            HeaderViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_student, parent, false)
+            StudentViewHolder(view)
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is HeaderViewHolder -> {
+                val header = items[position] as String
+                holder.headerTitle.text = header
+            }
+            is StudentViewHolder -> {
+                val student = items[position] as Student
+                holder.fullName.text = "${student.lastName}, ${student.firstName} "
+                holder.section.text = student.section
+                holder.gradeLevel.text = student.gradeLevel
+                holder.editButton.setOnClickListener { onEdit(student) }
+                holder.archiveButton.setOnClickListener { onArchive(student) }
+            }
+        }
+    }
+
+    override fun getItemCount(): Int = items.size
 
     fun updateList(newStudents: List<Student>) {
-        students = newStudents
+        val groupedItems = mutableListOf<Any>()
+
+        // Group students by gender and sort alphabetically
+        val maleStudents = newStudents.filter { it.gender == "Male" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+        val femaleStudents = newStudents.filter { it.gender == "Female" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+
+        // Add Male Students section if there are any
+        if (maleStudents.isNotEmpty()) {
+            groupedItems.add("Male Students")
+            groupedItems.addAll(maleStudents)
+        }
+
+        // Add Female Students section if there are any
+        if (femaleStudents.isNotEmpty()) {
+            groupedItems.add("Female Students")
+            groupedItems.addAll(femaleStudents)
+        }
+
+        items = groupedItems
         notifyDataSetChanged()
     }
 
@@ -44,12 +86,7 @@ class StudentAdapter(
         val archiveButton: ImageView = view.findViewById(R.id.btnArchiveStudent)
     }
 
-    fun filter(query: String) {
-        val filteredList = students.filter { student ->
-            student.firstName.contains(query, ignoreCase = true) ||
-                    student.lastName.contains(query, ignoreCase = true) ||
-                    student.section.contains(query, ignoreCase = true)
-        }
-        updateList(filteredList)
+    class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val headerTitle: TextView = view.findViewById(R.id.headerTitle)
     }
 }

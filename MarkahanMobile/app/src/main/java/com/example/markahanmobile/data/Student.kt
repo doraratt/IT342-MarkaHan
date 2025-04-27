@@ -12,7 +12,9 @@ data class Student(
     val section: String,
     val gradeLevel: String,
     var attendanceStatus: String = "",
-    val grades: Map<String, SubjectGrade> = emptyMap()
+    val gender: String = "",
+    val grades: Map<String, SubjectGrade> = emptyMap(),
+    val isArchived: Boolean = false
 ) : Parcelable {
     val average: Double
         get() = if (grades.isNotEmpty()) grades.values.map { it.grade }.average() else 0.0

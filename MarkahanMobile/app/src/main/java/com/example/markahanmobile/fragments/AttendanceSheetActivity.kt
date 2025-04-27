@@ -1,18 +1,18 @@
 package com.example.markahanmobile.fragments
 
-import android.app.DatePickerDialog
+import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.example.markahanmobile.data.AttendanceRecord
-import com.example.markahanmobile.data.Student
+import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.utils.toast
 import com.example.markahanmobile.R
+import com.example.markahanmobile.data.Student
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,32 +28,28 @@ class AttendanceSheetActivity : AppCompatActivity() {
     private val dateFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     private val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
     private var selectedSection: String = ""
+    private var chosenDate: Date? = null
 
-    // Sample data - replace with your actual data source
-    private val allStudents = mutableListOf<Student>()
-    private val attendanceRecords = mutableListOf<AttendanceRecord>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_attendance_sheet)
 
-        // Get selected section from intent
         selectedSection = intent.getStringExtra("SELECTED_SECTION") ?: ""
 
-        // Initialize views
+        val selectedDateMillis = intent.getLongExtra("SELECTED_DATE", -1L)
+        if (selectedDateMillis != -1L){
+            calendar.time = Date(selectedDateMillis)
+        }
+
         scrollDates = findViewById(R.id.scrollDates)
         studentNamesContainer = findViewById(R.id.studentNames)
         datesHeader = findViewById(R.id.datesHeader)
         attendanceDataContainer = findViewById(R.id.attendanceData)
         monthYearText = findViewById(R.id.txtMonthYear)
 
-        // Load sample data
-        loadSampleData()
-
-        // Set current month
         updateMonthDisplay()
 
-        // Set up navigation
         findViewById<ImageView>(R.id.btnPrevMonth).setOnClickListener {
             calendar.add(Calendar.MONTH, -1)
             updateMonthDisplay()
@@ -75,27 +71,11 @@ class AttendanceSheetActivity : AppCompatActivity() {
             // TODO: Implement printing functionality
         }
 
+        findViewById<ImageView>(R.id.iconTable).setOnClickListener {
+            startActivity(Intent(this, AttendanceActivity::class.java))
+        }
+
         loadAttendanceData()
-    }
-
-    private fun loadSampleData() {
-        // Sample students - replace with your actual data
-        allStudents.addAll(listOf(
-            Student("1", "John", "Doe", "Faith", "4"),
-            Student("2", "Jane", "Smith", "Hope", "4"),
-            Student("3", "Emily", "Johnson", "Faith", "4"),
-        ))
-
-        // Sample attendance records - replace with your actual data
-        val sampleDate = Calendar.getInstance().apply {
-            set(2023, Calendar.APRIL, 1)
-        }.time
-
-        attendanceRecords.addAll(listOf(
-            AttendanceRecord("1", sampleDate, "P", "Faith"),
-            AttendanceRecord("2", sampleDate, "A", "Hope"),
-            AttendanceRecord("3", sampleDate, "P", "Faith"),
-        ))
     }
 
     private fun updateMonthDisplay() {
@@ -103,52 +83,61 @@ class AttendanceSheetActivity : AppCompatActivity() {
     }
 
     private fun showMonthYearPicker() {
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_month_year_picker, null)
+        val monthPicker = dialogView.findViewById<NumberPicker>(R.id.monthPicker)
+        val yearPicker = dialogView.findViewById<NumberPicker>(R.id.yearPicker)
 
-        DatePickerDialog(
-            this,
-            { _, selectedYear, selectedMonth, _ ->
-                calendar.set(selectedYear, selectedMonth, 1)
-                updateMonthDisplay()
-                loadAttendanceData()
-            },
-            year,
-            month,
-            1
-        ).apply {
-            // Try to hide the day picker
-            try {
-                val dayPicker = datePicker.findViewById<View>(
-                    resources.getIdentifier("day", "id", "android")
-                )
-                dayPicker?.visibility = View.GONE
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            setTitle("Select Month and Year")
-        }.show()
+        // Set up month picker
+        monthPicker.minValue = 0
+        monthPicker.maxValue = 11
+        monthPicker.displayedValues = arrayOf(
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        )
+        monthPicker.value = calendar.get(Calendar.MONTH)
+
+        // Set up year picker
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        yearPicker.minValue = currentYear - 50 // Allow 50 years back
+        yearPicker.maxValue = currentYear + 10 // Allow 10 years forward
+        yearPicker.value = calendar.get(Calendar.YEAR)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogView.findViewById<Button>(R.id.btnConfirm).setOnClickListener {
+            val selectedMonth = monthPicker.value
+            val selectedYear = yearPicker.value
+            calendar.set(selectedYear, selectedMonth, 1)
+            updateMonthDisplay()
+            loadAttendanceData()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun loadAttendanceData() {
-        // Clear existing views
         studentNamesContainer.removeAllViews()
         datesHeader.removeAllViews()
         attendanceDataContainer.removeAllViews()
 
-        // Get all days in current month
         val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
         val currentMonth = calendar.get(Calendar.MONTH)
         val currentYear = calendar.get(Calendar.YEAR)
 
-        // Create dates for the month
         val dates = (1..daysInMonth).map { day ->
             Calendar.getInstance().apply {
-                set(currentYear, currentMonth, day)
+                set(currentYear, currentMonth, day, 0,0 ,0)
+                set(Calendar.MILLISECOND, 0)
             }.time
         }
 
-        // Add date headers
         dates.forEach { date ->
             val dateHeader = TextView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
@@ -162,84 +151,229 @@ class AttendanceSheetActivity : AppCompatActivity() {
                 textSize = 12f
                 gravity = Gravity.CENTER
                 setTypeface(typeface, Typeface.BOLD)
-                background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.colorPrimary)
+                background =
+                    if (chosenDate != null && isSameDay(date, chosenDate!!)) {
+                    ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.colorAccent)
+                    } else {
+                        ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.student_names_column_background)
+                    }
             }
             datesHeader.addView(dateHeader)
         }
 
         // Filter students by selected section
-        val studentsToShow = if (selectedSection.isNotEmpty() && selectedSection != "All Sections") {
-            allStudents.filter { it.section == selectedSection }
-        } else {
-            allStudents
-        }
+        val studentsToShow = DataStore.getStudents(selectedSection)
+          if (studentsToShow.isEmpty()) {
+              toast("No students found for section $selectedSection")
+              return
+          }
 
-        // Create student rows
-        studentsToShow.forEachIndexed { index, student ->
-            // Add student name (fixed column)
+        val maleStudents = studentsToShow.filter { it.gender == "Male" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+        val femaleStudents = studentsToShow.filter { it.gender == "Female" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+
+        val startDate = Calendar.getInstance().apply{
+            set(currentYear, currentMonth, 1,0,0,0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+
+        val endDate = Calendar.getInstance().apply{
+            set(currentYear, currentMonth, daysInMonth,23,59,59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        val attendanceRecords = DataStore.getAttendanceRecords(selectedSection, startDate, endDate)
+
+        var rowIndex = 0
+
+        if (maleStudents.isNotEmpty()) {
+            // Add header for student names column
             studentNamesContainer.addView(
                 TextView(this).apply {
                     layoutParams = LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         48.dpToPx()
                     )
-                    text = "${student.firstName} ${student.lastName}"
-                    textSize = 12f
+                    text = "Male Students"
+                    textSize = 16f
                     gravity = Gravity.CENTER_VERTICAL
                     setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
-                    background = ContextCompat.getDrawable(
-                        this@AttendanceSheetActivity,
-                        if (index % 2 == 0) R.color.white else R.color.light_gray
-                    )
+                    setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
+                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                    setTypeface(typeface, Typeface.BOLD)
                 }
             )
 
-            // Add attendance row for this student
-            val attendanceRow = LinearLayout(this).apply {
+            // Add empty header row in attendance data to align with the student names header
+            val maleHeaderRow = LinearLayout(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     48.dpToPx()
                 )
                 orientation = LinearLayout.HORIZONTAL
-                background = ContextCompat.getDrawable(
-                    this@AttendanceSheetActivity,
-                    if (index % 2 == 0) R.color.white else R.color.light_gray
-                )
+                background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
             }
-
-            // Add attendance status for each date
-            dates.forEach { date ->
-                val status = attendanceRecords.firstOrNull {
-                    it.studentId == student.studentID && isSameDay(it.date, date)
-                }?.status ?: ""
-
-                attendanceRow.addView(TextView(this).apply {
+            dates.forEach {
+                maleHeaderRow.addView(TextView(this).apply {
                     layoutParams = LinearLayout.LayoutParams(
                         60.dpToPx(),
                         ViewGroup.LayoutParams.MATCH_PARENT
                     ).apply {
                         marginStart = 1.dpToPx()
                     }
-                    text = status
-                    gravity = Gravity.CENTER
-                    textSize = 12f
-                    setTextColor(
-                        when (status) {
-                            "P" -> ContextCompat.getColor(context, R.color.present)
-                            "A" -> ContextCompat.getColor(context, R.color.absent)
-                            "L" -> ContextCompat.getColor(context, R.color.late)
-                            else -> ContextCompat.getColor(context, R.color.black)
-                        }
-                    )
                 })
             }
-            attendanceDataContainer.addView(attendanceRow)
+            attendanceDataContainer.addView(maleHeaderRow)
+            rowIndex++
+
+            maleStudents.forEach { student ->
+                addStudentRow(student, dates, attendanceRecords, rowIndex)
+                rowIndex++
+            }
+        }
+
+        // Add Female Students section if there are any
+        if (femaleStudents.isNotEmpty()) {
+            // Add header for student names column
+            studentNamesContainer.addView(
+                TextView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        48.dpToPx()
+                    )
+                    text = "Female Students"
+                    textSize = 16f
+                    gravity = Gravity.CENTER_VERTICAL
+                    setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
+                    setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
+                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                    setTypeface(typeface, Typeface.BOLD)
+                }
+            )
+
+            // Add empty header row in attendance data to align with the student names header
+            val femaleHeaderRow = LinearLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    48.dpToPx()
+                )
+                orientation = LinearLayout.HORIZONTAL
+                background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+            }
+            dates.forEach {
+                femaleHeaderRow.addView(TextView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        60.dpToPx(),
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    ).apply {
+                        marginStart = 1.dpToPx()
+                    }
+                })
+            }
+            attendanceDataContainer.addView(femaleHeaderRow)
+            rowIndex++
+
+            // Add female students
+            femaleStudents.forEach { student ->
+                addStudentRow(student, dates, attendanceRecords, rowIndex)
+                rowIndex++
+            }
+        }
+
+        chosenDate?.let { date ->
+            val dayIndex = dates.indexOfFirst { isSameDay(it, date) }
+            if (dayIndex != -1) {
+                scrollDates.post {
+                    scrollDates.scrollTo(dayIndex * 61.dpToPx(), 0) // 60dp + 1dp margin
+                }
+            }
         }
     }
 
+    private fun addStudentRow(student: Student, dates: List<Date>, attendanceRecords: List<com.example.markahanmobile.data.AttendanceRecord>, rowIndex: Int) {
+        // Add student name (fixed column)
+        studentNamesContainer.addView(
+            TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    48.dpToPx()
+                )
+                text = "${student.lastName}, ${student.firstName}"
+                textSize = 12f
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
+                background = ContextCompat.getDrawable(
+                    this@AttendanceSheetActivity,
+                    if (rowIndex % 2 == 0) R.color.white else R.color.light_gray
+                )
+            }
+        )
+
+        // Add attendance row for this student
+        val attendanceRow = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                48.dpToPx()
+            )
+            orientation = LinearLayout.HORIZONTAL
+            background = ContextCompat.getDrawable(
+                this@AttendanceSheetActivity,
+                if (rowIndex % 2 == 0) R.color.white else R.color.light_gray
+            )
+        }
+
+        // Add attendance status for each date
+        dates.forEach { date ->
+            val record = attendanceRecords.firstOrNull {
+                it.studentId == student.studentID && isSameDay(it.date, date)
+            }
+
+            val status = when (record?.status) {
+                "P" -> "P"
+                "A" -> "A"
+                "L" -> "L"
+                else -> ""
+            }
+
+            attendanceRow.addView(TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    60.dpToPx(),
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ).apply {
+                    marginStart = 1.dpToPx()
+                }
+                text = status
+                gravity = Gravity.CENTER
+                textSize = 12f
+                setTextColor(
+                    when (status) {
+                        "P" -> ContextCompat.getColor(context, R.color.present)
+                        "A" -> ContextCompat.getColor(context, R.color.absent)
+                        "L" -> ContextCompat.getColor(context, R.color.late)
+                        else -> ContextCompat.getColor(context, R.color.black)
+                    }
+                )
+            })
+        }
+        attendanceDataContainer.addView(attendanceRow)
+    }
+
     private fun isSameDay(date1: Date, date2: Date): Boolean {
-        val cal1 = Calendar.getInstance().apply { time = date1 }
-        val cal2 = Calendar.getInstance().apply { time = date2 }
+        val cal1 = Calendar.getInstance().apply {
+            time = date1
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val cal2 = Calendar.getInstance().apply {
+            time = date2
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                 cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
                 cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
