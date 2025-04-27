@@ -349,7 +349,7 @@ function Grades() {
     });
 
   return (
-    <Box sx={{ width: '100%', p: 3 }}>
+    <Box sx={{ width: '95%', p: 3 }}>
       {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
       <Box sx={{ mb: 4 }}>
         <Typography sx={{ mb: 2 }}>Sections</Typography>

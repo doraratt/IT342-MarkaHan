@@ -118,7 +118,7 @@ export default function NumberOfStudents() {
             <Typography 
               variant="body1" 
               sx={{ 
-                color: '#1f295a', // Blue for Male
+                color: '#32a852', // Blue for Male
                 fontWeight: 'bold', 
                 mb: 0.5 
               }}

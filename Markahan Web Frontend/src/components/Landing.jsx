@@ -9,7 +9,7 @@ import "slick-carousel/slick/slick.css";
 import logo from "../assets/logo2.png";
 
 //gifs
-import dashboard from "../assets/dashboard.svg";
+import dashboard from "../assets/Dashboard.png";
 
 //imgs
 import calendar from "../assets/LandingCalendar.png";
@@ -24,19 +24,20 @@ import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp
 const carouselItems = [
   {
     title: "Attendance",
-    description: "Organize your tasks and check them off as you complete them",
+    description: 
+      "Track and manage student attendance with ease.",
     image: attendance,
   },
   {
     title: "Grades",
     description:
-      "Plan your schedule and never miss a deadline with our task calendar.",
+      "View and manage student grades efficiently.",
     image: grade,
   },
   {
     title: "Students List",
     description:
-      "Plan your schedule and never miss a deadline with our task calendar.",
+      "Access and organize your list of students effortlessly.",
     image: studentlist,
   },
   {
@@ -48,7 +49,7 @@ const carouselItems = [
   {
     title: "Journal",
     description:
-      "Quickly jot down your thoughts and ideas with our sticky notes feature.",
+      "Write and organize your thoughts and notes like a digital diary.",
     image: journal,
   },
 ];
@@ -282,6 +283,7 @@ export default function Landing() {
                 width: "100%",
                 maxWidth: "800px",
                 height: "auto",
+                borderRadius: 16,
               }}
             />
           </Box>
