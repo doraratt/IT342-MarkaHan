@@ -6,20 +6,20 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.markahanmobile.fragments.JournalActivity">
+    tools:context=".fragments.JournalActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#d6e1f7">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#fff"
+            android:background="#d6e1f7"
             app:title="Journal"
-            app:titleTextColor="#000"
+            app:titleTextColor="#1f295a"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
         <!-- Add Journal Header -->
@@ -38,10 +38,10 @@
 
             <ImageView
                 android:id="@+id/addJournalButtonIcon"
-                android:layout_width="13dp"
-                android:layout_height="13dp"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
                 android:src="@drawable/add"
-                android:tint="#0A588C"
+                android:tint="#1f295a"
                 android:contentDescription="Add Journal Entry" />
 
             <TextView
@@ -49,8 +49,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Journal Entry"
-                android:textColor="#0A588C"
-                android:textSize="18sp"
+                android:textColor="#1f295a"
+                android:textSize="20sp"
+                android:layout_marginTop="9dp"
+                android:layout_marginBottom="10dp"
                 android:layout_marginStart="8dp"
                 android:fontFamily="@font/lexend_bold"/>
         </LinearLayout>

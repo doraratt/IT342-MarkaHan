@@ -11,9 +11,9 @@
         android:layout_height="wrap_content"
         android:text="Add Event"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#000"
-        android:layout_marginBottom="16dp" />
+        android:fontFamily="@font/lexend_bold"
+        android:textColor="#1f295a"
+        android:layout_marginBottom="20dp" />
 
     <!-- Input -->
     <EditText
@@ -30,23 +30,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="end"
-        android:layout_marginTop="20dp">
+        android:layout_marginTop="22dp">
 
         <Button
             android:id="@+id/btnCancel"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Cancel"
-            android:textColor="@color/white"
-            android:background="#0A588C"/>
+            android:textColor="#1f295a"
+            android:background="#d6e1f7"/>
 
         <Button
             android:id="@+id/btnSubmit"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Add Event"
-            android:background="#0A588C"
+            android:background="#1f295a"
             android:textColor="@color/white"
             android:layout_marginStart="10dp"/>
     </LinearLayout>

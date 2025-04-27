@@ -14,7 +14,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingTop="18dp"
+        android:paddingBottom="28dp"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp">
 
         <!-- Top row with date and edit/delete -->
         <LinearLayout
@@ -28,8 +31,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColor="#0A588C"
-                android:textSize="14sp" />
+                android:textColor="#1f295a"
+                android:textSize="14sp"
+                android:fontFamily="@font/lexend_light"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -43,7 +47,7 @@
                     android:layout_height="20dp"
                     android:layout_marginEnd="16dp"
                     android:src="@drawable/edit"
-                    android:tint="#0A588C"
+                    android:tint="#1f295a"
                     android:contentDescription="Edit" />
 
                 <ImageView
@@ -61,7 +65,7 @@
             android:id="@+id/journalEntry"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="14dp"
             android:textColor="#000"
             android:textSize="16sp" />
     </LinearLayout>

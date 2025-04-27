@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.markahanmobile.fragments.ForgotPassActivity">
+    tools:context=".fragments.ForgotPassActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Forgot Password,"
-        android:textSize="32sp"
-        android:textColor="#333"
+        android:textSize="34sp"
+        android:textColor="#1f295a"
         android:fontFamily="@font/lexend_bold"
-        android:layout_marginTop="170dp"
+        android:layout_marginTop="150dp"
         android:layout_marginLeft="30dp"/>
 
     <TextView
@@ -23,7 +22,7 @@
         android:layout_height="wrap_content"
         android:text="Please enter your registered email to reset your password"
         android:textSize="15sp"
-        android:textColor="#787979"
+        android:textColor="#5163aa"
         android:fontFamily="@font/lexend_med"
         android:layout_marginTop="8dp"
         android:layout_marginLeft="30dp"/>
@@ -40,7 +39,7 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:minHeight="50dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="70dp"
         android:layout_gravity="center"/>
 
     <Button
@@ -52,7 +51,7 @@
         android:textSize="16sp"
         android:textColor="#fff"
         android:fontFamily="@font/lexend_reg"
-        android:layout_marginTop="35dp"
+        android:layout_marginTop="45dp"
         android:layout_gravity="center"/>
 
 
