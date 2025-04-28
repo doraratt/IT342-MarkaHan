@@ -19,7 +19,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import GradingIcon from '@mui/icons-material/Grading';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import { useUser } from '../UserContext'; // Added useUser import
+import { useUser } from '../UserContext';
 import logo1 from "../assets/logo2.png"
 
 import Journal from './Journal';
@@ -27,6 +27,7 @@ import Calendar from './Calendar';
 import Students from './Students';
 import Grades from './Grades';
 import Attendance from './Attendance';
+import Dashboard from "./Dashboard";
 
 const NAVIGATION = [
   {
@@ -61,7 +62,7 @@ const NAVIGATION = [
   },
 ];
 
-function DemoPageContent({ activeSegment, user }) { // Added user prop
+function DemoPageContent({ activeSegment, user }) {
   const location = window.location.pathname;
   const studentIdMatch = location.match(/\/grades\/(\d+)/);
   const studentId = studentIdMatch ? studentIdMatch[1] : null;
@@ -71,27 +72,40 @@ function DemoPageContent({ activeSegment, user }) { // Added user prop
   switch (activeSegment) {
     case "dashboard":
       content = (
-        <Box sx={{ padding: 3 }}>
-          <Typography variant="h5">
-            {user ? `Welcome, Teacher ${user.firstName}!` : "Dashboard Coming Soon"}
+        <Box sx={{ width: "100%", padding: 0, marginLeft  : 0 }}>
+          <Typography variant="h3" paddingTop={5} color="#134B70" sx={{ml: 4}}>
+            Welcome to MarkaHan!
+            <Typography variant="h6">
+              {user ? `Welcome, Teacher ${user.firstName}!` : "Dashboard Coming Soon"}
+            </Typography>
           </Typography>
+          <Box
+            sx={{
+              width: "100%",
+              marginTop: 2,
+              boxSizing: "border-box",
+              padding: 0,
+            }}
+          >
+            <Dashboard user={user} />
+          </Box>
         </Box>
       );
       break;
     case "calendar":
-      content = <Calendar user={user} />; // Pass user to Calendar
+      content = <Calendar user={user} />;
       break;
     case "students":
-      content = <Students user={user} />; // Pass user to Students
+      content = <Students user={user} />;
       break;
     case "attendance":
-      content = <Attendance user={user} />; // Pass user to Attendance
+      content = <Attendance user={user} />;
       break;
     case "grades":
-      content = <Grades user={user} />; // Pass user to Grades
+      content = <Grades user={user} />;
       break;
     case "journal":
-      content = <Journal user={user} />; // Pass user to Journal
+      content = <Journal user={user} />;
       break;
     default:
       content = <Typography variant="h6">Select a segment to view content.</Typography>;
@@ -102,8 +116,8 @@ function DemoPageContent({ activeSegment, user }) { // Added user prop
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-        textAlign: "left",
-        flexGrow: 1,
+      textAlign: "left",
+      flexGrow: 1,
       overflowY: "hidden",
       minHeight: "100%",
       width: "100%",
@@ -113,7 +127,7 @@ function DemoPageContent({ activeSegment, user }) { // Added user prop
   );
 }
 
-function Sidebar({ onNavigate, activeSegment, user }) { // Added user prop
+function Sidebar({ onNavigate, activeSegment, user }) {
   return (
     <Box sx={{
       maxWidth: "320px",
@@ -134,7 +148,7 @@ function Sidebar({ onNavigate, activeSegment, user }) { // Added user prop
           alignItems: "center",
           padding: 3,
           cursor: "pointer",
-        }} onClick={() => onNavigate("dashboard")}> {/* Changed to "dashboard" */}
+        }} onClick={() => onNavigate("dashboard")}>
           <img src={logo1} alt="Logo" style={{ height: '150px', marginBottom: '20px', alignSelf: 'center' }} />
           <Box sx={{ padding: 1,
                   backgroundColor: "#6577C5",
@@ -202,7 +216,7 @@ function DashboardLayout() {
     return localStorage.getItem("activeSegment") || "dashboard";
   });
   const [isModalOpen, setModalOpen] = useState(false);
-  const { user, setUser } = useUser(); // Added useUser hook
+  const { user, setUser } = useUser();
 
   // Redirect to login if no user is present
   useEffect(() => {
@@ -212,7 +226,7 @@ function DashboardLayout() {
   }, [user, navigate]);
 
   const handleLogout = () => {
-    setUser(null); // Clear user from context
+    setUser(null);
     localStorage.removeItem("activeSegment");
     navigate("/");
   };
@@ -281,7 +295,7 @@ function DashboardLayout() {
       overflow: "hidden",
       width: "100%",
     }}>
-      <Sidebar onNavigate={handleNavigation} activeSegment={activeSegment} user={user} /> {/* Pass user */}
+      <Sidebar onNavigate={handleNavigation} activeSegment={activeSegment} user={user} />
       <Box sx={{
         flexGrow: 1,
         display: "flex",
@@ -327,13 +341,13 @@ function DashboardLayout() {
           <Box sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
             <UserIcon />
             <Typography variant="body1" sx={{ marginLeft: 1 }}>
-              {user ? `${user.firstName} ${user.lastName}` : "User"} {/* Display user's name */}
+              {user ? `${user.firstName} ${user.lastName}` : "User"}
             </Typography>
           </Box>
         </Box>
 
         <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-          <DemoPageContent activeSegment={activeSegment} user={user} /> {/* Pass user */}
+          <DemoPageContent activeSegment={activeSegment} user={user} />
         </Box>
       </Box>
       <LogoutConfirmationModal

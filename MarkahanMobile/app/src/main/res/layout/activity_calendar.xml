@@ -5,12 +5,12 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.markahanmobile.fragments.CalendarActivity">
+    tools:context=".fragments.CalendarActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#d6e1f7">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -18,7 +18,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="#fff"
             app:title="Calendar"
-            app:titleTextColor="#000"
+            app:titleTextColor="#1f295a"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
         <ScrollView
@@ -31,7 +31,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:layout_marginTop="20dp">
 
                 <!-- Calendar inside a Card -->
                 <androidx.cardview.widget.CardView
@@ -39,7 +40,7 @@
                     android:layout_height="wrap_content"
                     android:elevation="10dp"
                     app:cardCornerRadius="20dp"
-                    android:layout_marginBottom="20dp">
+                    android:layout_marginBottom="40dp">
 
                     <CalendarView
                         android:id="@+id/calendarView"
@@ -54,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:text="Events"
                     android:textSize="22sp"
-                    android:textColor="#0A588C"
+                    android:textColor="#1f295a"
                     android:fontFamily="@font/lexend_bold"
                     android:layout_marginBottom="10dp"
                     android:layout_marginLeft="10dp"/>
@@ -80,8 +81,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="Date"
-                            android:textSize="16sp"
-                            android:textColor="#0A588C"
+                            android:textSize="18sp"
+                            android:textColor="#1f295a"
                             android:fontFamily="@font/lexend_reg" />
 
                         <TextView
@@ -90,8 +91,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="Event Name"
-                            android:textSize="16sp"
-                            android:textColor="#0A588C"
+                            android:textSize="18sp"
+                            android:textColor="#1f295a"
                             android:fontFamily="@font/lexend_reg" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

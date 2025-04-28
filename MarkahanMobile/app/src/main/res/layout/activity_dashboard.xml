@@ -6,18 +6,18 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.markahanmobile.fragments.DashboardActivity">
+    tools:context=".fragments.DashboardActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#d6e1f7">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#fff"
+            android:background="#d6e1f7"
             app:title="Dashboard"
             app:titleTextColor="#000"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
@@ -30,10 +30,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="MarkaHan"
-                android:textSize="30sp"
-                android:textColor="#0A588C"
+                android:textSize="40sp"
+                android:textColor="#1f295a"
                 android:fontFamily="@font/paytone_one_reg"
-                android:layout_marginTop="80dp"
+                android:layout_marginTop="90dp"
                 android:layout_marginBottom="50dp"
                 android:gravity="center"/>
 
@@ -42,35 +42,35 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/border_blu"
                 android:text="UIIAI"
-                android:textSize="24sp"
+                android:textSize="26sp"
                 android:textColor="#fff"
                 android:fontFamily="@font/lexend_med"
-                android:layout_marginTop="170dp"
+                android:layout_marginTop="235dp"
                 android:layout_marginLeft="30dp"
                 android:paddingTop="45dp"
-                android:paddingBottom="35dp"
+                android:paddingBottom="45dp"
                 android:gravity="center"/>
 
             <TextView
                 android:layout_width="280dp"
                 android:layout_height="wrap_content"
                 android:text="Meowmeow"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="#fff"
                 android:fontFamily="@font/lexend_light"
-                android:layout_marginTop="205dp"
+                android:layout_marginTop="270dp"
                 android:layout_marginLeft="65dp"
                 android:paddingTop="45dp"
                 android:paddingBottom="35dp"
                 android:gravity="center"/>
 
             <ImageView
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
                 android:src="@drawable/cat"
                 android:background="@drawable/circle_shape_w"
-                android:layout_marginTop="140dp"
-                android:layout_marginLeft="170dp"
+                android:layout_marginTop="170dp"
+                android:layout_marginLeft="150dp"
                 android:scaleType="centerCrop"
                 android:adjustViewBounds="true"
                 android:clipToOutline="true" />
@@ -80,9 +80,9 @@
                 android:layout_height="wrap_content"
                 android:text="This week's attendance"
                 android:textSize="16sp"
-                android:textColor="#000"
+                android:textColor="#5163aa"
                 android:fontFamily="@font/lexend_bold"
-                android:layout_marginTop="320dp"
+                android:layout_marginTop="415dp"
                 android:layout_marginLeft="30dp"/>
 
             <LinearLayout
@@ -90,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginTop="340dp">
+                android:layout_marginTop="440dp">
 
                 <!-- Present Box -->
                 <RelativeLayout
@@ -104,7 +104,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Present"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textColor="#fff"
                         android:fontFamily="@font/lexend_bold"
                         android:layout_alignParentTop="true"
@@ -116,7 +116,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="10"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textColor="#fff"
                         android:fontFamily="@font/lexend_med"
                         android:layout_alignParentBottom="true"
@@ -136,7 +136,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Absent"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textColor="#fff"
                         android:fontFamily="@font/lexend_bold"
                         android:layout_alignParentTop="true"
@@ -148,21 +148,22 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textColor="#7D0A0A"
-                        android:fontFamily="@font/lexend_med"
+                        android:fontFamily="@font/lexend_bold"
                         android:layout_alignParentBottom="true"
                         android:layout_alignParentEnd="true"
                         android:layout_margin="10dp" />
                 </RelativeLayout>
             </LinearLayout>
 
+            <!--4 boxes-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginTop="500dp">
+                android:layout_marginTop="620dp">
 
                 <TextView
                     android:id="@+id/attendance"
@@ -172,7 +173,7 @@
                     android:text="Attendance"
                     android:textSize="16sp"
                     android:textColor="#fff"
-                    android:fontFamily="@font/lexend_light"
+                    android:fontFamily="@font/lexend_reg"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"
                     android:layout_margin="5dp"
@@ -186,7 +187,7 @@
                     android:text="Grades"
                     android:textSize="16sp"
                     android:textColor="#fff"
-                    android:fontFamily="@font/lexend_light"
+                    android:fontFamily="@font/lexend_reg"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"
                     android:layout_margin="5dp"
@@ -198,7 +199,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginTop="550dp">
+                android:layout_marginTop="675dp">
 
                 <TextView
                     android:id="@+id/section"
@@ -208,7 +209,7 @@
                     android:text="Section"
                     android:textSize="16sp"
                     android:textColor="#fff"
-                    android:fontFamily="@font/lexend_light"
+                    android:fontFamily="@font/lexend_reg"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"
                     android:layout_margin="5dp"
@@ -222,7 +223,7 @@
                     android:text="View All"
                     android:textSize="16sp"
                     android:textColor="#fff"
-                    android:fontFamily="@font/lexend_light"
+                    android:fontFamily="@font/lexend_reg"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"
                     android:layout_margin="5dp"

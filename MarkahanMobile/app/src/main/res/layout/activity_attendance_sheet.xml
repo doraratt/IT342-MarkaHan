@@ -4,16 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    tools:context="com.example.markahanmobile.fragments.AttendanceSheetActivity">
+    android:background="@color/attendance_sheet_background"
+    tools:context=".fragments.AttendanceSheetActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#fff"
+        android:background="#d6e1f7"
         app:title="Attendance Sheet"
-        app:titleTextColor="#000"
+        app:titleTextColor="#1f295a"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     <!-- Month selector -->
@@ -23,14 +23,15 @@
         android:layout_below="@id/toolbar"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp">
 
         <ImageView
             android:id="@+id/btnPrevMonth"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/leftarrow"
-            android:tint="#0A588C"
+            android:tint="#1f295a"
             android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <TextView
@@ -39,8 +40,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="April 2023"
-            android:textColor="#0A588C"
-            android:textSize="18sp"
+            android:textColor="#1f295a"
+            android:textSize="20sp"
             android:fontFamily="@font/lexend_bold"
             android:gravity="center"/>
 
@@ -49,7 +50,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/rightarrow"
-            android:tint="#0A588C"
+            android:tint="#1f295a"
             android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <ImageView
@@ -58,7 +59,7 @@
             android:layout_height="20dp"
             android:src="@drawable/table"
             android:layout_marginStart="16dp"
-            android:tint="#0A588C"/>
+            android:tint="#1f295a"/>
 
         <ImageView
             android:id="@+id/iconCalendar"
@@ -66,7 +67,7 @@
             android:layout_height="24dp"
             android:src="@drawable/calendar"
             android:layout_marginStart="8dp"
-            android:tint="#0A588C"/>
+            android:tint="#1f295a"/>
     </LinearLayout>
 
     <!-- Attendance table container -->
@@ -83,18 +84,19 @@
             android:layout_width="120dp"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#F5F5F5">
+            android:background="@color/student_names_column_background"
+            android:layout_marginTop="10dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:text="Student"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:fontFamily="@font/lexend_bold"
                 android:gravity="center_vertical"
                 android:paddingStart="8dp"
-                android:background="#0A588C"/>
+                android:background="@color/header_background"/>
 
             <LinearLayout
                 android:id="@+id/studentNames"
@@ -115,7 +117,8 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:layout_marginTop="10dp">
 
                 <!-- Dates header row -->
                 <LinearLayout
@@ -123,7 +126,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"
                     android:orientation="horizontal"
-                    android:background="#0A588C"/>
+                    android:background="@color/header_background"/>
 
                 <!-- Attendance data rows -->
                 <LinearLayout
@@ -142,6 +145,8 @@
         android:layout_alignParentBottom="true"
         android:text="Print Attendance"
         android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:fontFamily="@font/lexend_reg"
         android:background="@drawable/border_blu"
         android:layout_margin="16dp"/>
 </RelativeLayout>

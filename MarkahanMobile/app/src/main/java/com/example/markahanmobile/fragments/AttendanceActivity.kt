@@ -3,6 +3,7 @@ package com.example.markahanmobile.fragments
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -11,6 +12,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.markahanmobile.data.AttendanceRecord
+import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.helper.AttendanceAdapter
 import com.example.markahanmobile.helper.SectionAdapter
@@ -31,8 +34,14 @@ class AttendanceActivity : AppCompatActivity() {
     private val allStudents = mutableListOf<Student>()
     private val displayedStudents = mutableListOf<Student>()
     private val sectionList = mutableListOf<String>()
-    private var selectedDate = Calendar.getInstance().time
-    private var selectedSection = "Faith" // Default to Faith section
+    private var selectedDate = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.time
+    private var selectedSection = SectionAdapter.ALL_SECTIONS
+    private val TAG = "AttendanceActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,13 +67,15 @@ class AttendanceActivity : AppCompatActivity() {
         setupSubmitButton()
         setupSheetsIcon()
 
+        loadSections()
         loadStudents()
+    }
 
-        val sheetPage = findViewById<ImageView>(R.id.iconSheets)
-        sheetPage.setOnClickListener{
-            val intent = Intent(this, AttendanceSheetActivity::class.java)
-            startActivity(intent)
-        }
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume: Reloading sections and students")
+        loadSections()
+        loadStudents()
     }
 
     private fun setupNavigation() {
@@ -85,8 +96,6 @@ class AttendanceActivity : AppCompatActivity() {
         sectionRecyclerView = findViewById(R.id.recyclerViewSections)
         sectionRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
-        // Only Faith and Hope sections
-        sectionList.addAll(listOf("Faith", "Hope"))
         sectionAdapter = SectionAdapter(sectionList) { section ->
             selectedSection = section
             filterStudentsBySection(section)
@@ -97,10 +106,11 @@ class AttendanceActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         recyclerView = findViewById(R.id.attendanceRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = AttendanceAdapter(displayedStudents) { position, status ->
+        adapter = AttendanceAdapter { position, status ->
             displayedStudents[position].attendanceStatus = status
         }
         recyclerView.adapter = adapter
+        filterStudentsBySection(selectedSection)
     }
 
     private fun setupDateDisplay() {
@@ -112,9 +122,11 @@ class AttendanceActivity : AppCompatActivity() {
             DatePickerDialog(
                 this,
                 { _, year, month, day ->
-                    calendar.set(year, month, day)
+                    calendar.set(year, month, day, 0, 0, 0)
+                    calendar.set(Calendar.MILLISECOND, 0)
                     selectedDate = calendar.time
                     dateTextView.text = SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(selectedDate)
+                    loadStudents() // Refresh to apply any existing attendance statuses
                 },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -132,27 +144,46 @@ class AttendanceActivity : AppCompatActivity() {
     private fun setupSheetsIcon() {
         findViewById<ImageView>(R.id.iconSheets).setOnClickListener {
             val intent = Intent(this, AttendanceSheetActivity::class.java)
-            // Pass current date to show the same month
-            intent.putExtra("selected_date", selectedDate.time)
+            intent.putExtra("SELECTED_SECTION", selectedSection)
+            intent.putExtra("SELECTED_DATE", selectedDate.time)
             startActivity(intent)
         }
     }
 
     private fun loadStudents() {
         allStudents.clear()
-        // Same students as in StudentsListActivity
-        allStudents.addAll(listOf(
-            Student("1", "John", "Doe", "Faith", "4"),
-            Student("2", "Jane", "Smith", "Hope", "4"),
-            Student("3", "Emily", "Johnson", "Faith", "4")
-        ))
+        allStudents.addAll(DataStore.getStudents())
+        Log.d(TAG, "Loaded ${allStudents.size} students: ${allStudents.map { "${it.lastName}, ${it.firstName}, Section=${it.section}" }}")
         filterStudentsBySection(selectedSection)
     }
 
+    private fun loadSections() {
+        sectionList.clear()
+        sectionList.addAll(DataStore.getSections())
+        sectionAdapter.updateSections(sectionList)
+        if (sectionList.isNotEmpty()) {
+            selectedSection = SectionAdapter.ALL_SECTIONS
+            sectionAdapter.setSelectedPosition(0)
+        }
+        Log.d(TAG, "Loaded sections: $sectionList")
+    }
+
     private fun filterStudentsBySection(section: String) {
+        Log.d(TAG, "Filtering students for section: $section")
         displayedStudents.clear()
-        displayedStudents.addAll(allStudents.filter { it.section == section })
-        adapter.notifyDataSetChanged()
+        val students = DataStore.getStudents(section)
+        val records = DataStore.getAttendanceRecords(section, selectedDate, selectedDate)
+        displayedStudents.addAll(students.map { student ->
+            val status = records.firstOrNull { it.studentId == student.studentID }?.status ?: ""
+            student.copy(attendanceStatus = when (status) {
+                "P" -> "P"
+                "A" -> "A"
+                "L" -> "L"
+                else -> ""
+            })
+        }.sortedWith(compareBy({ it.gender != "Male" }, { it.lastName }, { it.firstName })))
+        adapter.updateList(displayedStudents)
+        Log.d(TAG, "Filtered ${displayedStudents.size} students for section: $section, Students: ${displayedStudents.map { "${it.lastName}, ${it.firstName}, Section=${it.section}" }}")
     }
 
     private fun saveAttendanceRecords() {
@@ -164,14 +195,22 @@ class AttendanceActivity : AppCompatActivity() {
 
         val dateStr = SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(selectedDate)
         val summary = recordsToSave.joinToString("\n") { student ->
-            "${student.firstName} ${student.lastName}: ${student.attendanceStatus}"
+            "${student.lastName}, ${student.firstName}: ${student.attendanceStatus}"
         }
 
         AlertDialog.Builder(this)
             .setTitle("Confirm Attendance")
             .setMessage("Save attendance for $selectedSection on $dateStr?\n\n$summary")
             .setPositiveButton("Save") { _, _ ->
-                // TODO: Implement actual database save
+                val newRecords = recordsToSave.map { student ->
+                    AttendanceRecord(
+                        studentId = student.studentID,
+                        date = selectedDate,
+                        status = student.attendanceStatus,
+                        section = selectedSection
+                    )
+                }
+                DataStore.addAttendanceRecords(newRecords)
                 toast("Attendance saved for ${recordsToSave.size} students")
             }
             .setNegativeButton("Cancel", null)

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
@@ -15,24 +14,33 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="16dp">
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/studentName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#0A588C"
+                android:textColor="#1f295a"
                 android:textSize="20sp"
                 android:fontFamily="@font/lexend_bold"/>
+
+            <TextView
+                android:id="@+id/section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="#1f295a"
+                android:fontFamily="@font/lexend_med"/>
 
             <TextView
                 android:id="@+id/currentAverage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#0A588C"
-                android:textSize="16sp"/>
+                android:textColor="#1f295a"
+                android:textSize="16sp"
+                android:fontFamily="@font/lexend_reg"
+                android:layout_marginBottom="20dp"/>
         </LinearLayout>
 
         <!-- Grade Input Fields -->
@@ -40,9 +48,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Enter Grades (0-100)"
-            android:textColor="#0A588C"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"/>
+            android:textColor="#5163aa"
+            android:textSize="14sp"
+            android:fontFamily="@font/lexend_reg" />
 
         <!-- Filipino -->
         <com.google.android.material.textfield.TextInputLayout
@@ -64,7 +72,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="English">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -79,7 +87,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="Mathematics">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -94,7 +102,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="Science">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -109,7 +117,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="AP">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -124,7 +132,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="ESP">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -139,7 +147,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="MAPEH">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -154,7 +162,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="Computer">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -169,7 +177,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:hint="TLE">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -180,25 +188,23 @@
                 android:maxLength="5"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Add all other subjects similarly -->
-        <!-- Mathematics, Science, AP, ESP, MAPEH, Computer, TLE -->
-
         <!-- New Average Display -->
         <TextView
             android:id="@+id/newAverage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="#0A588C"
+            android:layout_marginTop="12dp"
+            android:textColor="#1f295a"
             android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:fontFamily="@font/lexend_bold"/>
 
         <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="25dp">
 
             <Button
                 android:id="@+id/btnCancel"
@@ -207,9 +213,10 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
                 android:text="Cancel"
-                android:textColor="#0A588C"
-                android:backgroundTint="#E3F2FD"
-                android:textAllCaps="false"/>
+                android:textColor="#1f295a"
+                android:backgroundTint="#d6e1f7"
+                android:textAllCaps="false"
+                android:fontFamily="@font/lexend_reg"/>
 
             <Button
                 android:id="@+id/btnSave"
@@ -218,8 +225,9 @@
                 android:layout_weight="1"
                 android:text="Save Grades"
                 android:textColor="#FFFFFF"
-                android:backgroundTint="#0A588C"
-                android:textAllCaps="false"/>
+                android:backgroundTint="#1f295a"
+                android:textAllCaps="false"
+                android:fontFamily="@font/lexend_reg"/>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

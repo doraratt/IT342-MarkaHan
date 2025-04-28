@@ -65,7 +65,6 @@ class JournalActivity : AppCompatActivity() {
                 .show()
         }
 
-        // Handle other menu items from drawer_menu.xml
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_dash -> startActivity(Intent(this, DashboardActivity::class.java))
@@ -93,8 +92,6 @@ class JournalActivity : AppCompatActivity() {
         journalHeader.setOnClickListener {
             showAddJournalDialog()
         }
-
-        loadSampleJournals()
     }
 
     private fun showAddJournalDialog() {
@@ -183,7 +180,6 @@ class JournalActivity : AppCompatActivity() {
                 }
             }
         }
-
         dialog.show()
     }
 
@@ -236,26 +232,4 @@ class JournalActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    private fun loadSampleJournals() {
-        val today = Date()
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, -1)
-        val yesterday = calendar.time
-
-        journalList.addAll(listOf(
-            Journal(
-                journalID = UUID.randomUUID().toString(),
-                journalEntry = "Today's reflection on class progress",
-                date = today
-            ),
-            Journal(
-                journalID = UUID.randomUUID().toString(),
-                journalEntry = "Notes from yesterday's parent meeting",
-                date = yesterday
-            )
-        ))
-        adapter.notifyDataSetChanged()
-    }
-
 }

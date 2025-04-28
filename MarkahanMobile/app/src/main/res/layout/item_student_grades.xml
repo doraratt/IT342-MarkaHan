@@ -3,14 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp"
+    android:padding="10dp"
     android:background="?attr/selectableItemBackground">
 
     <TextView
         android:id="@+id/studentName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.2"
+        android:layout_weight="1"
         android:textColor="#000"
         android:textSize="14sp"
         android:fontFamily="@font/lexend_reg"/>
@@ -28,10 +28,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="View Grade"
-        android:textColor="#0A588C"
+        android:textColor="#1f295a"
         android:textSize="14sp"
         android:layout_marginStart="22dp"
         android:clickable="true"
         android:focusable="true"
-        android:fontFamily="@font/lexend_reg" />
+        android:fontFamily="@font/lexend_med" />
 </LinearLayout>

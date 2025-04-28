@@ -16,4 +16,8 @@
     <color name="absent">#F44336</color>   <!-- Red for Absent -->
     <color name="late">#FFC107</color>     <!-- Yellow for Late -->
     <color name="light_gray">#F5F5F5</color> <!-- For alternating rows -->
+
+    <color name="attendance_sheet_background">#d6e1f7</color>
+    <color name="student_names_column_background">#334596</color>
+    <color name="header_background">#1f295a</color>
 </resources>

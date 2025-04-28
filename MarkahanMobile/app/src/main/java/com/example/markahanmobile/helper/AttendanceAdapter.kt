@@ -1,5 +1,6 @@
 package com.example.markahanmobile.helper
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,57 +11,113 @@ import com.example.markahanmobile.R
 import com.example.markahanmobile.data.Student
 
 class AttendanceAdapter(
-    private val students: List<Student>,
-    private val onAttendanceChanged: (Int, String) -> Unit
-) : RecyclerView.Adapter<AttendanceAdapter.AttendanceViewHolder>() {
+    private val onStatusChanged: (Int, String) -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    companion object {
+        private const val VIEW_TYPE_HEADER = 0
+        private const val VIEW_TYPE_STUDENT = 1
+    }
+
+    private val items: MutableList<Any> = mutableListOf() // List can contain Students or Strings (headers)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VIEW_TYPE_HEADER) {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_header, parent, false)
+            HeaderViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_attendance, parent, false)
+            AttendanceViewHolder(view)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (items[position] is String) VIEW_TYPE_HEADER else VIEW_TYPE_STUDENT
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is HeaderViewHolder -> {
+                val header = items[position] as String
+                holder.headerTitle.text = header
+            }
+            is AttendanceViewHolder -> {
+                val student = items[position] as Student
+                val studentPosition = items.filterIndexed { index, item -> index <= position && item is Student }.count() - 1
+                Log.d("AttendanceAdapter", "Binding student at position $position (studentPosition $studentPosition): ${student.firstName} ${student.lastName}, Section=${student.section}")
+                holder.nameTextView.text = "${student.lastName}, ${student.firstName}"
+
+                when (student.attendanceStatus) {
+                    "P" -> holder.radioPresent.isChecked = true
+                    "L" -> holder.radioLate.isChecked = true
+                    "A" -> holder.radioAbsent.isChecked = true
+                    else -> {
+                        holder.radioPresent.isChecked = false
+                        holder.radioLate.isChecked = false
+                        holder.radioAbsent.isChecked = false
+                    }
+                }
+
+                holder.radioPresent.setOnClickListener {
+                    if (holder.radioPresent.isChecked) {
+                        holder.radioLate.isChecked = false
+                        holder.radioAbsent.isChecked = false
+                        onStatusChanged(studentPosition, "P")
+                    }
+                }
+                holder.radioLate.setOnClickListener {
+                    if (holder.radioLate.isChecked) {
+                        holder.radioPresent.isChecked = false
+                        holder.radioAbsent.isChecked = false
+                        onStatusChanged(studentPosition, "L")
+                    }
+                }
+                holder.radioAbsent.setOnClickListener {
+                    if (holder.radioAbsent.isChecked) {
+                        holder.radioPresent.isChecked = false
+                        holder.radioLate.isChecked = false
+                        onStatusChanged(studentPosition, "A")
+                    }
+                }
+            }
+        }
+    }
+
+    override fun getItemCount() = items.size
+
+    fun updateList(newStudents: List<Student>) {
+        items.clear()
+
+        // Group students by gender and sort alphabetically by last name, then first name
+        val maleStudents = newStudents.filter { it.gender == "Male" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+        val femaleStudents = newStudents.filter { it.gender == "Female" }
+            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+
+        // Add Male Students section if there are any
+        if (maleStudents.isNotEmpty()) {
+            items.add("Male Students")
+            items.addAll(maleStudents)
+        }
+
+        // Add Female Students section if there are any
+        if (femaleStudents.isNotEmpty()) {
+            items.add("Female Students")
+            items.addAll(femaleStudents)
+        }
+
+        Log.d("AttendanceAdapter", "Updated list with ${newStudents.size} students: ${newStudents.map { "${it.firstName} ${it.lastName}, Section=${it.section}" }}")
+        notifyDataSetChanged()
+    }
 
     class AttendanceViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val studentName: TextView = view.findViewById(R.id.txtStudentName)
-        val cbPresent: CheckBox = view.findViewById(R.id.cbPresent)
-        val cbLate: CheckBox = view.findViewById(R.id.cbLate)
-        val cbAbsent: CheckBox = view.findViewById(R.id.cbAbsent)
+        val nameTextView: TextView = view.findViewById(R.id.studentName)
+        val radioPresent: CheckBox = view.findViewById(R.id.radioPresent)
+        val radioLate: CheckBox = view.findViewById(R.id.radioLate)
+        val radioAbsent: CheckBox = view.findViewById(R.id.radioAbsent)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AttendanceViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_attendance, parent, false)
-        return AttendanceViewHolder(view)
+    class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val headerTitle: TextView = view.findViewById(R.id.headerTitle)
     }
-
-    override fun onBindViewHolder(holder: AttendanceViewHolder, position: Int) {
-        val student = students[position]
-        holder.studentName.text = "${student.firstName} ${student.lastName}"
-
-        // Set initial state
-        holder.cbPresent.isChecked = student.attendanceStatus == "P"
-        holder.cbLate.isChecked = student.attendanceStatus == "L"
-        holder.cbAbsent.isChecked = student.attendanceStatus == "A"
-
-        // Set listeners
-        holder.cbPresent.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                holder.cbLate.isChecked = false
-                holder.cbAbsent.isChecked = false
-                onAttendanceChanged(position, "P")
-            }
-        }
-
-        holder.cbLate.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                holder.cbPresent.isChecked = false
-                holder.cbAbsent.isChecked = false
-                onAttendanceChanged(position, "L")
-            }
-        }
-
-        holder.cbAbsent.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                holder.cbPresent.isChecked = false
-                holder.cbLate.isChecked = false
-                onAttendanceChanged(position, "A")
-            }
-        }
-    }
-
-    override fun getItemCount() = students.size
 }

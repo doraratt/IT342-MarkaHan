@@ -6,30 +6,29 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.markahanmobile.fragments.DashboardActivity">
+    tools:context=".fragments.DashboardActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#d6e1f7">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#fff"
+            android:background="#d6e1f7"
             app:title="Grades"
-            app:titleTextColor="#000"
+            app:titleTextColor="#d6e1f7"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
-
 
         <TextView
             android:id="@+id/sectionsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sections"
-            android:textColor="#0A588C"
-            android:textSize="22sp"
+            android:textColor="#1f295a"
+            android:textSize="26sp"
             android:fontFamily="@font/lexend_bold"
             android:layout_below="@id/toolbar"
             android:layout_marginTop="20dp"
@@ -66,8 +65,7 @@
                     android:layout_height="24dp"
                     android:src="@drawable/search"
                     android:contentDescription="Search Student"
-                    android:tint="#0A588C" />
-
+                    android:tint="#1f295a" />
             </LinearLayout>
         </LinearLayout>
 
@@ -83,18 +81,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1.2"
                 android:text="Student"
-                android:textColor="#0A588C"
-                android:textSize="14sp"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
                 android:fontFamily="@font/lexend_bold"
-                android:layout_marginLeft="28dp"/>
+                android:layout_marginLeft="24dp"/>
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.3"
+                android:layout_weight="1.25"
                 android:text="Remarks"
-                android:textColor="#0A588C"
-                android:textSize="14sp"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
                 android:fontFamily="@font/lexend_bold"/>
 
             <View
@@ -108,7 +106,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/sectionRow"
-            android:layout_marginTop="35dp"
+            android:layout_marginTop="40dp"
             android:padding="16dp"
             android:clipToPadding="false" />
     </RelativeLayout>

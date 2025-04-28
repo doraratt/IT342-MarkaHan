@@ -155,6 +155,23 @@ function Attendance() {
 
   const weekdays = getWeekdaysInMonth(currentYear, currentMonth);
 
+  // Filter and sort students by section and gender for both views
+  const filteredStudents = students.filter(student => student.section === selectedSection);
+  const maleStudents = filteredStudents
+    .filter(student => student.gender === 'Male')
+    .sort((a, b) => {
+      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
+      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  const femaleStudents = filteredStudents
+    .filter(student => student.gender === 'Female')
+    .sort((a, b) => {
+      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
+      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
   const renderMarkAttendanceView = () => (
     <Box sx={{ 
       backgroundColor: 'white',
@@ -172,41 +189,96 @@ function Attendance() {
         <Typography fontWeight="500">Attendance</Typography>
       </Box>
 
-      {students
-        .filter(student => student.section === selectedSection)
-        .map((student, index) => (
-          <Box
-            key={student.studentId}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              padding: '16px 24px',
-              backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
-              '&:hover': {
-                backgroundColor: '#f5f5f5',
-              },
-            }}
-          >
-            <Typography>{`${student.firstName} ${student.lastName}`}</Typography>
-            <Button
-              onClick={() => {
-                setSelectedStudent(student);
-                setMarkAttendanceModal(true);
-              }}
+      {/* Male Students Section */}
+      {maleStudents.length > 0 && (
+        <>
+          <Box sx={{ backgroundColor: '#e0e0e0', padding: '8px 24px' }}>
+            <Typography fontWeight="bold">Male Students</Typography>
+          </Box>
+          {maleStudents.map((student, index) => (
+            <Box
+              key={student.studentId}
               sx={{
-                color: '#0D5CAB',
-                textTransform: 'none',
-                justifyContent: 'flex-start',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                padding: '16px 24px',
+                backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
                 '&:hover': {
-                  backgroundColor: 'transparent',
-                  textDecoration: 'underline',
+                  backgroundColor: '#f5f5f5',
                 },
               }}
             >
-              Mark Attendance
-            </Button>
+              <Typography>{`${student.lastName}, ${student.firstName}`}</Typography>
+              <Button
+                onClick={() => {
+                  setSelectedStudent(student);
+                  setMarkAttendanceModal(true);
+                }}
+                sx={{
+                  color: '#0D5CAB',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                Mark Attendance
+              </Button>
+            </Box>
+          ))}
+        </>
+      )}
+
+      {/* Female Students Section */}
+      {femaleStudents.length > 0 && (
+        <>
+          <Box sx={{ backgroundColor: '#e0e0e0', padding: '8px 24px' }}>
+            <Typography fontWeight="bold">Female Students</Typography>
           </Box>
-        ))}
+          {femaleStudents.map((student, index) => (
+            <Box
+              key={student.studentId}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                padding: '16px 24px',
+                backgroundColor: index % 2 === 0 ? '#f0f0f0' : 'white',
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                },
+              }}
+            >
+              <Typography>{`${student.lastName}, ${student.firstName}`}</Typography>
+              <Button
+                onClick={() => {
+                  setSelectedStudent(student);
+                  setMarkAttendanceModal(true);
+                }}
+                sx={{
+                  color: '#0D5CAB',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                Mark Attendance
+              </Button>
+            </Box>
+          ))}
+        </>
+      )}
+
+      {/* Display message if no students in the section */}
+      {maleStudents.length === 0 && femaleStudents.length === 0 && (
+        <Box sx={{ padding: '16px 24px' }}>
+          <Typography>No students available.</Typography>
+        </Box>
+      )}
     </Box>
   );
 
@@ -215,8 +287,6 @@ function Attendance() {
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
-
-    const filteredStudents = students.filter(student => student.section === selectedSection);
 
     return (
       <Box sx={{ 
@@ -290,54 +360,130 @@ function Attendance() {
         </Box>
 
         <Box sx={{ overflowX: 'auto' }}>
-          {filteredStudents.map((student, index) => (
-            <Box 
-              key={student.studentId}
-              sx={{ 
-                display: 'flex',
-                borderBottom: '1px solid #ddd',
-                bgcolor: index % 2 === 0 ? '#fafafa' : 'white'
-              }}
-            >
-              <Box sx={{ 
-                width: '200px',
-                p: 1,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <Typography variant="body2">{`${student.firstName} ${student.lastName}`}</Typography>
+          {/* Male Students Section */}
+          {maleStudents.length > 0 && (
+            <>
+              <Box sx={{ display: 'flex', backgroundColor: '#e0e0e0', padding: '8px 16px' }}>
+                <Box sx={{ width: '200px', flexShrink: 0 }}>
+                  <Typography fontWeight="bold">Male Students</Typography>
+                </Box>
               </Box>
-              {weekdays.map(day => {
-                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const record = attendanceRecords.find(r => {
-                  if (!r.student) {
-                    console.warn('Attendance record missing student field:', r);
-                    return false;
-                  }
-                  return r.student.studentId === student.studentId && r.date === dateStr;
-                });
-                const status = record 
-                  ? (record.status.charAt(0).toUpperCase() === 'P' ? 'P' : record.status.charAt(0).toUpperCase())
-                  : '--';
-
-                return (
-                  <Box
-                    key={dateStr}
-                    sx={{
-                      width: '40px',
-                      p: 1,
-                      textAlign: 'center',
-                      borderRight: '1px solid #ddd',
-                      ...getStatusColor(status)
-                    }}
-                  >
-                    <Typography variant="body2">{status}</Typography>
+              {maleStudents.map((student, index) => (
+                <Box 
+                  key={student.studentId}
+                  sx={{ 
+                    display: 'flex',
+                    borderBottom: '1px solid #ddd',
+                    bgcolor: index % 2 === 0 ? '#fafafa' : 'white'
+                  }}
+                >
+                  <Box sx={{ 
+                    width: '200px',
+                    p: 1,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <Typography variant="body2">{`${student.lastName}, ${student.firstName}`}</Typography>
                   </Box>
-                );
-              })}
+                  {weekdays.map(day => {
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const record = attendanceRecords.find(r => {
+                      if (!r.student) {
+                        console.warn('Attendance record missing student field:', r);
+                        return false;
+                      }
+                      return r.student.studentId === student.studentId && r.date === dateStr;
+                    });
+                    const status = record 
+                      ? (record.status.charAt(0).toUpperCase() === 'P' ? 'P' : record.status.charAt(0).toUpperCase())
+                      : '--';
+
+                    return (
+                      <Box
+                        key={dateStr}
+                        sx={{
+                          width: '40px',
+                          p: 1,
+                          textAlign: 'center',
+                          borderRight: '1px solid #ddd',
+                          ...getStatusColor(status)
+                        }}
+                      >
+                        <Typography variant="body2">{status}</Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </>
+          )}
+
+          {/* Female Students Section */}
+          {femaleStudents.length > 0 && (
+            <>
+              <Box sx={{ display: 'flex', backgroundColor: '#e0e0e0', padding: '8px 16px' }}>
+                <Box sx={{ width: '200px', flexShrink: 0 }}>
+                  <Typography fontWeight="bold">Female Students</Typography>
+                </Box>
+              </Box>
+              {femaleStudents.map((student, index) => (
+                <Box 
+                  key={student.studentId}
+                  sx={{ 
+                    display: 'flex',
+                    borderBottom: '1px solid #ddd',
+                    bgcolor: index % 2 === 0 ? '#fafafa' : 'white'
+                  }}
+                >
+                  <Box sx={{ 
+                    width: '200px',
+                    p: 1,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <Typography variant="body2">{`${student.lastName}, ${student.firstName}`}</Typography>
+                  </Box>
+                  {weekdays.map(day => {
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const record = attendanceRecords.find(r => {
+                      if (!r.student) {
+                        console.warn('Attendance record missing student field:', r);
+                        return false;
+                      }
+                      return r.student.studentId === student.studentId && r.date === dateStr;
+                    });
+                    const status = record 
+                      ? (record.status.charAt(0).toUpperCase() === 'P' ? 'P' : record.status.charAt(0).toUpperCase())
+                      : '--';
+
+                    return (
+                      <Box
+                        key={dateStr}
+                        sx={{
+                          width: '40px',
+                          p: 1,
+                          textAlign: 'center',
+                          borderRight: '1px solid #ddd',
+                          ...getStatusColor(status)
+                        }}
+                      >
+                        <Typography variant="body2">{status}</Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </>
+          )}
+
+          {/* Display message if no students in the section */}
+          {maleStudents.length === 0 && femaleStudents.length === 0 && (
+            <Box sx={{ padding: '16px 24px' }}>
+              <Typography>No students available.</Typography>
             </Box>
-          ))}
+          )}
         </Box>
 
         <Box sx={{ 
@@ -359,7 +505,7 @@ function Attendance() {
   };
 
   return (
-    <Box sx={{ width: '100%', p: 3 }}>
+    <Box sx={{ width: '95%', p: 3 }}>
       {isLoading && <Typography>Loading...</Typography>}
       {error && (
         <Box sx={{ mb: 2 }}>
@@ -412,13 +558,11 @@ function Attendance() {
                   minWidth: '140px',
                   backgroundColor: selectedView === 'mark' ? '#0D5CAB' : '#fff',
                   color: selectedView === 'mark' ? '#fff' : '#000',
-                  borderRadius: 0,
+                  borderRadius: '4px 0 0 4px',
                   px: 3,
                   '&:hover': {
                     backgroundColor: selectedView === 'mark' ? '#0D5CAB' : '#f5f5f5',
                   },
-                  borderTopLeftRadius: '4px',
-                  borderBottomLeftRadius: '4px',
                 }}
               >
                 Mark Attendance
@@ -429,13 +573,11 @@ function Attendance() {
                   minWidth: '140px',
                   backgroundColor: selectedView === 'table' ? '#0D5CAB' : '#fff',
                   color: selectedView === 'table' ? '#fff' : '#000',
-                  borderRadius: 0,
+                  borderRadius: '0 4px 4px 0',
                   px: 3,
                   '&:hover': {
                     backgroundColor: selectedView === 'table' ? '#0D5CAB' : '#f5f5f5',
                   },
-                  borderTopRightRadius: '4px',
-                  borderBottomRightRadius: '4px',
                 }}
               >
                 Attendance Table
