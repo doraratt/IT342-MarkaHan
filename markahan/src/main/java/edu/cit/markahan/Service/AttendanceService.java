@@ -78,6 +78,11 @@ public class AttendanceService {
     public List<AttendanceEntity> getAttendanceByUserId(int userId) {
         return attendanceRepository.findByUserUserIdWithFetch(userId);
     }
+    
+    @Transactional(readOnly = true)
+    public List<AttendanceEntity> getAttendanceByUserIdAndMonthYear(int userId, int month, int year) {
+        return attendanceRepository.findByUserIdAndMonthYearWithFetch(userId, month, year);
+    }
 
     @Transactional
     public String deleteAttendance(int attendanceId) {

@@ -6,10 +6,10 @@ import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import MenuItem from '@mui/material/MenuItem'; // Add for dropdown
-import Select from '@mui/material/Select'; // Add for dropdown
-import FormControl from '@mui/material/FormControl'; // Add for dropdown
-import InputLabel from '@mui/material/InputLabel'; // Add for dropdown
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
@@ -82,18 +82,21 @@ const AddStudentModal = ({ open, onClose, onSubmit, data, onChange }) => (
           variant="outlined"
           autoComplete="off"
         />
-        <TextField
-          name="gradeLevel"
-          label="Grade Level"
-          value={data.gradeLevel || ''}
-          onChange={onChange}
-          fullWidth
-          size="small"
-          placeholder="Enter grade level"
-          required
-          variant="outlined"
-          autoComplete="off"
-        />
+        <FormControl fullWidth size="small" required>
+          <InputLabel>Grade Level</InputLabel>
+          <Select
+            name="gradeLevel"
+            label="Grade Level"
+            value={data.gradeLevel || ''}
+            onChange={onChange}
+          >
+            {[1, 2, 3, 4, 5, 6].map(grade => (
+              <MenuItem key={grade} value={grade.toString()}>
+                {grade}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Button
           variant="contained"
           onClick={onSubmit}
@@ -179,18 +182,21 @@ const EditStudentModal = ({ open, onClose, onSubmit, data, onChange }) => (
           variant="outlined"
           autoComplete="off"
         />
-        <TextField
-          name="gradeLevel"
-          label="Grade Level"
-          value={data.gradeLevel || ''}
-          onChange={onChange}
-          fullWidth
-          size="small"
-          placeholder="Enter grade level"
-          required
-          variant="outlined"
-          autoComplete="off"
-        />
+        <FormControl fullWidth size="small" required>
+          <InputLabel>Grade Level</InputLabel>
+          <Select
+            name="gradeLevel"
+            label="Grade Level"
+            value={data.gradeLevel || ''}
+            onChange={onChange}
+          >
+            {[1, 2, 3, 4, 5, 6].map(grade => (
+              <MenuItem key={grade} value={grade.toString()}>
+                {grade}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Button
           variant="contained"
           onClick={onSubmit}
@@ -208,11 +214,12 @@ const EditStudentModal = ({ open, onClose, onSubmit, data, onChange }) => (
   </Modal>
 );
 
-// SearchStudentsModal (unchanged)
+// SearchStudentsModal
 const SearchStudentsModal = ({ open, onClose, students, onSelectStudent }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const filteredStudents = students.filter(student => 
+
+  const filteredStudents = students.filter(student =>
+    !student.isArchived &&
     `${student.firstName} ${student.lastName}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
@@ -277,6 +284,7 @@ const SearchStudentsModal = ({ open, onClose, students, onSelectStudent }) => {
   );
 };
 
+// Students Component
 function Students() {
   const { user } = useUser();
   const [selectedSection, setSelectedSection] = useState('');
@@ -290,17 +298,19 @@ function Students() {
   const [newStudent, setNewStudent] = useState({
     firstName: '',
     lastName: '',
-    gender: '', // Added gender field
+    gender: '',
     section: '',
-    gradeLevel: ''
+    gradeLevel: '',
+    isArchived: false
   });
   const [editingStudent, setEditingStudent] = useState({
     id: null,
     firstName: '',
     lastName: '',
-    gender: '', // Added gender field
+    gender: '',
     section: '',
-    gradeLevel: ''
+    gradeLevel: '',
+    isArchived: false
   });
   const [error, setError] = useState('');
 
@@ -313,67 +323,86 @@ function Students() {
       const fetchStudents = async () => {
         try {
           const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
-          setStudents(response.data);
-          const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
+          // Map the response data to ensure correct field names
+          const mappedStudents = response.data.map(student => ({
+            studentId: student.studentId,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            gender: student.gender,
+            section: student.section,
+            gradeLevel: student.gradeLevel,
+            isArchived: student.archived, // Map 'archived' from backend to 'isArchived'
+          }));
+          // Filter out archived students for the main list
+          const nonArchivedStudents = mappedStudents.filter(student => !student.isArchived);
+          setStudents(nonArchivedStudents);
+          const uniqueSections = [...new Set(nonArchivedStudents.map(s => s.section))].sort();
           setSelectedSection(uniqueSections[0] || '');
         } catch (error) {
           console.error('Error fetching students:', error.response?.data || error.message);
+          setError('Failed to fetch students');
         }
       };
-
       fetchStudents();
-    } else {
-      console.log('No user logged in');
     }
   }, [user]);
+
+  const updateSections = (updatedStudents) => {
+    const uniqueSections = [...new Set(updatedStudents.filter(s => !s.isArchived).map(s => s.section))].sort();
+    if (!uniqueSections.includes(selectedSection) || !selectedSection) {
+      setSelectedSection(uniqueSections[0] || '');
+    }
+  };
 
   const handleOpenAdd = () => setOpenAddModal(true);
   const handleCloseAdd = () => {
     setOpenAddModal(false);
-    setNewStudent({ firstName: '', lastName: '', gender: '', section: '', gradeLevel: '' });
+    setNewStudent({ firstName: '', lastName: '', gender: '', section: '', gradeLevel: '', isArchived: false });
+    setError('');
   };
   const handleOpenEdit = (student) => {
     setEditingStudent({
       id: student.studentId,
       firstName: student.firstName,
       lastName: student.lastName,
-      gender: student.gender, // Include gender
+      gender: student.gender,
       section: student.section,
-      gradeLevel: student.gradeLevel
+      gradeLevel: student.gradeLevel,
+      isArchived: student.isArchived
     });
     setOpenEditModal(true);
   };
   const handleCloseEdit = () => {
     setOpenEditModal(false);
-    setEditingStudent({ id: null, firstName: '', lastName: '', gender: '', section: '', gradeLevel: '' });
+    setEditingStudent({ id: null, firstName: '', lastName: '', gender: '', section: '', gradeLevel: '', isArchived: false });
+    setError('');
   };
   const handleOpenSearch = () => setOpenSearchModal(true);
   const handleCloseSearch = () => setOpenSearchModal(false);
 
   const handleAddStudent = async () => {
     if (!newStudent.firstName || !newStudent.lastName || !newStudent.gender || !newStudent.section || !newStudent.gradeLevel) {
-      setError('All fields are required to add a student');
+      setError('All fields are required');
       return;
     }
-    if (!user) {
-      setError('User not logged in');
-      return;
-    }
-
     const studentData = { ...newStudent, user: { userId: user.userId } };
     try {
-      console.log('Adding student:', studentData);
       const response = await axios.post('http://localhost:8080/api/student/add', studentData);
-      setStudents(prevStudents => [...prevStudents, response.data]);
-      const uniqueSections = [...new Set([...students, response.data].map(s => s.section))].sort();
-      if (!selectedSection || !students.some(s => s.section === selectedSection)) {
-        setSelectedSection(uniqueSections[0] || '');
-      }
+      const newStudentData = {
+        studentId: response.data.studentId,
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        gender: response.data.gender,
+        section: response.data.section,
+        gradeLevel: response.data.gradeLevel,
+        isArchived: response.data.archived, // Map 'archived' to 'isArchived'
+      };
+      const updatedStudents = [...students, newStudentData];
+      setStudents(updatedStudents);
+      updateSections(updatedStudents);
       handleCloseAdd();
-      setError('');
     } catch (error) {
-      setError('Error adding student: ' + (error.response?.data?.message || error.response?.data || error.message));
-      console.error('Add error:', error.response?.data, error);
+      setError('Error adding student: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -384,36 +413,31 @@ function Students() {
 
   const handleFinalEdit = async () => {
     if (!editingStudent.id || !editingStudent.firstName || !editingStudent.lastName || !editingStudent.gender || !editingStudent.section || !editingStudent.gradeLevel) {
-      setError('All fields are required to update a student');
+      setError('All fields are required');
       return;
     }
-    if (!user) {
-      setError('User not logged in');
-      return;
-    }
-
     const studentData = { ...editingStudent, user: { userId: user.userId } };
     try {
       const response = await axios.put(
         `http://localhost:8080/api/student/update/${editingStudent.id}`,
         studentData
       );
-      setStudents(prevStudents =>
-        prevStudents.map(student => (student.studentId === editingStudent.id ? response.data : student))
-      );
-      const updatedStudents = students.map(student => 
-        student.studentId === editingStudent.id ? response.data : student
-      );
-      const uniqueSections = [...new Set(updatedStudents.map(s => s.section))].sort();
-      if (!updatedStudents.some(s => s.section === selectedSection)) {
-        setSelectedSection(uniqueSections[0] || '');
-      }
+      const updatedStudentData = {
+        studentId: response.data.studentId,
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        gender: response.data.gender,
+        section: response.data.section,
+        gradeLevel: response.data.gradeLevel,
+        isArchived: response.data.archived, // Map 'archived' to 'isArchived'
+      };
+      const updatedStudents = students.map(student => (student.studentId === editingStudent.id ? updatedStudentData : student));
+      setStudents(updatedStudents.filter(s => !s.isArchived)); // Ensure archived students are filtered out
+      updateSections(updatedStudents);
       setOpenConfirmEditModal(false);
-      setEditingStudent({ id: null, firstName: '', lastName: '', gender: '', section: '', gradeLevel: '' });
-      setError('');
+      setEditingStudent({ id: null, firstName: '', lastName: '', gender: '', section: '', gradeLevel: '', isArchived: false });
     } catch (error) {
-      setError('Error updating student: ' + (error.response?.data?.message || error.response?.data || error.message));
-      console.error('Edit error:', error.response?.data, error);
+      setError('Error updating student: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -423,21 +447,43 @@ function Students() {
   };
 
   const handleFinalArchive = async () => {
-    if (!selectedStudent?.studentId) return;
+    if (!selectedStudent?.studentId) {
+      setError('No student selected');
+      return;
+    }
     try {
-      await axios.delete(`http://localhost:8080/api/student/delete/${selectedStudent.studentId}`);
+      // Use the update endpoint to set isArchived to true
+      const updatedStudentData = {
+        studentId: selectedStudent.studentId,
+        firstName: selectedStudent.firstName,
+        lastName: selectedStudent.lastName,
+        gender: selectedStudent.gender,
+        section: selectedStudent.section,
+        gradeLevel: selectedStudent.gradeLevel,
+        archived: true, // Backend expects 'archived'
+        user: { userId: user.userId }
+      };
+      const response = await axios.put(
+        `http://localhost:8080/api/student/update/${selectedStudent.studentId}`,
+        updatedStudentData
+      );
+      const updatedStudentResponse = {
+        studentId: response.data.studentId,
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        gender: response.data.gender,
+        section: response.data.section,
+        gradeLevel: response.data.gradeLevel,
+        isArchived: response.data.archived, // Map 'archived' to 'isArchived'
+      };
+      // Remove the archived student from the list
       const updatedStudents = students.filter(student => student.studentId !== selectedStudent.studentId);
       setStudents(updatedStudents);
-      const uniqueSections = [...new Set(updatedStudents.map(s => s.section))].sort();
-      if (!updatedStudents.some(s => s.section === selectedSection)) {
-        setSelectedSection(uniqueSections[0] || '');
-      }
+      updateSections(updatedStudents);
       setOpenConfirmArchiveModal(false);
       setSelectedStudent(null);
-      setError('');
     } catch (error) {
-      setError('Error archiving student: ' + (error.response?.data || error.message));
-      console.error('Archive error:', error);
+      setError('Error archiving student: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -445,8 +491,6 @@ function Students() {
     setSelectedSection(student.section);
     handleCloseSearch();
   };
-
-  const sections = [...new Set(students.map(student => student.section))].sort();
 
   const handleAddInputChange = (e) => {
     const { name, value } = e.target;
@@ -464,22 +508,17 @@ function Students() {
     }));
   };
 
+  // Calculate sections dynamically
+  const sections = [...new Set(students.map(student => student.section))].sort();
+
   // Filter and sort students by section and gender
   const filteredStudents = students.filter(student => student.section === selectedSection);
   const maleStudents = filteredStudents
     .filter(student => student.gender === 'Male')
-    .sort((a, b) => {
-      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
-      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
+    .sort((a, b) => `${a.lastName}, ${a.firstName}`.toLowerCase().localeCompare(`${b.lastName}, ${b.firstName}`.toLowerCase()));
   const femaleStudents = filteredStudents
     .filter(student => student.gender === 'Female')
-    .sort((a, b) => {
-      const nameA = `${a.lastName}, ${a.firstName}`.toLowerCase();
-      const nameB = `${b.lastName}, ${b.firstName}`.toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
+    .sort((a, b) => `${a.lastName}, ${b.firstName}`.toLowerCase().localeCompare(`${b.lastName}, ${b.firstName}`.toLowerCase()));
 
   return (
     <Box sx={{ width: '95%', p: 3 }}>

@@ -52,6 +52,22 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.getAttendanceByUserId(userId));
     }
 
+    @GetMapping("/getAttendanceByUserAndMonth")
+    public ResponseEntity<List<AttendanceEntity>> getAttendanceByUserAndMonth(
+        @RequestParam int userId,
+        @RequestParam int month,
+        @RequestParam int year
+    ) {
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("Invalid month: must be between 1 and 12");
+        }
+        if (year < 2000 || year > 9999) {
+            throw new IllegalArgumentException("Invalid year");
+        }
+        List<AttendanceEntity> attendance = attendanceService.getAttendanceByUserIdAndMonthYear(userId, month, year);
+        return ResponseEntity.ok(attendance);
+    }
+
     @PutMapping("/putAttendance/{id}")
     public ResponseEntity<AttendanceEntity> putAttendance(@PathVariable int id, @RequestBody AttendanceEntity newAttendanceDetails) {
         AttendanceEntity updatedAttendance = attendanceService.putAttendance(id, newAttendanceDetails);
