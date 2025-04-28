@@ -33,7 +33,10 @@ public class StudentEntity {
 
     @Column(nullable = false)
     private String gender;
-    
+
+    @Column(nullable = false)
+    private boolean isArchived = false; // New field
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -51,7 +54,7 @@ public class StudentEntity {
         super();
     }
 
-    public StudentEntity(int studentId, String firstName, String lastName, String section, String gradeLevel, String gender) {
+    public StudentEntity(int studentId, String firstName, String lastName, String section, String gradeLevel, String gender, boolean isArchived) {
         super();
         this.studentId = studentId;
         this.firstName = firstName;
@@ -59,6 +62,7 @@ public class StudentEntity {
         this.section = section;
         this.gradeLevel = gradeLevel;
         this.gender = gender;
+        this.isArchived = isArchived;
     }
 
     public int getStudentId() {
@@ -107,6 +111,14 @@ public class StudentEntity {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public boolean isArchived() {
+        return isArchived;
+    }
+
+    public void setArchived(boolean isArchived) {
+        this.isArchived = isArchived;
     }
     
     public UserEntity getUser() {
