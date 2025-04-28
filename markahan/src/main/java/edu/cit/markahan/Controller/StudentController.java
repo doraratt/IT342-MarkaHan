@@ -25,7 +25,6 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getAllStudents());
     }
 
-    // New endpoint to get students by user ID
     @GetMapping("/getStudentsByUser")
     public ResponseEntity<List<StudentEntity>> getStudentsByUser(@RequestParam int userId) {
         return ResponseEntity.ok(studentService.getStudentsByUserId(userId));
@@ -34,11 +33,6 @@ public class StudentController {
     @PutMapping("/update/{id}")
     public ResponseEntity<StudentEntity> updateStudent(@PathVariable int id, @RequestBody StudentEntity updatedStudent) {
         return ResponseEntity.ok(studentService.updateStudent(id, updatedStudent));
-    }
-    
-    @PutMapping("/archive/{id}")
-    public ResponseEntity<StudentEntity> archiveStudent(@PathVariable int id, @RequestParam boolean isArchived) {
-        return ResponseEntity.ok(studentService.archiveStudent(id, isArchived));
     }
 
     @DeleteMapping("/delete/{id}")

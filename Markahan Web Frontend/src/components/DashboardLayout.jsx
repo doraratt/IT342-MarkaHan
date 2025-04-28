@@ -1,6 +1,7 @@
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LogoutIcon from "@mui/icons-material/Logout";
 import UserIcon from "@mui/icons-material/Person";
+import ArchiveBoxIcon from '@mui/icons-material/Archive';
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import DialogActions from "@mui/material/DialogActions";
@@ -25,6 +26,7 @@ import logo1 from "../assets/logo2.png"
 import Journal from './Journal';
 import Calendar from './Calendar';
 import Students from './Students';
+import ArchivedStudentsPage from './ArchivedStudents'; // Updated import
 import Grades from './Grades';
 import Attendance from './Attendance';
 import Dashboard from "./Dashboard";
@@ -60,6 +62,11 @@ const NAVIGATION = [
     title: "Journal",
     icon: <MenuBookIcon />,
   },
+  {
+    segment: "archived-students",
+    title: "Archived Students",
+    icon: <ArchiveBoxIcon />,
+  },
 ];
 
 function DemoPageContent({ activeSegment, user }) {
@@ -72,7 +79,7 @@ function DemoPageContent({ activeSegment, user }) {
   switch (activeSegment) {
     case "dashboard":
       content = (
-        <Box sx={{ width: "100%", padding: 0, marginLeft  : 0 }}>
+        <Box sx={{ width: "100%", padding: 0, marginLeft: 0 }}>
           <Typography variant="h3" paddingTop={5} color="#134B70" sx={{ml: 4}}>
             Welcome to MarkaHan!
             <Typography variant="h6">
@@ -97,6 +104,9 @@ function DemoPageContent({ activeSegment, user }) {
       break;
     case "students":
       content = <Students user={user} />;
+      break;
+    case "archived-students":
+      content = <ArchivedStudentsPage user={user} />;
       break;
     case "attendance":
       content = <Attendance user={user} />;
