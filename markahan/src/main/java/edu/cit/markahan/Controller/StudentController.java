@@ -35,6 +35,11 @@ public class StudentController {
     public ResponseEntity<StudentEntity> updateStudent(@PathVariable int id, @RequestBody StudentEntity updatedStudent) {
         return ResponseEntity.ok(studentService.updateStudent(id, updatedStudent));
     }
+    
+    @PutMapping("/archive/{id}")
+    public ResponseEntity<StudentEntity> archiveStudent(@PathVariable int id, @RequestParam boolean isArchived) {
+        return ResponseEntity.ok(studentService.archiveStudent(id, isArchived));
+    }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteStudent(@PathVariable int id) {

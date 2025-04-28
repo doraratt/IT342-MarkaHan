@@ -11,14 +11,14 @@ const Dashboard = () => {
   const { user } = useUser();
 
   return (
-    <Box sx={{ width: '100%', margin: 0, padding: 2, boxSizing: 'border-box' }}>
+    <Box sx={{ width: '95%', marginLeft: 2, padding: 2, boxSizing: 'border-box' }}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: 'repeat(6, 1fr)',
           gridTemplateRows: 'repeat(6, 1fr)',
           gap: '8px',
-          width: '100%',
+          width: '98%',
           height: '600px', // Adjust height to fit the 6x6 grid proportionally
         }}
       >

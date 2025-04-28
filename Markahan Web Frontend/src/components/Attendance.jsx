@@ -505,7 +505,7 @@ function Attendance() {
   };
 
   return (
-    <Box sx={{ width: '100%', p: 3 }}>
+    <Box sx={{ width: '95%', p: 3 }}>
       {isLoading && <Typography>Loading...</Typography>}
       {error && (
         <Box sx={{ mb: 2 }}>

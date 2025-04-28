@@ -332,7 +332,7 @@ function Journal() {
     <Box sx={{ 
       padding: 3,
       width: '100%',
-      maxWidth: '1200px',
+      maxWidth: '1450px',
       margin: '0 auto'
     }}>
       {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}

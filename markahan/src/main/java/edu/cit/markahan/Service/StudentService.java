@@ -41,7 +41,7 @@ public class StudentService {
         student.setLastName(newStudentDetails.getLastName());
         student.setSection(newStudentDetails.getSection());
         student.setGradeLevel(newStudentDetails.getGradeLevel());
-        student.setGender(newStudentDetails.getGender());
+        student.setArchived(newStudentDetails.isArchived()); // Update isArchived
         // User is not updated here to prevent changing ownership
 
         return studentRepository.save(student);
@@ -54,5 +54,13 @@ public class StudentService {
         } else {
             return "Student not found.";
         }
+    }
+    
+ // New method to archive/unarchive a student
+    public StudentEntity archiveStudent(int studentId, boolean isArchived) {
+        StudentEntity student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        student.setArchived(isArchived);
+        return studentRepository.save(student);
     }
 }

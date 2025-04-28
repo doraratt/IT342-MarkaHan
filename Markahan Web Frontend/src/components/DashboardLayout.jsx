@@ -72,8 +72,8 @@ function DemoPageContent({ activeSegment, user }) {
   switch (activeSegment) {
     case "dashboard":
       content = (
-        <Box sx={{ width: "100%", padding: 0, margin: 0 }}>
-          <Typography variant="h3" paddingTop={5} color="#134B70">
+        <Box sx={{ width: "100%", padding: 0, marginLeft  : 0 }}>
+          <Typography variant="h3" paddingTop={5} color="#134B70" sx={{ml: 4}}>
             Welcome to MarkaHan!
             <Typography variant="h6">
               {user ? `Welcome, Teacher ${user.firstName}!` : "Dashboard Coming Soon"}
