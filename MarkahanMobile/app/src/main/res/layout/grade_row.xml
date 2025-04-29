@@ -6,28 +6,31 @@
     android:padding="10dp">
 
     <TextView
-        android:id="@+id/subjectName"
+        android:id="@+id/txtSubject"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="2"
         android:textColor="#333"
-        android:textSize="14sp"/>
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg" />
 
     <TextView
-        android:id="@+id/subjectGrade"
+        android:id="@+id/txtGrade"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textColor="#333"
         android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg"
         android:gravity="end"/>
 
     <TextView
-        android:id="@+id/subjectRemarks"
+        android:id="@+id/txtRemarks"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textColor="#4CAF50"
         android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg"
         android:gravity="end"/>
 </LinearLayout>

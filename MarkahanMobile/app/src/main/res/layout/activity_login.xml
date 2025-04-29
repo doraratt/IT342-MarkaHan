@@ -139,7 +139,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Don't have an Account? "
+            android:text="Not registered yet? "
             android:textSize="15sp"
             android:textColor="#5163aa"
             android:fontFamily="@font/lexend_reg"
@@ -150,7 +150,7 @@
             android:id="@+id/btn_signup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sign up"
+            android:text="Create an Account"
             android:textSize="15sp"
             android:textColor="#1f295a"
             android:fontFamily="@font/lexend_med"

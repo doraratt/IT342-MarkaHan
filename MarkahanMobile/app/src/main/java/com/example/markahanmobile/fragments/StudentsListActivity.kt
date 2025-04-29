@@ -3,12 +3,16 @@ package com.example.markahanmobile.fragments
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -16,13 +20,13 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
+import com.example.markahanmobile.data.User
+import com.example.markahanmobile.helper.GenderSpinnerAdapter
 import com.example.markahanmobile.helper.SectionAdapter
 import com.example.markahanmobile.helper.StudentAdapter
-import com.example.markahanmobile.utils.toast
-import com.example.markahanmobile.R
-import com.example.markahanmobile.helper.GenderSpinnerAdapter
 import com.google.android.material.navigation.NavigationView
 
 class StudentsListActivity : AppCompatActivity() {
@@ -31,12 +35,15 @@ class StudentsListActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var iconAddStudent: ImageView
     private lateinit var iconSearchStudent: ImageView
+    private lateinit var iconToggleArchived: ImageView
     private lateinit var sectionAdapter: SectionAdapter
     private lateinit var studentAdapter: StudentAdapter
+    private lateinit var progressBar: ProgressBar
+    private lateinit var noStudentsText: TextView
     private val sectionList = mutableListOf<String>()
-    private val allStudents = mutableListOf<Student>()
     private val studentList = mutableListOf<Student>()
     private var selectedSection: String = ""
+    private var isShowingSearchResults = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +54,8 @@ class StudentsListActivity : AppCompatActivity() {
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        progressBar = findViewById(R.id.progressBar)
+        noStudentsText = findViewById(R.id.noStudentsText)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -55,16 +64,12 @@ class StudentsListActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Navigation setup
         setupNavigation()
         setupRecyclerViews()
         setupButtons()
 
-        // Load data
-        loadSections()
         loadStudents()
 
-        // Set initial section selection
         if (sectionList.isNotEmpty()) {
             selectedSection = SectionAdapter.ALL_SECTIONS
             filterStudentsBySection(selectedSection)
@@ -80,7 +85,11 @@ class StudentsListActivity : AppCompatActivity() {
                 .setMessage("Are you sure you want to log out?")
                 .setIcon(R.drawable.warningsign)
                 .setPositiveButton("Logout") { _, _ ->
+                    DataStore.logout()
+                    val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+                    sharedPreferences.edit().clear().apply()
                     startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -104,29 +113,35 @@ class StudentsListActivity : AppCompatActivity() {
         sectionRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         sectionAdapter = SectionAdapter(sectionList) { section ->
             selectedSection = section
+            isShowingSearchResults = false
             filterStudentsBySection(section)
         }
         sectionRecyclerView.adapter = sectionAdapter
 
         val studentRecyclerView = findViewById<RecyclerView>(R.id.studentRecyclerView)
         studentRecyclerView.layoutManager = LinearLayoutManager(this)
-        studentAdapter = StudentAdapter(studentList, ::editStudent, ::archiveStudent)
+        studentAdapter = StudentAdapter(studentList, ::editStudent, ::archiveStudent, null, showArchived = false)
         studentRecyclerView.adapter = studentAdapter
     }
 
     private fun setupButtons() {
         iconAddStudent = findViewById(R.id.iconAddStudent)
         iconSearchStudent = findViewById(R.id.iconSearchStudent)
+        iconToggleArchived = findViewById(R.id.iconToggleArchived)
 
         iconAddStudent.setOnClickListener { showAddStudentDialog() }
         iconSearchStudent.setOnClickListener { showSearchStudentDialog() }
+        iconToggleArchived.setOnClickListener {
+            startActivity(Intent(this, ArchiveActivity::class.java))
+        }
     }
 
     private fun filterStudentsBySection(section: String) {
         findViewById<TextView>(R.id.sectionsLabel).text = "Sections"
         studentList.clear()
-        studentList.addAll(DataStore.getStudents(section))
+        studentList.addAll(DataStore.getStudents(section, includeArchived = false))
         studentAdapter.updateList(studentList)
+        updateNoStudentsVisibility()
 
         val position = sectionList.indexOf(section)
         if (position != -1) {
@@ -143,13 +158,14 @@ class StudentsListActivity : AppCompatActivity() {
             .setTitle("Confirm Archive")
             .setMessage("Are you sure you want to archive this student?")
             .setPositiveButton("Yes") { _, _ ->
-                try {
-                    DataStore.archiveStudent(student.studentID)
-                    loadSections()
-                    filterStudentsBySection(selectedSection)
-                    toast("Student archived succesfully")
-                } catch (e: IllegalArgumentException) {
-                    toast(e.message ?: "Failed to archive student")
+                DataStore.archiveStudent(student.studentId) { success ->
+                    if (success) {
+                        loadSections()
+                        filterStudentsBySection(selectedSection)
+                        Toast.makeText(this, "Student archived successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to archive student", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .setNegativeButton("No", null)
@@ -162,9 +178,15 @@ class StudentsListActivity : AppCompatActivity() {
         val firstNameEditText = dialogView.findViewById<EditText>(R.id.inputFirstName)
         val lastNameEditText = dialogView.findViewById<EditText>(R.id.inputLastName)
         val sectionEditText = dialogView.findViewById<EditText>(R.id.inputSection)
-        val gradeLevelEditText = dialogView.findViewById<EditText>(R.id.inputGradeLevel)
+        val gradeLevelSpinner = dialogView.findViewById<Spinner>(R.id.inputGradeLevel)
         val genderSpinner = dialogView.findViewById<Spinner>(R.id.inputGender)
         val submitButton = dialogView.findViewById<Button>(R.id.btnSubmitStudent)
+
+        // Setup Grade Level Spinner
+        val gradeLevels = listOf("Select Grade Level", "1", "2", "3", "4", "5", "6")
+        val gradeLevelAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, gradeLevels)
+        gradeLevelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        gradeLevelSpinner.adapter = gradeLevelAdapter
 
         val genderAdapter = GenderSpinnerAdapter(
             this,
@@ -177,14 +199,15 @@ class StudentsListActivity : AppCompatActivity() {
         if (student == null) {
             dialogTitle.text = "Add Student"
             submitButton.text = "Add Student"
-            genderSpinner.setSelection(0) // Default to "Select Gender"
+            genderSpinner.setSelection(0)
+            gradeLevelSpinner.setSelection(0)
         } else {
             dialogTitle.text = "Edit Student"
             submitButton.text = "Apply Changes"
             firstNameEditText.setText(student.firstName)
             lastNameEditText.setText(student.lastName)
             sectionEditText.setText(student.section)
-            gradeLevelEditText.setText(student.gradeLevel)
+            gradeLevelSpinner.setSelection(gradeLevels.indexOf(student.gradeLevel))
             genderSpinner.setSelection(
                 if (student.gender == "Male") 1
                 else if (student.gender == "Female") 2
@@ -204,33 +227,51 @@ class StudentsListActivity : AppCompatActivity() {
             val firstName = firstNameEditText.text.toString().trim()
             val lastName = lastNameEditText.text.toString().trim()
             val section = sectionEditText.text.toString().trim()
-            val gradeLevel = gradeLevelEditText.text.toString().trim()
+            val gradeLevel = gradeLevelSpinner.selectedItem.toString()
             val gender = genderSpinner.selectedItem.toString()
 
             if (gender == "Select Gender") {
-                toast("Please select a gender")
+                Toast.makeText(this, "Please select a gender", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Pass all parameters including gradeLevel
-            if (validateInput(firstName, lastName, section, gradeLevel)) {
+            if (gradeLevel == "Select Grade Level") {
+                Toast.makeText(this, "Please select a grade level", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (validateInput(firstName, lastName, section)) {
+                val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+                val userId = sharedPreferences.getInt("userId", -1)
+
+                if (userId == -1) {
+                    Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                    return@setOnClickListener
+                }
+
+                val user = User(userId = userId)
+
                 if (student == null) {
-                   val newStudent = Student (
-                       studentID = System.currentTimeMillis().toString(),
-                       firstName = firstName,
-                       lastName = lastName,
-                       section = section,
-                       gradeLevel = gradeLevel,
-                       gender = gender
-                   )
-                    try {
-                        DataStore.addStudent(newStudent)
-                        loadSections()
-                        filterStudentsBySection(section)
-                        dialog.dismiss()
-                        toast("Student added succesfully")
-                    } catch (e:IllegalArgumentException) {
-                        toast(e.message ?: "Failed to add student")
+                    val newStudent = Student(
+                        studentId = 0,
+                        firstName = firstName,
+                        lastName = lastName,
+                        section = section,
+                        gradeLevel = gradeLevel,
+                        gender = gender,
+                        user = user
+                    )
+                    DataStore.addStudent(newStudent) { success ->
+                        if (success) {
+                            loadSections()
+                            filterStudentsBySection(section)
+                            dialog.dismiss()
+                            Toast.makeText(this, "Student added successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Failed to add student", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } else {
                     showUpdateConfirmationDialog(
@@ -240,7 +281,8 @@ class StudentsListActivity : AppCompatActivity() {
                         newSection = section,
                         newGradeLevel = gradeLevel,
                         newGender = gender,
-                        parentDialog = dialog
+                        parentDialog = dialog,
+                        user = user
                     )
                 }
             }
@@ -255,27 +297,34 @@ class StudentsListActivity : AppCompatActivity() {
         newSection: String,
         newGradeLevel: String,
         newGender: String,
-        parentDialog: AlertDialog
+        parentDialog: AlertDialog,
+        user: User
     ) {
         AlertDialog.Builder(this)
             .setTitle("Confirm Changes")
             .setMessage("Are you sure you want to update this student's information?")
             .setPositiveButton("Update") { _, _ ->
-                val updatedStudent = originalStudent.copy(
+                val updatedStudent = Student(
+                    studentId = originalStudent.studentId,
                     firstName = newFirstName,
                     lastName = newLastName,
                     section = newSection,
                     gradeLevel = newGradeLevel,
-                    gender = newGender
+                    gender = newGender,
+                    user = user,
+                    attendanceStatus = originalStudent.attendanceStatus,
+                    isArchived = originalStudent.isArchived,
+                    grade = originalStudent.grade
                 )
-                try {
-                    DataStore.updateStudent(updatedStudent)
-                    loadSections()
-                    filterStudentsBySection(selectedSection)
-                    parentDialog.dismiss()
-                    toast("Student updated successfully")
-                } catch (e: IllegalArgumentException) {
-                    toast(e.message ?: "Failed to update student")
+                DataStore.updateStudent(updatedStudent) { success ->
+                    if (success) {
+                        loadSections()
+                        filterStudentsBySection(selectedSection)
+                        parentDialog.dismiss()
+                        Toast.makeText(this, "Student updated successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to update student", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -285,14 +334,21 @@ class StudentsListActivity : AppCompatActivity() {
     private fun validateInput(
         firstName: String,
         lastName: String,
-        section: String,
-        gradeLevel: String
+        section: String
     ): Boolean {
         return when {
-            firstName.isEmpty() -> { toast("Please enter first name"); false }
-            lastName.isEmpty() -> { toast("Please enter last name"); false }
-            section.isEmpty() -> { toast("Please enter section"); false }
-            gradeLevel.isEmpty() -> { toast("Please enter grade level"); false }
+            firstName.isEmpty() -> {
+                Toast.makeText(this, "Please enter first name", Toast.LENGTH_SHORT).show()
+                false
+            }
+            lastName.isEmpty() -> {
+                Toast.makeText(this, "Please enter last name", Toast.LENGTH_SHORT).show()
+                false
+            }
+            section.isEmpty() -> {
+                Toast.makeText(this, "Please enter section", Toast.LENGTH_SHORT).show()
+                false
+            }
             else -> true
         }
     }
@@ -306,6 +362,10 @@ class StudentsListActivity : AppCompatActivity() {
             .setView(dialogView)
             .setTitle("Search Students")
             .setNegativeButton("Cancel", null)
+            .setNeutralButton("Clear") { _, _ ->
+                isShowingSearchResults = false
+                filterStudentsBySection(selectedSection)
+            }
             .create()
 
         searchInput.setOnEditorActionListener { _, actionId, _ ->
@@ -325,18 +385,23 @@ class StudentsListActivity : AppCompatActivity() {
 
         dialog.show()
     }
+
     private fun performSearch(query: String) {
         if (query.isNotBlank()) {
-            val filtered = DataStore.getStudents().filter {
-                "${it.lastName}, ${it.firstName}".contains(query, true)
+            val filtered = DataStore.getStudents(includeArchived = false).filter {
+                "${it.lastName}, ${it.firstName}".contains(query, ignoreCase = true)
             }
             studentList.clear()
             studentList.addAll(filtered.sortedWith(compareBy({ it.gender != "Male" }, { it.lastName }, { it.firstName })))
             studentAdapter.updateList(studentList)
+            updateNoStudentsVisibility()
 
-            // Show search state in UI
             findViewById<TextView>(R.id.sectionsLabel).text = "Search Results"
             sectionAdapter.setSelectedPosition(-1)
+            isShowingSearchResults = true
+        } else {
+            isShowingSearchResults = false
+            filterStudentsBySection(selectedSection)
         }
     }
 
@@ -347,8 +412,48 @@ class StudentsListActivity : AppCompatActivity() {
     }
 
     private fun loadStudents() {
-        allStudents.clear()
-        allStudents.addAll(DataStore.getStudents())
-        filterStudentsBySection(selectedSection)
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val userId = sharedPreferences.getInt("userId", -1)
+
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        progressBar.visibility = View.VISIBLE
+        noStudentsText.visibility = View.GONE
+
+        DataStore.syncStudents(userId, includeArchived = false) { success ->
+            if (success) {
+                // Sync grades to ensure student data is up-to-date
+                DataStore.syncGrades(userId) { gradeSuccess ->
+                    progressBar.visibility = View.GONE
+                    if (gradeSuccess) {
+                        loadSections()
+                        filterStudentsBySection(selectedSection)
+                    } else {
+                        Toast.makeText(this, "Error syncing grades", Toast.LENGTH_SHORT).show()
+                        loadSections()
+                        filterStudentsBySection(selectedSection)
+                    }
+                }
+            } else {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this, "Error loading students", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateNoStudentsVisibility() {
+        noStudentsText.visibility = if (studentList.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!isShowingSearchResults) {
+            loadStudents()
+        }
     }
 }
