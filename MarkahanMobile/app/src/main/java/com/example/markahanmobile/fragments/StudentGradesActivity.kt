@@ -5,89 +5,87 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
-import com.example.markahanmobile.utils.toast
 
 class StudentGradesActivity : AppCompatActivity() {
 
+    private lateinit var studentNameText: TextView
+    private lateinit var sectionText: TextView
+    private lateinit var gradeLevelText: TextView
+    private lateinit var averageGradeText: TextView
+    private lateinit var averageRemarksText: TextView
+    private lateinit var editGradesButton: Button
+    private lateinit var printGradesButton: Button
+    private lateinit var progressBar: ProgressBar
+    private lateinit var scrollView: ScrollView
     private lateinit var student: Student
+    private val EDIT_GRADES_REQUEST = 1001
     private val TAG = "StudentGradesActivity"
-    private val EDIT_GRADES_REQUEST = 1002
-    private val isEditMode: Boolean
-        get() = intent.getBooleanExtra("editMode", false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_grades)
 
-        try {
-            student = intent.getParcelableExtra("student") ?: run {
-                Log.e(TAG, "Student data not found in Intent")
-                toast("Error: Student data not found")
-                finish()
-                return
-            }
+        initializeViews()
+        loadData()
+        setupListeners()
+    }
 
-            val latestStudent = DataStore.getStudents(includeArchived = true).find { it.studentID == student.studentID }
-            if (latestStudent == null) {
-                Log.e(TAG, "Student not found in DataStore: ${student.studentID}")
-                toast("Error: Student not found in DataStore")
-                finish()
-                return
-            }
-            student = latestStudent
-            Log.d(TAG, "Fetched student: ${student.studentID}, Grades: ${student.grades}, Remarks: ${student.remarks}")
+    private fun initializeViews() {
+        studentNameText = findViewById(R.id.studentName)
+        sectionText = findViewById(R.id.studentSection)
+        gradeLevelText = findViewById(R.id.studentGradeLevel)
+        averageGradeText = findViewById(R.id.txtAverageGrade)
+        averageRemarksText = findViewById(R.id.txtAverageRemarks)
+        editGradesButton = findViewById(R.id.btnEditGrades)
+        printGradesButton = findViewById(R.id.btnPrintGrades)
+        progressBar = findViewById(R.id.progressBar)
+        scrollView = findViewById(R.id.scrollView)
+    }
 
-            setupUI()
-            setupButtons()
+    private fun loadData() {
+        student = intent.getParcelableExtra("student") ?: return finish()
 
-            if (isEditMode) {
-                launchEditGradesActivity()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in onCreate", e)
-            toast("Failed to load grades: ${e.message}")
+        studentNameText.text = "${student.lastName}, ${student.firstName}"
+        sectionText.text = student.section
+        gradeLevelText.text = student.gradeLevel
+
+        progressBar.visibility = View.VISIBLE
+        scrollView.visibility = View.GONE
+
+        val userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getInt("userId", -1)
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
+            return
+        }
+
+        DataStore.syncGrades(userId) { success ->
+            progressBar.visibility = View.GONE
+            scrollView.visibility = View.VISIBLE
+            if (success) {
+                val grade = DataStore.getGradeByStudent(student.studentId)
+                student = student.copy(grade = grade)
+                setupUI()
+            } else {
+                Toast.makeText(this, "Error loading grades", Toast.LENGTH_SHORT).show()
+                setupUI()
+            }
         }
     }
 
     private fun setupUI() {
-        try {
-            findViewById<TextView>(R.id.studentName)?.text =
-                ("${student.firstName} ${student.lastName}"
-                    ?: Log.e(TAG, "studentName TextView not found")).toString()
-
-            Log.d(TAG, "Setting student info - Section: ${student.section}, GradeLevel: ${student.gradeLevel}")
-            val sectionTextView = findViewById<TextView>(R.id.studentSection)
-            val gradeLevelTextView = findViewById<TextView>(R.id.studentGradeLevel)
-
-            if (sectionTextView != null) {
-                sectionTextView.text = student.section.takeIf { !it.isNullOrEmpty() } ?: "N/A"
-            } else {
-                Log.e(TAG, "studentSection TextView not found")
-            }
-
-            if (gradeLevelTextView != null) {
-                gradeLevelTextView.text = student.gradeLevel.takeIf { !it.isNullOrEmpty() } ?: "N/A"
-            } else {
-                Log.e(TAG, "studentGradeLevel TextView not found")
-            }
-
-            findViewById<TextView>(R.id.txtAverageGrade)?.text =
-                (String.format("%.2f", student.average)
-                    ?: Log.e(TAG, "txtAverageGrade TextView not found")).toString()
-            findViewById<TextView>(R.id.txtAverageRemarks)?.let {
-                it.text = if (student.average >= 75) "PASSED" else "FAILED"
-                it.setTextColor(
-                    if (student.average >= 75) android.graphics.Color.GREEN
-                    else android.graphics.Color.RED
-                )
-            } ?: Log.e(TAG, "txtAverageRemarks TextView not found")
-
+        student.grade?.let { grade ->
             bindGradeRow(R.id.rowFilipino, "Filipino")
             bindGradeRow(R.id.rowEnglish, "English")
             bindGradeRow(R.id.rowMath, "Math")
@@ -96,87 +94,84 @@ class StudentGradesActivity : AppCompatActivity() {
             bindGradeRow(R.id.rowESP, "ESP")
             bindGradeRow(R.id.rowMAPEH, "MAPEH")
             bindGradeRow(R.id.rowComputer, "Computer")
-            bindGradeRow(R.id.rowTLE, "TLE")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in setupUI", e)
-            toast("Failed to set up UI: ${e.message}")
+
+            averageGradeText.text = if (grade.finalGrade > 0) String.format("%.2f", grade.finalGrade) else "-"
+            averageRemarksText.text = grade.remarks.ifEmpty { "-" }
+            averageRemarksText.setTextColor(
+                ContextCompat.getColor(
+                    this,
+                    if (grade.finalGrade >= 75) R.color.green else R.color.red
+                )
+            )
+        } ?: run {
+            Toast.makeText(this, "No grades available for this student", Toast.LENGTH_SHORT).show()
+            arrayOf(
+                R.id.rowFilipino, R.id.rowEnglish, R.id.rowMath, R.id.rowScience,
+                R.id.rowAP, R.id.rowESP, R.id.rowMAPEH, R.id.rowComputer
+            ).forEach { rowId ->
+                findViewById<LinearLayout>(rowId)?.visibility = View.GONE
+            }
+            averageGradeText.text = "-"
+            averageRemarksText.text = "-"
+            averageRemarksText.setTextColor(ContextCompat.getColor(this, R.color.red))
         }
     }
 
     private fun bindGradeRow(rowId: Int, subject: String) {
-        try {
-            val row = findViewById<View>(rowId) ?: run {
-                Log.e(TAG, "Grade row not found for ID: $rowId")
-                return
-            }
-            row.findViewById<TextView>(R.id.subjectName)?.text = (subject ?: Log.e(TAG, "subjectName TextView not found in grade row $rowId")).toString()
-            val grade = student.grades[subject]
-            row.findViewById<TextView>(R.id.subjectGrade)?.let {
-                it.text = grade?.grade?.let { g -> String.format("%.2f", g) } ?: "-"
-            } ?: Log.e(TAG, "subjectGrade TextView not found in grade row $rowId")
-            row.findViewById<TextView>(R.id.subjectRemarks)?.let {
-                it.text = grade?.remarks ?: "-"
-                it.setTextColor(
-                    if (grade != null && grade.grade >= 75) android.graphics.Color.GREEN else android.graphics.Color.RED
+        val row = findViewById<LinearLayout>(rowId)
+        val subjectText = row.findViewById<TextView>(R.id.txtSubject)
+        val gradeText = row.findViewById<TextView>(R.id.txtGrade)
+        val remarksText = row.findViewById<TextView>(R.id.txtRemarks)
+
+        student.grade?.subjectGrades?.get(subject)?.let { subjectGrade ->
+            subjectText.text = subject
+            gradeText.text = if (subjectGrade.grade > 0) String.format("%.2f", subjectGrade.grade) else "-"
+            remarksText.text = subjectGrade.remarks.ifEmpty { "-" }
+            remarksText.setTextColor(
+                ContextCompat.getColor(
+                    this,
+                    if (subjectGrade.grade >= 75) R.color.green else R.color.red
                 )
-            } ?: Log.e(TAG, "subjectRemarks TextView not found in grade row $rowId")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error binding grade row for subject: $subject", e)
+            )
+        } ?: run {
+            subjectText.text = subject
+            gradeText.text = "-"
+            remarksText.text = "-"
+            remarksText.setTextColor(ContextCompat.getColor(this, R.color.red))
         }
     }
 
-    private fun setupButtons() {
-        findViewById<Button>(R.id.btnEditGrades)?.setOnClickListener {
-           launchEditGradesActivity()
+    private fun setupListeners() {
+        editGradesButton.setOnClickListener {
+            try {
+                val intent = Intent(this, EditGradesActivity::class.java).apply {
+                    putExtra("student", student as android.os.Parcelable)
+                }
+                startActivityForResult(intent, EDIT_GRADES_REQUEST)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error opening EditGradesActivity", e)
+                Toast.makeText(this, "Error opening grade editor", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        findViewById<Button>(R.id.btnPrintGrades)?.setOnClickListener {
-            Log.d(TAG, "Printing grades for ${student.studentID}")
-            toast("Printing grades for ${student.firstName} ${student.lastName}")
-            // Implement actual print functionality if needed
+        printGradesButton.setOnClickListener {
+            Toast.makeText(this, "Print functionality not implemented", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun launchEditGradesActivity() {
-        Log.d(TAG, "Launching EditGradesActivity for ${student.studentID}")
-        val intent = Intent(this, EditGradesActivity::class.java).apply {
-            putExtra("student", student)
-        }
-        startActivityForResult(intent, EDIT_GRADES_REQUEST)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == EDIT_GRADES_REQUEST) {
-            when (resultCode) {
-                RESULT_OK -> {
-                    data?.getParcelableExtra<Student>("updatedStudent")?.let { updatedStudent ->
-                        try {
-                            Log.d(TAG, "Received updated student: ${updatedStudent.studentID}, Grades: ${updatedStudent.grades}, Remarks: ${updatedStudent.remarks}")
-                            DataStore.updateStudent(updatedStudent)
-                            student = updatedStudent
-                            setupUI()
-                            toast("Grades updated successfully")
-
-                            if (isEditMode) {
-                                val resultIntent = Intent().apply {
-                                    putExtra("updatedStudent", updatedStudent)
-                                }
-                                setResult(RESULT_OK, resultIntent)
-                                finish()
-                            }
-                        } catch (e: IllegalArgumentException) {
-                            Log.e(TAG, "Error updating student", e)
-                            toast(e.message ?: "Failed to update grades")
-                        }
-                    } ?: Log.e(TAG, "No updated student received in onActivityResult")
-                }
-                RESULT_CANCELED -> {
-                    if (isEditMode) {
-                        setResult(RESULT_CANCELED)
-                        finish()
-                    }
-                }
+        if (requestCode == EDIT_GRADES_REQUEST && resultCode == RESULT_OK) {
+            data?.getParcelableExtra<Student>("updatedStudent")?.let { updatedStudent ->
+                student = updatedStudent
+                setupUI()
+                val resultIntent = Intent()
+                resultIntent.putExtra("updatedStudent", student as android.os.Parcelable)
+                setResult(RESULT_OK, resultIntent)
+                Toast.makeText(this, "Grades updated successfully", Toast.LENGTH_SHORT).show()
+            } ?: run {
+                Log.e(TAG, "No updated student received in onActivityResult")
+                Toast.makeText(this, "Failed to update grades", Toast.LENGTH_SHORT).show()
             }
         }
     }

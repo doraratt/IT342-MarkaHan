@@ -1,4 +1,13 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "terminal.integrated.env.windows": {
+        "PATH": "${env:PATH};C:/Program Files/Apache/Maven/apache-maven-3.9.9-bin/apache-maven-3.9.9/bin"
+    },
+    "terminal.integrated.env.linux": {
+        "PATH": "${env:PATH}:C:/Program Files/Apache/Maven/apache-maven-3.9.9-bin/apache-maven-3.9.9/bin"
+    },
+    "terminal.integrated.env.osx": {
+        "PATH": "${env:PATH}:C:/Program Files/Apache/Maven/apache-maven-3.9.9-bin/apache-maven-3.9.9/bin"
+    }
 }

@@ -47,9 +47,9 @@
 
     <ImageView
         android:id="@+id/btnArchiveStudent"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:src="@drawable/archive"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/archivestudent"
         android:contentDescription="Archive"
         android:tint="#808080" />
 </LinearLayout>
