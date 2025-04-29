@@ -5,9 +5,16 @@ import googleLogo from '../assets/Google-Symbol.png';
 
 const GoogleButton = () => {
   const handleGoogleLogin = () => {
-    // Redirect to your Spring Boot OAuth2 authorization endpoint
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    console.log("Initiating Google OAuth2 redirect");
+    try {
+      // Use the standard OAuth2 authorization endpoint
+      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    } catch (err) {
+      console.error("Redirect failed:", err);
+      alert("Failed to initiate Google login. Please try again.");
+    }
   };
+
   return (
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
@@ -18,6 +25,7 @@ const GoogleButton = () => {
       <Button
         fullWidth
         variant="outlined"
+        onClick={handleGoogleLogin}
         sx={{
           py: 1,
           border: '1px solid #e0e0e0',
@@ -32,16 +40,16 @@ const GoogleButton = () => {
         }}
         startIcon={
           <img
-            src={googleLogo}
+            src={googleLogo || "/placeholder.svg"}
             alt="Google logo"
             style={{ height: '18px' }}
           />
         }
       >
-        Google
+        Sign in with Google
       </Button>
     </>
   );
 };
 
-export default GoogleButton; 
+export default GoogleButton;
