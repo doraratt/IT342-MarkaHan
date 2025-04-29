@@ -1,0 +1,12 @@
+<resources>
+    <style name="DrawerMenuItemTextStyle">
+        <item name="android:fontFamily">@font/lexend_med</item> <!-- Custom font -->
+        <item name="android:textColor">#fff</item>  <!-- Text color (optional) -->
+        <item name="android:textSize">16sp</item> <!-- Font size (optional) -->
+    </style>
+
+    <style name="ThemeOverlay.AppCompat.Dialog" parent="ThemeOverlay.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
+</resources>

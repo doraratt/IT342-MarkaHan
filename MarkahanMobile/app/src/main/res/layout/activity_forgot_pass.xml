@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".fragments.ForgotPassActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Forgot Password,"
+        android:textSize="34sp"
+        android:textColor="#1f295a"
+        android:fontFamily="@font/lexend_bold"
+        android:layout_marginTop="150dp"
+        android:layout_marginLeft="30dp"/>
+
+    <TextView
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="Please enter your registered email to reset your password"
+        android:textSize="15sp"
+        android:textColor="#5163aa"
+        android:fontFamily="@font/lexend_med"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="30dp"/>
+
+    <EditText
+        android:id="@+id/edit_email"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_transpa"
+        android:hint="Registered Email"
+        android:fontFamily="@font/lexend_reg"
+        android:textSize="16sp"
+        android:inputType="textEmailAddress"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:minHeight="50dp"
+        android:layout_marginTop="70dp"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/recover_password"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_blu"
+        android:text="Recover Password"
+        android:textSize="16sp"
+        android:textColor="#fff"
+        android:fontFamily="@font/lexend_reg"
+        android:layout_marginTop="45dp"
+        android:layout_gravity="center"/>
+
+
+</LinearLayout>

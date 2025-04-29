@@ -1,9 +1,12 @@
 # Build stage
 FROM maven:3.8.4-openjdk-17-slim AS build
 WORKDIR /app
-COPY pom.xml .
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+RUN ./mvnw dependency:resolve
 COPY src ./src
-RUN mvn package -DskipTests
+RUN ./mvnw package -DskipTests
 
 # Runtime stage
 FROM openjdk:17-jdk-slim
@@ -19,6 +22,10 @@ RUN apt-get update && \
 USER javauser
 
 COPY --from=build /app/target/*.jar app.jar
+
+# Healthcheck configuration
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
