@@ -1,55 +1,70 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import CircularProgress from "@mui/material/CircularProgress"
-import Box from "@mui/material/Box"
-import Typography from "@mui/material/Typography"
-import { useUser } from "../UserContext"
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { useUser } from "../UserContext";
 
 const OAuth2RedirectHandler = () => {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const navigate = useNavigate()
-  const { setUser } = useUser()
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { setUser } = useUser();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        console.log("Fetching user info after OAuth login...")
+        console.log("Fetching user info from /api/user/me after OAuth login...");
+        
+        // Add a small delay to ensure the session is properly established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const response = await fetch("http://localhost:8080/api/user/me", {
-          credentials: "include", // Important for cookies
+          method: "GET",
+          credentials: "include", // Important for cookies (JSESSIONID)
           headers: {
-            Accept: "application/json",
+            "Accept": "application/json",
+            "Content-Type": "application/json"
           },
-        })
+        });
 
+        console.log("Response status:", response.status);
+        
         if (response.ok) {
-          const userData = await response.json()
-          console.log("User data received:", userData)
-
-          // Store user data in context
-          setUser(userData)
-
-          // Also store in localStorage as backup
-          localStorage.setItem("user", JSON.stringify(userData))
-
-          // Redirect to dashboard
-          navigate("/dashboard")
+          const userData = await response.json();
+          console.log("User data received:", userData);
+          
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem("user", JSON.stringify(userData));
+            navigate("/dashboard");
+          } else {
+            throw new Error("Empty user data received");
+          }
         } else {
-          console.error("Failed to fetch user info:", await response.text())
-          setError("Failed to fetch user information. Please try again.")
-          setTimeout(() => navigate("/login"), 3000)
+          let errorMessage;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || "Authentication failed";
+          } catch (e) {
+            errorMessage = await response.text() || `HTTP error: ${response.status}`;
+          }
+          
+          console.error("Failed to fetch user info:", errorMessage);
+          setError(errorMessage);
+          setTimeout(() => navigate("/login"), 3000);
         }
       } catch (err) {
-        console.error("Error during authentication:", err)
-        setError("An error occurred during authentication. Please try again.")
-        setTimeout(() => navigate("/login"), 3000)
+        console.error("Error during authentication:", err);
+        setError(err.message || "An unexpected error occurred");
+        setTimeout(() => navigate("/login"), 3000);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchUserInfo()
-  }, [navigate, setUser])
+    fetchUserInfo();
+  }, [navigate, setUser]);
 
   if (loading) {
     return (
@@ -67,7 +82,7 @@ const OAuth2RedirectHandler = () => {
           Completing authentication...
         </Typography>
       </Box>
-    )
+    );
   }
 
   if (error) {
@@ -82,14 +97,14 @@ const OAuth2RedirectHandler = () => {
         }}
       >
         <Typography variant="h6" color="error">
-          {error}
+          Authentication Error: {error}
         </Typography>
         <Typography variant="body1">Redirecting to login page...</Typography>
       </Box>
-    )
+    );
   }
 
-  return null
-}
+  return null;
+};
 
-export default OAuth2RedirectHandler
+export default OAuth2RedirectHandler;
