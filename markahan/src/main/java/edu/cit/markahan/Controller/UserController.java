@@ -27,7 +27,7 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class UserController {
     
     @Autowired
@@ -43,6 +43,36 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (principal != null) {
+                String email = principal.getAttribute("email");
+                if (email != null) {
+                    UserEntity userEntity = userRepository.findByEmail(email);
+                    if (userEntity != null) {
+                        response.put("id", userEntity.getUserId());
+                        response.put("email", userEntity.getEmail());
+                        response.put("firstName", userEntity.getFirstName());
+                        response.put("lastName", userEntity.getLastName());
+                        return ResponseEntity.ok(response);
+                    }
+                }
+                // Fallback for OAuth2 users not yet in DB
+                response.put("email", principal.getAttribute("email"));
+                response.put("firstName", principal.getAttribute("given_name"));
+                response.put("lastName", principal.getAttribute("family_name"));
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        } catch (Exception e) {
+            response.put("error", "Failed to retrieve user information: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -100,48 +130,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-    }
-    
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal OAuth2User principal, Principal user) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            if (principal != null) {
-                String email = principal.getAttribute("email");
-                if (email != null) {
-                    UserEntity userEntity = userRepository.findByEmail(email);
-                    if (userEntity != null) {
-                        response.put("id", userEntity.getUserId());
-                        response.put("email", userEntity.getEmail());
-                        response.put("firstName", userEntity.getFirstName());
-                        response.put("lastName", userEntity.getLastName());
-                        return ResponseEntity.ok(response);
-                    }
-                }
-                
-                // If user not found in our database but authenticated via OAuth2
-                response.put("email", principal.getAttribute("email"));
-                response.put("name", principal.getAttribute("name"));
-                return ResponseEntity.ok(response);
-            } else if (user != null) {
-                // Handle regular authentication
-                String username = user.getName();
-                UserEntity userEntity = userRepository.findByEmail(username);
-                if (userEntity != null) {
-                    response.put("id", userEntity.getUserId());
-                    response.put("email", userEntity.getEmail());
-                    response.put("firstName", userEntity.getFirstName());
-                    response.put("lastName", userEntity.getLastName());
-                    return ResponseEntity.ok(response);
-                }
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        } catch (Exception e) {
-            response.put("error", "Failed to retrieve user information: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }
