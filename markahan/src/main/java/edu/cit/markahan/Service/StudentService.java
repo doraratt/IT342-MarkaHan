@@ -28,7 +28,6 @@ public class StudentService {
         return studentRepository.findAll();
     }
 
-    // New method to get students by user ID
     public List<StudentEntity> getStudentsByUserId(int userId) {
         return studentRepository.findByUserUserId(userId);
     }
@@ -54,13 +53,5 @@ public class StudentService {
         } else {
             return "Student not found.";
         }
-    }
-    
- // New method to archive/unarchive a student
-    public StudentEntity archiveStudent(int studentId, boolean isArchived) {
-        StudentEntity student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-        student.setArchived(isArchived);
-        return studentRepository.save(student);
     }
 }

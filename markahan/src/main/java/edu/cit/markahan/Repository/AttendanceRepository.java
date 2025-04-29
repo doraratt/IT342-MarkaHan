@@ -15,6 +15,14 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, In
     @Query("SELECT a FROM AttendanceEntity a JOIN FETCH a.student JOIN FETCH a.user WHERE a.user.userId = :userId")
     List<AttendanceEntity> findByUserUserIdWithFetch(@Param("userId") int userId);
 
+    @Query("SELECT a FROM AttendanceEntity a JOIN FETCH a.student JOIN FETCH a.user " +
+        "WHERE a.user.userId = :userId AND YEAR(a.date) = :year AND MONTH(a.date) = :month")
+    List<AttendanceEntity> findByUserIdAndMonthYearWithFetch(
+    @Param("userId") int userId,
+    @Param("month") int month,
+    @Param("year") int year
+    );
+
     // Existing methods (for reference)
     AttendanceEntity findByStudentAndDate(StudentEntity student, LocalDate localDate);
     List<AttendanceEntity> findByUserUserId(int userId);

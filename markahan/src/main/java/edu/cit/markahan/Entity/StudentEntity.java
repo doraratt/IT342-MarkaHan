@@ -35,7 +35,7 @@ public class StudentEntity {
     private String gender;
 
     @Column(nullable = false)
-    private boolean isArchived = false; // New field
+    private boolean isArchived; // New field
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
