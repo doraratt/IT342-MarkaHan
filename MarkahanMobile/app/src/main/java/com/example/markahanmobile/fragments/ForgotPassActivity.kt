@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import com.example.markahanmobile.R
-import com.example.markahanmobile.utils.toast
 
 class ForgotPassActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +33,7 @@ class ForgotPassActivity : Activity() {
             }
 
             // Simulate email validation success
-            toast("Reset link sent to $email")
+            Toast.makeText(this,"Reset link sent to $email", Toast.LENGTH_SHORT).show()
 
             // Now navigate to the next activity
             val intent = Intent(this, CheckEmailActivity::class.java)

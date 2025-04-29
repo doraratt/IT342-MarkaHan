@@ -4,7 +4,12 @@ import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.*
+import android.view.View
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -12,16 +17,16 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.markahanmobile.R
 import com.example.markahanmobile.data.AttendanceRecord
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.helper.AttendanceAdapter
 import com.example.markahanmobile.helper.SectionAdapter
-import com.example.markahanmobile.utils.toast
-import com.example.markahanmobile.R
 import com.google.android.material.navigation.NavigationView
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class AttendanceActivity : AppCompatActivity() {
 
@@ -29,18 +34,16 @@ class AttendanceActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var recyclerView: RecyclerView
     private lateinit var sectionRecyclerView: RecyclerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var noStudentsText: TextView
     private lateinit var adapter: AttendanceAdapter
     private lateinit var sectionAdapter: SectionAdapter
     private val allStudents = mutableListOf<Student>()
     private val displayedStudents = mutableListOf<Student>()
     private val sectionList = mutableListOf<String>()
-    private var selectedDate = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.time
+    private var selectedDate: LocalDate = LocalDate.now()
     private var selectedSection = SectionAdapter.ALL_SECTIONS
+    private var userId: Int = 0
     private val TAG = "AttendanceActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +55,8 @@ class AttendanceActivity : AppCompatActivity() {
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        progressBar = findViewById(R.id.progressBar)
+        noStudentsText = findViewById(R.id.noStudentsText)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -79,6 +84,21 @@ class AttendanceActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
+        val logoutView = navView.findViewById<TextView>(R.id.nav_logout)
+        logoutView?.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Confirm Logout")
+                .setMessage("Are you sure you want to log out?")
+                .setIcon(R.drawable.warningsign)
+                .setPositiveButton("Logout") { _, _ ->
+                    DataStore.logout()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_dash -> startActivity(Intent(this, DashboardActivity::class.java))
@@ -106,31 +126,30 @@ class AttendanceActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         recyclerView = findViewById(R.id.attendanceRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = AttendanceAdapter { position, status ->
-            displayedStudents[position].attendanceStatus = status
+        adapter = AttendanceAdapter { studentPosition, status ->
+            val student = displayedStudents[studentPosition]
+            displayedStudents[studentPosition] = student.copy(attendanceStatus = status)
+            Log.d(TAG, "Updated attendance for ${student.lastName}, ${student.firstName}: $status")
         }
         recyclerView.adapter = adapter
-        filterStudentsBySection(selectedSection)
     }
 
     private fun setupDateDisplay() {
         val dateTextView = findViewById<TextView>(R.id.txtDate)
-        dateTextView.text = SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(selectedDate)
+        val formatter = DateTimeFormatter.ofPattern("MM/dd/yy", Locale.getDefault())
+        dateTextView.text = selectedDate.format(formatter)
 
         dateTextView.setOnClickListener {
-            val calendar = Calendar.getInstance().apply { time = selectedDate }
             DatePickerDialog(
                 this,
                 { _, year, month, day ->
-                    calendar.set(year, month, day, 0, 0, 0)
-                    calendar.set(Calendar.MILLISECOND, 0)
-                    selectedDate = calendar.time
-                    dateTextView.text = SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(selectedDate)
-                    loadStudents() // Refresh to apply any existing attendance statuses
+                    selectedDate = LocalDate.of(year, month + 1, day)
+                    dateTextView.text = selectedDate.format(formatter)
+                    loadStudents()
                 },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+                selectedDate.year,
+                selectedDate.monthValue - 1,
+                selectedDate.dayOfMonth
             ).show()
         }
     }
@@ -145,16 +164,45 @@ class AttendanceActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.iconSheets).setOnClickListener {
             val intent = Intent(this, AttendanceSheetActivity::class.java)
             intent.putExtra("SELECTED_SECTION", selectedSection)
-            intent.putExtra("SELECTED_DATE", selectedDate.time)
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault())
+            intent.putExtra("SELECTED_DATE", selectedDate.format(formatter))
             startActivity(intent)
         }
     }
 
     private fun loadStudents() {
-        allStudents.clear()
-        allStudents.addAll(DataStore.getStudents())
-        Log.d(TAG, "Loaded ${allStudents.size} students: ${allStudents.map { "${it.lastName}, ${it.firstName}, Section=${it.section}" }}")
-        filterStudentsBySection(selectedSection)
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        userId = DataStore.getLoggedInUser()?.userId ?: sharedPreferences.getInt("userId", -1)
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        progressBar.visibility = View.VISIBLE
+        noStudentsText.visibility = View.GONE
+
+        DataStore.syncStudents(userId, includeArchived = false) { success ->
+            if (success) {
+                DataStore.syncAttendanceRecords(userId) { attendanceSuccess ->
+                    progressBar.visibility = View.GONE
+                    if (attendanceSuccess) {
+                        allStudents.clear()
+                        allStudents.addAll(DataStore.getStudents(includeArchived = false))
+                        Log.d(TAG, "Loaded ${allStudents.size} students: ${allStudents.map { "${it.lastName}, ${it.firstName}, Section=${it.section}" }}")
+                        val records = DataStore.getAttendanceRecords(selectedSection, selectedDate, selectedDate)
+                        filterStudentsBySection(selectedSection, records)
+                    } else {
+                        Toast.makeText(this, "Error syncing attendance records", Toast.LENGTH_SHORT).show()
+                        filterStudentsBySection(selectedSection)
+                    }
+                }
+            } else {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this, "Error loading students", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun loadSections() {
@@ -168,32 +216,33 @@ class AttendanceActivity : AppCompatActivity() {
         Log.d(TAG, "Loaded sections: $sectionList")
     }
 
-    private fun filterStudentsBySection(section: String) {
+    private fun filterStudentsBySection(section: String, records: List<AttendanceRecord> = emptyList()) {
         Log.d(TAG, "Filtering students for section: $section")
         displayedStudents.clear()
-        val students = DataStore.getStudents(section)
-        val records = DataStore.getAttendanceRecords(section, selectedDate, selectedDate)
+        val students = if (section == SectionAdapter.ALL_SECTIONS) {
+            allStudents
+        } else {
+            allStudents.filter { it.section == section }
+        }
         displayedStudents.addAll(students.map { student ->
-            val status = records.firstOrNull { it.studentId == student.studentID }?.status ?: ""
-            student.copy(attendanceStatus = when (status) {
-                "P" -> "P"
-                "A" -> "A"
-                "L" -> "L"
-                else -> ""
-            })
-        }.sortedWith(compareBy({ it.gender != "Male" }, { it.lastName }, { it.firstName })))
+            val record = records.firstOrNull { it.studentId == student.studentId && it.date == selectedDate }
+            val status = record?.status ?: ""
+            student.copy(attendanceStatus = status)
+        })
         adapter.updateList(displayedStudents)
-        Log.d(TAG, "Filtered ${displayedStudents.size} students for section: $section, Students: ${displayedStudents.map { "${it.lastName}, ${it.firstName}, Section=${it.section}" }}")
+        updateNoStudentsVisibility()
+        Log.d(TAG, "Filtered ${displayedStudents.size} students for section: $section")
     }
 
     private fun saveAttendanceRecords() {
         val recordsToSave = displayedStudents.filter { it.attendanceStatus.isNotEmpty() }
         if (recordsToSave.isEmpty()) {
-            toast("No attendance records to save")
+            Toast.makeText(this, "No attendance records to save", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val dateStr = SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(selectedDate)
+        val formatter = DateTimeFormatter.ofPattern("MM/dd/yy", Locale.getDefault())
+        val dateStr = selectedDate.format(formatter)
         val summary = recordsToSave.joinToString("\n") { student ->
             "${student.lastName}, ${student.firstName}: ${student.attendanceStatus}"
         }
@@ -204,16 +253,31 @@ class AttendanceActivity : AppCompatActivity() {
             .setPositiveButton("Save") { _, _ ->
                 val newRecords = recordsToSave.map { student ->
                     AttendanceRecord(
-                        studentId = student.studentID,
+                        attendanceId = 0,
+                        studentId = student.studentId,
+                        userId = userId,
                         date = selectedDate,
                         status = student.attendanceStatus,
-                        section = selectedSection
+                        section = student.section,
+                        student = student,
+                        user = DataStore.getLoggedInUser()
                     )
                 }
-                DataStore.addAttendanceRecords(newRecords)
-                toast("Attendance saved for ${recordsToSave.size} students")
+                DataStore.addAttendanceRecords(newRecords) { success ->
+                    if (success) {
+                        Toast.makeText(this, "Attendance saved for ${recordsToSave.size} students", Toast.LENGTH_SHORT).show()
+                        loadStudents()
+                    } else {
+                        Toast.makeText(this, "Failed to save attendance. Check logs for details.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun updateNoStudentsVisibility() {
+        noStudentsText.visibility = if (displayedStudents.isEmpty()) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (displayedStudents.isEmpty()) View.GONE else View.VISIBLE
     }
 }

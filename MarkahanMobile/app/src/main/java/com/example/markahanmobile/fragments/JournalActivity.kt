@@ -3,12 +3,16 @@ package com.example.markahanmobile.fragments
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -16,32 +20,46 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.markahanmobile.R
+import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Journal
 import com.example.markahanmobile.helper.JournalAdapter
 import com.google.android.material.navigation.NavigationView
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import java.util.UUID
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class JournalActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var recyclerView: RecyclerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var noJournalsText: TextView
     private lateinit var adapter: JournalAdapter
     private val journalList = mutableListOf<Journal>()
+    private var userId: Int = 0
+    private val TAG = "JournalActivity"
+
+    fun closeNavigationDrawer() {
+        drawerLayout.closeDrawers()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_journal)
+
+        DataStore.init(this) // Initialize DataStore with Context
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        recyclerView = findViewById(R.id.journalRecyclerView)
+        progressBar = findViewById(R.id.progressBar)
+        noJournalsText = findViewById(R.id.noJournalsText)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -50,16 +68,23 @@ class JournalActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // 🔥 Correctly access the logout view inside NavigationView
+        setupNavigation()
+        setupRecyclerView()
+        setupButtons()
+        loadJournals()
+    }
+
+    private fun setupNavigation() {
         val logoutView = navView.findViewById<TextView>(R.id.nav_logout)
         logoutView?.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Confirm Logout")
                 .setMessage("Are you sure you want to log out?")
                 .setIcon(R.drawable.warningsign)
-                .setPositiveButton("Yes") { _, _ ->
-                    val intent = Intent(this, LoginActivity::class.java)
-                    startActivity(intent)
+                .setPositiveButton("Logout") { _, _ ->
+                    DataStore.logout()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -76,9 +101,9 @@ class JournalActivity : AppCompatActivity() {
             drawerLayout.closeDrawers()
             true
         }
+    }
 
-        // Initialize RecyclerView
-        recyclerView = findViewById(R.id.journalRecyclerView)
+    private fun setupRecyclerView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = JournalAdapter(
             journalList,
@@ -88,95 +113,154 @@ class JournalActivity : AppCompatActivity() {
         )
         recyclerView.adapter = adapter
 
+        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                return false
+            }
+        })
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        // Unlock the drawer when the user interacts outside the RecyclerView
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        return super.onTouchEvent(event)
+    }
+
+    private fun setupButtons() {
         val journalHeader = findViewById<LinearLayout>(R.id.journalHeader)
-        journalHeader.setOnClickListener {
-            showAddJournalDialog()
+        journalHeader.setOnClickListener { showAddJournalDialog() }
+    }
+
+    private fun loadJournals() {
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        userId = DataStore.getLoggedInUser()?.userId ?: sharedPreferences.getInt("userId", -1)
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        progressBar.visibility = View.VISIBLE
+        noJournalsText.visibility = View.GONE
+        recyclerView.visibility = View.GONE
+
+        DataStore.syncJournals(userId) { success ->
+            progressBar.visibility = View.GONE
+            if (success) {
+                journalList.clear()
+                journalList.addAll(DataStore.getJournals())
+                Log.d(TAG, "Loaded journals: ${journalList.size}, entries: ${journalList.map { it.entry }}")
+                adapter.updateJournals(journalList)
+                updateNoJournalsVisibility()
+            } else {
+                Toast.makeText(this, "Failed to load journals. Please try again.", Toast.LENGTH_SHORT).show()
+                updateNoJournalsVisibility()
+            }
         }
     }
 
+    private fun updateNoJournalsVisibility() {
+        noJournalsText.visibility = if (journalList.isEmpty()) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (journalList.isEmpty()) View.GONE else View.VISIBLE
+        Log.d(TAG, "updateNoJournalsVisibility: journalList.size=${journalList.size}, recyclerView.visibility=${recyclerView.visibility}")
+    }
+
     private fun showAddJournalDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_journal, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_journal, null)
         setupJournalDialog(dialogView, null)
     }
 
     private fun setupJournalDialog(dialogView: View, existingJournal: Journal?) {
-        val entryInput = dialogView.findViewById<EditText>(R.id.journalEntryInput)
+        val entryLayout = dialogView.findViewById<TextInputLayout>(R.id.journalEntryLayout)
+        val entryInput = dialogView.findViewById<TextInputEditText>(R.id.journalEntryInput)
         val dateText = dialogView.findViewById<TextView>(R.id.journalDatePicker)
         val addButton = dialogView.findViewById<Button>(R.id.addJournalEntryButton)
         val closeButton = dialogView.findViewById<ImageView>(R.id.btnClose)
         val dialogTitle = dialogView.findViewById<TextView>(R.id.journalDialogTitle)
 
-        val calendar = Calendar.getInstance()
-        var selectedDate = existingJournal?.date ?: calendar.time
+        var selectedDate = existingJournal?.date ?: LocalDate.now()
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
 
-        // Initialize fields
-        dateText.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(selectedDate)
+        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+        dateText.text = selectedDate.format(formatter)
         closeButton.setOnClickListener { dialog.dismiss() }
 
         if (existingJournal != null) {
-            // Edit mode
             dialogTitle.text = "Edit Journal Entry"
             addButton.text = "Update Entry"
-            entryInput.setText(existingJournal.journalEntry)
+            entryInput.setText(existingJournal.entry)
         } else {
-            // Add mode
             dialogTitle.text = "Add Journal Entry"
             addButton.text = "Add Entry"
         }
 
-        // Date picker click
         dateText.setOnClickListener {
+            val year = selectedDate.year
+            val month = selectedDate.monthValue - 1
+            val day = selectedDate.dayOfMonth
+
             DatePickerDialog(
                 this,
-                { _, year, month, day ->
-                    calendar.set(year, month, day)
-                    selectedDate = calendar.time
-                    dateText.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                        .format(selectedDate)
+                { _, selectedYear, selectedMonth, selectedDay ->
+                    selectedDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
+                    dateText.text = selectedDate.format(formatter)
                 },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+                year,
+                month,
+                day
             ).show()
         }
 
-        // Submit logic
         addButton.setOnClickListener {
             val entry = entryInput.text.toString().trim()
             if (entry.isEmpty()) {
-                entryInput.error = "Please enter journal content"
+                entryLayout.error = "Please enter journal content"
             } else {
+                entryLayout.error = null
                 if (existingJournal != null) {
-                    // Confirm update
                     AlertDialog.Builder(this)
                         .setTitle("Confirm Update")
                         .setMessage("Are you sure you want to update this entry?")
-                        .setPositiveButton("Yes") { _, _ ->
-                            val index = journalList.indexOfFirst { it.journalID == existingJournal.journalID }
-                            if (index != -1) {
-                                journalList[index] = existingJournal.copy(
-                                    journalEntry = entry,
-                                    date = selectedDate
-                                )
-                                adapter.notifyItemChanged(index)
+                        .setPositiveButton("Update") { _, _ ->
+                            val updatedJournal = existingJournal.copy(
+                                user = DataStore.getLoggedInUser(),
+                                entry = entry,
+                                date = selectedDate
+                            )
+                            DataStore.updateJournal(updatedJournal) { success ->
+                                if (success) {
+                                    loadJournals()
+                                    dialog.dismiss()
+                                    Toast.makeText(this, "Journal updated successfully", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(this, "Failed to update journal", Toast.LENGTH_SHORT).show()
+                                }
                             }
-                            dialog.dismiss()
                         }
                         .setNegativeButton("Cancel", null)
                         .show()
                 } else {
-                    // Add new journal
-                    journalList.add(Journal(
-                        journalID = UUID.randomUUID().toString(),
-                        journalEntry = entry,
+                    val user = DataStore.getLoggedInUser()
+                    val newJournal = Journal(
+                        journalId = 0,
+                        user = user,
+                        entry = entry,
                         date = selectedDate
-                    ))
-                    adapter.notifyItemInserted(journalList.size - 1)
-                    dialog.dismiss()
+                    )
+                    DataStore.addJournal(newJournal) { success ->
+                        if (success) {
+                            loadJournals()
+                            dialog.dismiss()
+                            Toast.makeText(this, "Journal added successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Failed to add journal", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
@@ -184,37 +268,40 @@ class JournalActivity : AppCompatActivity() {
     }
 
     private fun showJournalDetails(journal: Journal) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_journal, null)
-        val entryInput = dialogView.findViewById<EditText>(R.id.journalEntryInput)
-        val dateText = dialogView.findViewById<TextView>(R.id.journalDatePicker)
-        val addButton = dialogView.findViewById<Button>(R.id.addJournalEntryButton)
-        val closeButton = dialogView.findViewById<ImageView>(R.id.btnClose)
-        val dialogTitle = dialogView.findViewById<TextView>(R.id.journalDialogTitle)
+        try {
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_journal, null)
+            val entryLayout = dialogView.findViewById<TextInputLayout>(R.id.journalEntryLayout)
+            val entryInput = dialogView.findViewById<TextInputEditText>(R.id.journalEntryInput)
+            val dateText = dialogView.findViewById<TextView>(R.id.journalDatePicker)
+            val addButton = dialogView.findViewById<Button>(R.id.addJournalEntryButton)
+            val closeButton = dialogView.findViewById<ImageView>(R.id.btnClose)
+            val dialogTitle = dialogView.findViewById<TextView>(R.id.journalDialogTitle)
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
+            val dialog = AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create()
 
-        dialogTitle.text = "Journal Details"
+            dialogTitle.text = "Journal Details"
+            entryInput.setText(journal.entry)
+            entryInput.isEnabled = false
+            entryLayout.hint = "Journal Entry"
+            entryLayout.isHelperTextEnabled = false
 
-        entryInput.setText(journal.journalEntry)
-        entryInput.isEnabled = false
+            val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+            dateText.text = journal.date.format(formatter)
+            dateText.isEnabled = false
 
-        dateText.text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(journal.date)
-        dateText.isEnabled = false
-
-        addButton.visibility = View.GONE
-
-        entryInput.isEnabled = false
-
-        dateText.isEnabled = false
-
-        closeButton.setOnClickListener { dialog.dismiss() }
-        dialog.show()
+            addButton.visibility = View.GONE
+            closeButton.setOnClickListener { dialog.dismiss() }
+            dialog.show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show journal details: ${e.message}", e)
+            Toast.makeText(this, "Error displaying journal details", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showEditJournalDialog(journal: Journal) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_journal, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_journal, null)
         setupJournalDialog(dialogView, journal)
     }
 
@@ -223,10 +310,13 @@ class JournalActivity : AppCompatActivity() {
             .setTitle("Delete Journal Entry")
             .setMessage("Are you sure you want to delete this entry?")
             .setPositiveButton("Delete") { _, _ ->
-                val index = journalList.indexOfFirst { it.journalID == journal.journalID }
-                if (index != -1) {
-                    journalList.removeAt(index)
-                    adapter.notifyItemRemoved(index)
+                DataStore.deleteJournal(journal.journalId) { success ->
+                    if (success) {
+                        loadJournals()
+                        Toast.makeText(this, "Journal deleted successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to delete journal", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .setNegativeButton("Cancel", null)

@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     tools:context=".fragments.JournalActivity">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#d6e1f7">
@@ -20,21 +20,24 @@
             android:background="#d6e1f7"
             app:title="Journal"
             app:titleTextColor="#1f295a"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <!-- Add Journal Header -->
         <LinearLayout
             android:id="@+id/journalHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/toolbar"
-            android:layout_alignParentEnd="true"
             android:layout_margin="16dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground"> <!-- Optional: adds ripple effect -->
+            android:background="?attr/selectableItemBackground"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <ImageView
                 android:id="@+id/addJournalButtonIcon"
@@ -57,17 +60,47 @@
                 android:fontFamily="@font/lexend_bold"/>
         </LinearLayout>
 
+        <!-- ProgressBar for Loading -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/journalHeader"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- No Journals Message -->
+        <TextView
+            android:id="@+id/noJournalsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:text="No journals found"
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/journalHeader"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
         <!-- Journal Entries List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/journalRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/journalHeader"
-            android:padding="16dp"/>
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:clipToPadding="false"
+            app:layout_constraintTop_toBottomOf="@id/noJournalsText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
-    </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Navigation drawer (keep your existing code) -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
@@ -93,5 +126,4 @@
             <include layout="@layout/nav_logout" />
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
-
 </androidx.drawerlayout.widget.DrawerLayout>

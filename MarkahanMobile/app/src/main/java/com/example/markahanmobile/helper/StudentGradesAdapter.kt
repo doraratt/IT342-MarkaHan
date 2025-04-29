@@ -44,9 +44,10 @@ class StudentGradesAdapter(
                 val student = items[position] as Student
                 Log.d("StudentGradesAdapter", "Binding student at position $position: ${student.firstName} ${student.lastName}, Section=${student.section}")
                 holder.studentName.text = "${student.lastName}, ${student.firstName}"
-                holder.studentRemarks.text = student.remarks
+                val remarks = student.grade?.remarks ?: "No Remarks"
+                holder.studentRemarks.text = remarks
                 holder.studentRemarks.setTextColor(
-                    if (student.average >= 75)
+                    if (student.grade?.finalGrade ?: 0.0 >= 75)
                         android.graphics.Color.GREEN
                     else
                         android.graphics.Color.RED
@@ -81,7 +82,7 @@ class StudentGradesAdapter(
             items.addAll(femaleStudents)
         }
 
-        Log.d("StudentGradesAdapter", "Updated list with ${newList.size} students: ${newList.map { "${it.firstName} ${it.lastName}, Remarks: ${it.remarks}" }}")
+        Log.d("StudentGradesAdapter", "Updated list with ${newList.size} students: ${newList.map { "${it.firstName} ${it.lastName}, Remarks: ${it.grade?.remarks}" }}")
         notifyDataSetChanged()
     }
 

@@ -9,7 +9,9 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,12 +19,11 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.helper.SectionAdapter
 import com.example.markahanmobile.helper.StudentGradesAdapter
-import com.example.markahanmobile.utils.toast
-import com.example.markahanmobile.R
 import com.google.android.material.navigation.NavigationView
 
 class GradesActivity : AppCompatActivity() {
@@ -30,12 +31,15 @@ class GradesActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var iconSearchStudent: ImageView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var noStudentsText: TextView
     private lateinit var sectionAdapter: SectionAdapter
     private lateinit var studentAdapter: StudentGradesAdapter
     private val sectionList = mutableListOf<String>()
     private val allStudents = mutableListOf<Student>()
     private val studentList = mutableListOf<Student>()
-    private var selectedSection: String = ""
+    private var selectedSection: String = SectionAdapter.ALL_SECTIONS
+    private var userId: Int = 0
     private val TAG = "GradesActivity"
     private val VIEW_GRADES_REQUEST = 1001
 
@@ -48,6 +52,8 @@ class GradesActivity : AppCompatActivity() {
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        progressBar = findViewById(R.id.progressBar)
+        noStudentsText = findViewById(R.id.noStudentsText)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -62,18 +68,11 @@ class GradesActivity : AppCompatActivity() {
 
         loadSections()
         loadStudents()
-
-        selectedSection = if (sectionList.isNotEmpty()) SectionAdapter.ALL_SECTIONS else ""
-        if (sectionList.isNotEmpty()) {
-            selectedSection = SectionAdapter.ALL_SECTIONS
-            filterStudentsBySection(selectedSection)
-            sectionAdapter.setSelectedPosition(0)
-        }
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume: Reloading students")
+        Log.d(TAG, "onResume: Reloading sections and students")
         loadSections()
         loadStudents()
     }
@@ -86,7 +85,9 @@ class GradesActivity : AppCompatActivity() {
                 .setMessage("Are you sure you want to log out?")
                 .setIcon(R.drawable.warningsign)
                 .setPositiveButton("Logout") { _, _ ->
+                    DataStore.logout()
                     startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -129,39 +130,36 @@ class GradesActivity : AppCompatActivity() {
         Log.d(TAG, "Filtering students for section: $section")
         findViewById<TextView>(R.id.sectionsLabel).text = "Sections"
         studentList.clear()
-        studentList.addAll(DataStore.getStudents(section))
-        Log.d(TAG, "Filtered ${studentList.size} students: ${studentList.map { "${it.firstName} ${it.lastName}, Remarks: ${it.remarks}, Average: ${it.average}" }}")
+        val filtered = if (section == SectionAdapter.ALL_SECTIONS) {
+            allStudents
+        } else {
+            allStudents.filter { it.section == section }
+        }
+        studentList.addAll(filtered)
+        Log.d(TAG, "Filtered ${studentList.size} students: ${studentList.map { "${it.firstName} ${it.lastName}, Remarks: ${it.grade?.remarks}, Average: ${it.grade?.finalGrade}" }}")
         studentAdapter.updateList(studentList)
+        updateNoStudentsVisibility()
 
         val position = sectionList.indexOf(section)
         if (position != -1) {
             sectionAdapter.setSelectedPosition(position)
         } else {
             Log.w(TAG, "Section $section not found in sectionList")
-            sectionAdapter.setSelectedPosition(0) // Default to "All Sections"
+            sectionAdapter.setSelectedPosition(0)
         }
     }
 
     private fun viewGrades(student: Student) {
         try {
-            Log.d(TAG, "Viewing grades for ${student.studentID}: ${student.grades}")
+            Log.d(TAG, "Viewing grades for ${student.studentId}: ${student.grade}")
             val intent = Intent(this, StudentGradesActivity::class.java).apply {
-                putExtra("student", student)
+                putExtra("student", student as android.os.Parcelable)
             }
             startActivityForResult(intent, VIEW_GRADES_REQUEST)
         } catch (e: Exception) {
             Log.e(TAG, "Error opening StudentGradesActivity", e)
-            toast("Error opening grade details")
+            Toast.makeText(this, "Error opening grade details", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun editGrades(student: Student) {
-        Log.d(TAG, "Editing grades for ${student.studentID} via StudentsGradesActivity")
-        val intent = Intent(this, EditGradesActivity::class.java).apply {
-            putExtra("student", student)
-            putExtra("editMode", true)
-        }
-        startActivityForResult(intent, VIEW_GRADES_REQUEST)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -169,14 +167,16 @@ class GradesActivity : AppCompatActivity() {
         if (requestCode == VIEW_GRADES_REQUEST && resultCode == RESULT_OK) {
             data?.getParcelableExtra<Student>("updatedStudent")?.let { updatedStudent ->
                 try {
-                    Log.d(TAG, "Received updated student from StudentGradesActivity: ${updatedStudent.studentID}, Grades: ${updatedStudent.grades}, Remarks: ${updatedStudent.remarks}, Average: ${updatedStudent.average}")
-                    DataStore.updateStudent(updatedStudent)
-                    loadStudents()
+                    Log.d(TAG, "Received updated student: ${updatedStudent.studentId}, Grade: ${updatedStudent.grade}")
+                    val index = allStudents.indexOfFirst { it.studentId == updatedStudent.studentId }
+                    if (index != -1) {
+                        allStudents[index] = updatedStudent
+                    }
                     filterStudentsBySection(selectedSection)
-                    toast("Grades updated successfully")
+                    Toast.makeText(this, "Grades updated successfully", Toast.LENGTH_SHORT).show()
                 } catch (e: IllegalArgumentException) {
                     Log.e(TAG, "Error updating student", e)
-                    toast(e.message ?: "Failed to update grades")
+                    Toast.makeText(this, e.message ?: "Failed to update grades", Toast.LENGTH_SHORT).show()
                 }
             } ?: Log.e(TAG, "No updated student received in onActivityResult")
         }
@@ -213,16 +213,16 @@ class GradesActivity : AppCompatActivity() {
 
     private fun performSearch(query: String) {
         if (query.isNotBlank()) {
-            val filtered = DataStore.getStudents().filter {
+            val filtered = allStudents.filter {
                 "${it.lastName}, ${it.firstName}".contains(query, true)
             }
             studentList.clear()
             studentList.addAll(filtered)
             studentAdapter.updateList(studentList)
             Log.d(TAG, "Search results: ${filtered.size} students")
-
             findViewById<TextView>(R.id.sectionsLabel).text = "Search Results"
             sectionAdapter.setSelectedPosition(-1)
+            updateNoStudentsVisibility()
         }
     }
 
@@ -231,12 +231,49 @@ class GradesActivity : AppCompatActivity() {
         sectionList.addAll(DataStore.getSections())
         sectionAdapter.updateSections(sectionList)
         Log.d(TAG, "Loaded sections: $sectionList")
+        if (sectionList.isNotEmpty() && !sectionList.contains(selectedSection)) {
+            selectedSection = SectionAdapter.ALL_SECTIONS
+            sectionAdapter.setSelectedPosition(0)
+        }
     }
 
     private fun loadStudents() {
-        allStudents.clear()
-        allStudents.addAll(DataStore.getStudents())
-        Log.d(TAG, "Loaded ${allStudents.size} students: ${allStudents.map { "${it.lastName}, ${it.firstName}, Remarks: ${it.remarks}, Average: ${it.average}" }}")
-        filterStudentsBySection(selectedSection)
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        userId = DataStore.getLoggedInUser()?.userId ?: sharedPreferences.getInt("userId", -1)
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        progressBar.visibility = View.VISIBLE
+        noStudentsText.visibility = View.GONE
+
+        DataStore.syncStudents(userId, includeArchived = false) { studentSuccess ->
+            if (studentSuccess) {
+                DataStore.syncGrades(userId) { gradeSuccess ->
+                    progressBar.visibility = View.GONE
+                    if (gradeSuccess) {
+                        allStudents.clear()
+                        allStudents.addAll(DataStore.getStudents(includeArchived = false))
+                        Log.d(TAG, "Loaded ${allStudents.size} students: ${allStudents.map { "${it.lastName}, ${it.firstName}, Remarks: ${it.grade?.remarks}, Average: ${it.grade?.finalGrade}" }}")
+                        loadSections()
+                        filterStudentsBySection(selectedSection)
+                    } else {
+                        Toast.makeText(this, "Error syncing grades. Check logs for details.", Toast.LENGTH_SHORT).show()
+                        filterStudentsBySection(selectedSection)
+                    }
+                }
+            } else {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this, "Error loading students", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateNoStudentsVisibility() {
+        noStudentsText.visibility = if (studentList.isEmpty()) View.VISIBLE else View.GONE
+        findViewById<RecyclerView>(R.id.studentRecyclerView).visibility = if (studentList.isEmpty()) View.GONE else View.VISIBLE
     }
 }

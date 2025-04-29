@@ -76,13 +76,38 @@
                 android:tint="#1f295a"/>
         </LinearLayout>
 
-        <!-- Column Headers -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- ProgressBar for Loading -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/sectionRow"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- No Students Message -->
+        <TextView
+            android:id="@+id/noStudentsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sectionRow"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="60dp"
+            android:text="No students found"
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:visibility="gone" />
+
+        <!-- Column Headers -->
+        <LinearLayout
+            android:id="@+id/columnHeaders"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/noStudentsText"
             android:orientation="horizontal"
-            android:layout_marginTop="30dp">
+            android:layout_marginTop="16dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -108,9 +133,10 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/attendanceRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/sectionRow"
-            android:layout_marginTop="40dp"
+            android:layout_height="0dp"
+            android:layout_below="@id/columnHeaders"
+            android:layout_above="@id/btnSubmitAttendance"
+            android:layout_marginTop="8dp"
             android:padding="16dp"
             android:clipToPadding="false" />
 
@@ -120,13 +146,13 @@
             android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
+            android:layout_marginLeft="230dp"
+            android:layout_marginBottom="25dp"
             android:text="Submit"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:fontFamily="@font/lexend_reg"
             android:background="@drawable/border_blu"
-            android:layout_marginLeft="230dp"
-            android:layout_marginBottom="25dp"
             android:textAllCaps="false"/>
     </RelativeLayout>
 
