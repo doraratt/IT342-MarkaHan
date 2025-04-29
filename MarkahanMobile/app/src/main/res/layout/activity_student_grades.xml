@@ -1,198 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:fillViewport="true"
-    android:padding="12dp">
+    android:background="@android:color/white">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- ProgressBar for Loading -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="40dp">
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
 
-        <!-- Student Info Header -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:padding="12dp">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="16dp">
+            android:layout_marginTop="40dp">
 
-            <TextView
-                android:id="@+id/studentName"
+            <!-- Student Info Header -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#1f295a"
-                android:textSize="20sp"
-                android:fontFamily="@font/lexend_bold"/>
+                android:orientation="vertical"
+                android:paddingBottom="16dp">
 
+                <TextView
+                    android:id="@+id/studentName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#1f295a"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/lexend_bold"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+
+                    <TextView
+                        android:id="@+id/studentSection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#666"
+                        android:textSize="14sp"/>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="20dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:background="#999"/>
+
+                    <TextView
+                        android:id="@+id/studentGradeLevel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#666"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Grades Table Header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="4dp">
+                android:paddingVertical="12dp"
+                android:background="#F5F5F5">
 
                 <TextView
-                    android:id="@+id/studentSection"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/txtSubject"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textColor="#666"
-                    android:textSize="14sp"/>
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="20dp"
-                    android:layout_marginHorizontal="8dp"
-                    android:background="#999"/>
+                    android:layout_weight="1.7"
+                    android:text="LEARNING AREAS"
+                    android:textColor="#1f295a"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:layout_marginLeft="10dp"/>
 
                 <TextView
-                    android:id="@+id/studentGradeLevel"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/txtGrade"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textColor="#666"
-                    android:textSize="14sp"/>
+                    android:layout_weight="1"
+                    android:text="FINAL GRADE"
+                    android:textColor="#1f295a"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:gravity="end"/>
+
+                <TextView
+                    android:id="@+id/txtRemarks"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="REMARKS"
+                    android:textColor="#1f295a"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:layout_marginRight="8dp"
+                    android:gravity="end"/>
+            </LinearLayout>
+
+            <!-- Grade Rows -->
+            <include layout="@layout/grade_row" android:id="@+id/rowFilipino"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowEnglish"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowMath"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowScience"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowAP"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowESP"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowMAPEH"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <include layout="@layout/grade_row" android:id="@+id/rowComputer"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+            <!-- Average Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="16dp"
+                android:background="#F5F5F5"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.7"
+                    android:text="AVERAGE"
+                    android:textColor="#1f295a"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:layout_marginLeft="8dp"/>
+
+                <TextView
+                    android:id="@+id/txtAverageGrade"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#1f295a"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:gravity="end"/>
+
+                <TextView
+                    android:id="@+id/txtAverageRemarks"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#4CAF50"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/lexend_bold"
+                    android:gravity="end"/>
+            </LinearLayout>
+
+            <!-- Footer Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="100dp">
+
+                <Button
+                    android:id="@+id/btnEditGrades"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Edit Grade"
+                    android:textColor="#1f295a"
+                    android:fontFamily="@font/lexend_reg"
+                    android:backgroundTint="#d6e1f7"
+                    android:textAllCaps="false"
+                    android:drawablePadding="8dp"/>
+
+                <Button
+                    android:id="@+id/btnPrintGrades"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Print Grade"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="@font/lexend_reg"
+                    android:backgroundTint="#1f295a"
+                    android:textAllCaps="false"
+                    android:drawablePadding="8dp"
+                    android:drawableTint="#FFFFFF"/>
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Grades Table Header -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingVertical="12dp"
-            android:background="#F5F5F5">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.7"
-                android:text="LEARNING AREAS"
-                android:textColor="#1f295a"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:layout_marginLeft="10dp"/>
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="FINAL GRADE"
-                android:textColor="#1f295a"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:gravity="end"/>
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="REMARKS"
-                android:textColor="#1f295a"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:layout_marginRight="8dp"
-                android:gravity="end"/>
-        </LinearLayout>
-
-        <!-- Grade Rows - Using include tag for reusability -->
-        <include layout="@layout/grade_row" android:id="@+id/rowFilipino"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowEnglish"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowMath"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowScience"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowAP"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowESP"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowMAPEH"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowComputer"/>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-
-        <include layout="@layout/grade_row" android:id="@+id/rowTLE"/>
-
-        <!-- Average Row -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingVertical="16dp"
-            android:background="#F5F5F5"
-            android:layout_marginTop="8dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.7"
-                android:text="AVERAGE"
-                android:textColor="#1f295a"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:layout_marginLeft="8dp"/>
-
-            <TextView
-                android:id="@+id/txtAverageGrade"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="#1f295a"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:gravity="end"/>
-
-            <TextView
-                android:id="@+id/txtAverageRemarks"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="#4CAF50"
-                android:textSize="14sp"
-                android:fontFamily="@font/lexend_bold"
-                android:gravity="end"/>
-        </LinearLayout>
-
-        <!-- Footer Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="100dp">
-
-            <Button
-                android:id="@+id/btnEditGrades"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Edit Grade"
-                android:textColor="#1f295a"
-                android:fontFamily="@font/lexend_reg"
-                android:backgroundTint="#d6e1f7"
-                android:textAllCaps="false"
-                android:drawablePadding="8dp"/>
-
-            <Button
-                android:id="@+id/btnPrintGrades"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Print Grade"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/lexend_reg"
-                android:backgroundTint="#1f295a"
-                android:textAllCaps="false"
-                android:drawablePadding="8dp"
-                android:drawableTint="#FFFFFF"/>
-        </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</RelativeLayout>

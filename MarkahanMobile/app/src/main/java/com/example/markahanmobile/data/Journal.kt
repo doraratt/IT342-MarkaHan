@@ -1,10 +1,11 @@
 package com.example.markahanmobile.data
 
+import java.time.LocalDate
 import java.util.Date
-import java.util.UUID
 
 data class Journal(
-    val journalID: String = UUID.randomUUID().toString(),
-    val journalEntry: String,
-    val date: Date,
+    val journalId: Int = 0,
+    val user: User? = null,
+    val entry: String = "",
+    val date: LocalDate = LocalDate.now()
 )

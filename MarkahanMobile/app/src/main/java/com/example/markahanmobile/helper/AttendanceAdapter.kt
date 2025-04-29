@@ -48,9 +48,9 @@ class AttendanceAdapter(
                 holder.nameTextView.text = "${student.lastName}, ${student.firstName}"
 
                 when (student.attendanceStatus) {
-                    "P" -> holder.radioPresent.isChecked = true
-                    "L" -> holder.radioLate.isChecked = true
-                    "A" -> holder.radioAbsent.isChecked = true
+                    "Present" -> holder.radioPresent.isChecked = true
+                    "Late" -> holder.radioLate.isChecked = true
+                    "Absent" -> holder.radioAbsent.isChecked = true
                     else -> {
                         holder.radioPresent.isChecked = false
                         holder.radioLate.isChecked = false
@@ -62,21 +62,21 @@ class AttendanceAdapter(
                     if (holder.radioPresent.isChecked) {
                         holder.radioLate.isChecked = false
                         holder.radioAbsent.isChecked = false
-                        onStatusChanged(studentPosition, "P")
+                        onStatusChanged(studentPosition, "Present")
                     }
                 }
                 holder.radioLate.setOnClickListener {
                     if (holder.radioLate.isChecked) {
                         holder.radioPresent.isChecked = false
                         holder.radioAbsent.isChecked = false
-                        onStatusChanged(studentPosition, "L")
+                        onStatusChanged(studentPosition, "Late")
                     }
                 }
                 holder.radioAbsent.setOnClickListener {
                     if (holder.radioAbsent.isChecked) {
                         holder.radioPresent.isChecked = false
                         holder.radioLate.isChecked = false
-                        onStatusChanged(studentPosition, "A")
+                        onStatusChanged(studentPosition, "Absent")
                     }
                 }
             }

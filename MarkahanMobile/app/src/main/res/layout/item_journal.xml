@@ -39,7 +39,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="end">
+                android:gravity="end"
+                android:descendantFocusability="blocksDescendants">
 
                 <ImageView
                     android:id="@+id/editJournalButton"
@@ -48,7 +49,9 @@
                     android:layout_marginEnd="16dp"
                     android:src="@drawable/edit"
                     android:tint="#1f295a"
-                    android:contentDescription="Edit" />
+                    android:contentDescription="Edit"
+                    android:clickable="true"
+                    android:focusable="true"/>
 
                 <ImageView
                     android:id="@+id/deleteJournalButton"
@@ -56,7 +59,9 @@
                     android:layout_height="20dp"
                     android:src="@drawable/delete"
                     android:tint="#F44336"
-                    android:contentDescription="Delete" />
+                    android:contentDescription="Delete"
+                    android:clickable="true"
+                    android:focusable="true"/>
             </LinearLayout>
         </LinearLayout>
 
@@ -66,8 +71,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:textColor="#000"
-            android:textSize="16sp" />
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"/>
     </LinearLayout>
-
 </androidx.cardview.widget.CardView>

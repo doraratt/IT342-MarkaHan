@@ -1,19 +1,22 @@
 package com.example.markahanmobile.fragments
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.markahanmobile.R
-import com.example.markahanmobile.utils.toast
+import com.example.markahanmobile.data.DataStore
+import com.example.markahanmobile.data.User
 
-class RegisterActivity : Activity() {
+class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var editName: EditText
+    private lateinit var editFirstName: EditText
+    private lateinit var editLastName: EditText
     private lateinit var editEmail: EditText
-    private lateinit var editPhone: EditText
     private lateinit var editPassword: EditText
     private lateinit var editConfirmPassword: EditText
     private lateinit var btnSignup: Button
@@ -25,9 +28,9 @@ class RegisterActivity : Activity() {
         setContentView(R.layout.activity_register)
 
         // Initialize views
-        editName = findViewById(R.id.edit_name)
+        editFirstName = findViewById(R.id.edit_first_name)
+        editLastName = findViewById(R.id.edit_last_name)
         editEmail = findViewById(R.id.edit_email)
-        editPhone = findViewById(R.id.edit_phone)
         editPassword = findViewById(R.id.edit_password)
         editConfirmPassword = findViewById(R.id.edit_confirmpassword)
         btnSignup = findViewById(R.id.btn_signup)
@@ -37,11 +40,27 @@ class RegisterActivity : Activity() {
         // Set up the sign-up button click listener
         btnSignup.setOnClickListener {
             if (validateInput()) {
-                // Proceed with user registration (e.g., store data, call API)
-                toast("Account successfully created")
+                val firstName = editFirstName.text.toString().trim()
+                val lastName = editLastName.text.toString().trim()
+                val email = editEmail.text.toString().trim()
+                val password = editPassword.text.toString().trim()
 
-                val intent = Intent(this, LoginActivity::class.java)
-                startActivity(intent)
+                val user = User(
+                    firstName = firstName,
+                    lastName = lastName,
+                    email = email,
+                )
+
+                DataStore.signup(user) { createdUser, success ->
+                    if (success && createdUser != null) {
+                        Toast.makeText(this, "Account successfully created", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this, LoginActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this, "Failed to create account", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
 
@@ -63,21 +82,34 @@ class RegisterActivity : Activity() {
             }
             editConfirmPassword.setSelection(editConfirmPassword.text.length)
         }
+
+        val loginPage = findViewById<TextView>(R.id.btn_login)
+        loginPage.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     // Input validation function
     private fun validateInput(): Boolean {
         // Get the input values
-        val name = editName.text.toString().trim()
+        val firstName = editFirstName.text.toString().trim()
+        val lastName = editLastName.text.toString().trim()
         val email = editEmail.text.toString().trim()
-        val phone = editPhone.text.toString().trim()
         val password = editPassword.text.toString().trim()
         val confirmPassword = editConfirmPassword.text.toString().trim()
 
-        // Validate Full Name
-        if (name.isEmpty()) {
-            editName.error = "Full Name is required"
-            editName.requestFocus()
+        // Validate First Name
+        if (firstName.isEmpty()) {
+            editFirstName.error = "First Name is required"
+            editFirstName.requestFocus()
+            return false
+        }
+
+        // Validate Last Name
+        if (lastName.isEmpty()) {
+            editLastName.error = "Last Name is required"
+            editLastName.requestFocus()
             return false
         }
 
@@ -89,17 +121,6 @@ class RegisterActivity : Activity() {
         } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             editEmail.error = "Invalid email address"
             editEmail.requestFocus()
-            return false
-        }
-
-        // Validate Phone Number
-        if (phone.isEmpty()) {
-            editPhone.error = "Phone number is required"
-            editPhone.requestFocus()
-            return false
-        } else if (phone.length != 11 || !phone.all { it.isDigit() }) {
-            editPhone.error = "Invalid phone number"
-            editPhone.requestFocus()
             return false
         }
 

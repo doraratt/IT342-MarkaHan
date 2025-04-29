@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
-import com.example.markahanmobile.utils.toast
+import android.widget.Toast
 import com.example.markahanmobile.R
 
 class ResetPassActivity : Activity() {
@@ -70,7 +70,7 @@ class ResetPassActivity : Activity() {
             }
 
             // Simulate a successful password update
-            toast("Password updated successfully!")
+            Toast.makeText(this, "Password updated successfully!", Toast.LENGTH_SHORT).show()
 
             // Navigate to LoginActivity
             val intent = Intent(this, LoginActivity::class.java)
