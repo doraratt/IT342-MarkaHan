@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.9.9-openjdk-17 AS build
+FROM maven:3.9.6-openjdk-17 AS build
 WORKDIR /app
 COPY markahan/pom.xml .
 COPY markahan/src ./src
