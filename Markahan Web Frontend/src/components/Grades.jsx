@@ -10,6 +10,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 function Grades() {
   const { user } = useUser();
   const [selectedSection, setSelectedSection] = useState('');
@@ -36,7 +38,7 @@ function Grades() {
     if (user) {
       const fetchStudents = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
           console.log('Fetched students:', response.data);
           setStudents(response.data);
           const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
@@ -50,7 +52,7 @@ function Grades() {
 
       const fetchGrades = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/grade/getGradesByUser?userId=${user.userId}`);
           console.log('Fetched grades:', response.data);
           setGrades(response.data);
           setError('');
@@ -165,17 +167,17 @@ function Grades() {
       let response;
       if (selectedStudent.gradeId) {
         response = await axios.put(
-          `http://localhost:8080/api/grade/putGrade/${selectedStudent.gradeId}`,
+          `${API_URL}/api/grade/putGrade/${selectedStudent.gradeId}`,
           gradeData
         );
       } else {
         response = await axios.post(
-          'http://localhost:8080/api/grade/postGrade',
+          `${API_URL}/api/grade/postGrade`,
           gradeData
         );
       }
 
-      const updatedGrades = await axios.get(`http://localhost:8080/api/grade/getGradesByUser?userId=${user.userId}`);
+      const updatedGrades = await axios.get(`${API_URL}/api/grade/getGradesByUser?userId=${user.userId}`);
       setGrades(updatedGrades.data);
       
       const updatedSubjects = [
