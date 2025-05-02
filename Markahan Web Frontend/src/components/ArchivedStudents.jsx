@@ -9,12 +9,14 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { useUser } from '../UserContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 function ArchivedStudentsPage() {
   const { user } = useUser();
   const [students, setStudents] = useState([]);
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [openConfirmUnarchiveModal, setOpenConfirmUnarchiveModal] = useState(false);
+  const [openConfirmUnarchiveModal, setOpenConfirUnarchiveModal] = useState(false);
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,7 +27,7 @@ function ArchivedStudentsPage() {
   useEffect(() => {
     const fetchArchivedStudents = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+        const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
         const mappedStudents = response.data.map(student => ({
           studentId: student.studentId,
           firstName: student.firstName,
@@ -69,7 +71,7 @@ function ArchivedStudentsPage() {
         user: { userId: user.userId }
       };
       const response = await axios.put(
-        `http://localhost:8080/api/student/update/${selectedStudent.studentId}`,
+        `${API_URL}/api/student/update/${selectedStudent.studentId}`,
         updatedStudentData
       );
       const updatedStudentResponse = {
@@ -105,7 +107,7 @@ function ArchivedStudentsPage() {
       return;
     }
     try {
-      await axios.delete(`http://localhost:8080/api/student/delete/${selectedStudent.studentId}`);
+      await axios.delete(`${API_URL}/api/student/delete/${selectedStudent.studentId}`);
       const updatedStudents = students.filter(student => student.studentId !== selectedStudent.studentId);
       setStudents(updatedStudents);
       const uniqueSections = [...new Set(updatedStudents.map(s => s.section))].sort();

@@ -14,6 +14,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 // AddStudentModal
 const AddStudentModal = ({ open, onClose, onSubmit, data, onChange }) => (
   <Modal open={open} onClose={onClose}>
@@ -243,7 +245,7 @@ const SearchStudentsModal = ({ open, onClose, students, onSelectStudent }) => {
           <Typography variant="h6">Search Students</Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
-          </IconButton>
+        </IconButton>
         </Box>
         <TextField
           label="Search by Name"
@@ -322,7 +324,7 @@ function Students() {
     if (user) {
       const fetchStudents = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
           // Map the response data to ensure correct field names
           const mappedStudents = response.data.map(student => ({
             studentId: student.studentId,
@@ -387,7 +389,7 @@ function Students() {
     }
     const studentData = { ...newStudent, user: { userId: user.userId } };
     try {
-      const response = await axios.post('http://localhost:8080/api/student/add', studentData);
+      const response = await axios.post(`${API_URL}/api/student/add`, studentData);
       const newStudentData = {
         studentId: response.data.studentId,
         firstName: response.data.firstName,
@@ -419,7 +421,7 @@ function Students() {
     const studentData = { ...editingStudent, user: { userId: user.userId } };
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/student/update/${editingStudent.id}`,
+        `${API_URL}/api/student/update/${editingStudent.id}`,
         studentData
       );
       const updatedStudentData = {
@@ -464,7 +466,7 @@ function Students() {
         user: { userId: user.userId }
       };
       const response = await axios.put(
-        `http://localhost:8080/api/student/update/${selectedStudent.studentId}`,
+        `${API_URL}/api/student/update/${selectedStudent.studentId}`,
         updatedStudentData
       );
       const updatedStudentResponse = {
@@ -518,7 +520,7 @@ function Students() {
     .sort((a, b) => `${a.lastName}, ${a.firstName}`.toLowerCase().localeCompare(`${b.lastName}, ${b.firstName}`.toLowerCase()));
   const femaleStudents = filteredStudents
     .filter(student => student.gender === 'Female')
-    .sort((a, b) => `${a.lastName}, ${b.firstName}`.toLowerCase().localeCompare(`${b.lastName}, ${b.firstName}`.toLowerCase()));
+    .sort((a, b) => `${a.lastName}, ${a.firstName}`.toLowerCase().localeCompare(`${b.lastName}, ${b.firstName}`.toLowerCase()));
 
   return (
     <Box sx={{ width: '95%', p: 3 }}>
@@ -601,8 +603,8 @@ function Students() {
       <SearchStudentsModal
         open={openSearchModal}
         onClose={handleCloseSearch}
-        students={students}
         onSelectStudent={handleSelectStudent}
+        students={students}
       />
 
       <Modal open={openConfirmEditModal} onClose={() => setOpenConfirmEditModal(false)}>

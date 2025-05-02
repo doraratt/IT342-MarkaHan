@@ -40,7 +40,13 @@
     "rollup": "^4.40.1",
     "vite": "^6.3.3"
   },
+<<<<<<< HEAD
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.1"
   }
+=======
+"optionalDependencies": {
+  "@rollup/rollup-linux-x64-gnu": "4.40.1"
+}
+>>>>>>> d976ee6a8f305aa7c6abb8fb9da9cb3e1f626709
 }
