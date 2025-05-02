@@ -16,6 +16,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 function Attendance() {
   const { user } = useUser();
   const [selectedSection, setSelectedSection] = useState('');
@@ -45,7 +47,7 @@ function Attendance() {
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+      const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
       setStudents(response.data);
       setOriginalStudents(response.data);
       const uniqueSections = [...new Set(response.data.map(s => s.section))].sort();
@@ -63,7 +65,7 @@ function Attendance() {
     setIsLoading(true);
     try {
       console.log('Fetching attendance for userId:', user.userId, 'month:', currentMonth + 1, 'year:', currentYear);
-      const response = await axios.get(`http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`);
+      const response = await axios.get(`${API_URL}/api/attendance/getAttendanceByUser?userId=${user.userId}`);
       console.log('Fetched attendance records:', response.data);
       const filteredRecords = response.data.filter(record => {
         const recordDate = new Date(record.date);
@@ -109,7 +111,7 @@ function Attendance() {
     };
 
     try {
-      const response = await axios.post('http://localhost:8080/api/attendance/postAttendance', attendanceDataToSend);
+      const response = await axios.post(`${API_URL}/api/attendance/postAttendance`, attendanceDataToSend);
       setAttendanceRecords(prev => [
         ...prev.filter(r => r.date !== selectedDate || r.student.studentId !== selectedStudent.studentId),
         response.data

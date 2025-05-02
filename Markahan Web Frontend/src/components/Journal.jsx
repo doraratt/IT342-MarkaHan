@@ -14,6 +14,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 // EntryModal component (unchanged)
 const EntryModal = ({ open, onClose, title, entry, onSave, buttonText, onContentChange, onDateChange }) => (
   <Modal
@@ -191,7 +193,7 @@ function Journal() {
     if (user) {
       const fetchEntries = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/journal/getJournalsByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/journal/getJournalsByUser?userId=${user.userId}`);
           setEntries(response.data.map(entry => ({
             id: entry.journalId,
             content: entry.entry,
@@ -232,7 +234,7 @@ function Journal() {
     };
 
     try {
-      const response = await axios.post('http://localhost:8080/api/journal/post', entryData);
+      const response = await axios.post(`${API_URL}/api/journal/post`, entryData);
       setEntries((prevEntries) => [...prevEntries, {
         id: response.data.journalId,
         content: response.data.entry,
@@ -279,7 +281,7 @@ function Journal() {
 
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/journal/update/${editingEntry.id}`,
+        `${API_URL}/api/journal/update/${editingEntry.id}`,
         entryData
       );
       setEntries((prevEntries) => prevEntries.map((entry) =>
@@ -312,7 +314,7 @@ function Journal() {
     if (!entryToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/journal/delete/${entryToDelete.id}`);
+      await axios.delete(`${API_URL}/api/journal/delete/${entryToDelete.id}`);
       setEntries((prevEntries) => prevEntries.filter((entry) => entry.id !== entryToDelete.id));
       handleDeleteClose();
       setError('');

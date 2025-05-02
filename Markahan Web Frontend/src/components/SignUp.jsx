@@ -16,7 +16,10 @@ import GoogleButton from './GoogleButton';
 import axios from 'axios'; // Added axios import
 import { useUser } from '../UserContext'; // Added UserContext import
 import { AppProvider } from '@toolpad/core/AppProvider';
-import logo1 from "../assets/logo2.png"
+import logo1 from "../assets/logo2.png";
+
+// Base API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
 
 function CustomFirstNameField({ onChange }) {
   return (
@@ -187,7 +190,7 @@ const SignUp = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/api/user/signup', formData); // Updated to use axios
+      const response = await axios.post(`${API_URL}/api/user/signup`, formData); // Updated URL and added withCredentials
       console.log('Response data:', response.data);
       setUser(response.data); // Set user in context
       setSuccess('Account created successfully!');
@@ -216,71 +219,71 @@ const SignUp = () => {
 
   return (
     <AppProvider theme={theme}>
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundImage: 'linear-gradient(45deg, #1f295a, #4259c1)',
-      }}
-    >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          maxWidth: 500,
-          minWidth: 450,
-          height: 670,
-          padding: 4,
-          borderRadius: '12px 0 0 12px',
-          backgroundColor: '#d6e1f7',
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', paddingBottom: 5, paddingLeft: 5, paddingRight: 5 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', mb: 3 , mt: 2}}>
-            <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
-              Welcome User
-            </Typography>
-            <Typography align="left">
-              Create your account.
-            </Typography>
-          </Box>
-
-          <CustomFirstNameField onChange={handleChange} />
-          <CustomLastNameField onChange={handleChange} />
-          <CustomEmailField onChange={handleChange} />
-          <CustomPasswordField onChange={handleChange} name="password" label="Password" />
-          <CustomPasswordField onChange={handleChange} name="confirmPassword" label="Confirm Password" />
-          
-          {error && <Typography color="error" align="center">{error}</Typography>}
-          {success && <Typography color="success.main" align="center">{success}</Typography>}
-          
-          <CustomButton />
-          <GoogleButton />
-          <SignInLink />
-        </Box>
-      </Box>
-
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
-          maxWidth: 700,
-          minWidth: 450,
-          height: 670,
-          padding: 4,
-          borderRadius: '0px 12px 12px 0px',
-          backgroundColor: '#1f295a',
           justifyContent: 'center',
           alignItems: 'center',
+          height: '100vh',
+          backgroundImage: 'linear-gradient(45deg, #1f295a, #4259c1)',
         }}
       >
-      <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxWidth: 500,
+            minWidth: 450,
+            height: 670,
+            padding: 4,
+            borderRadius: '12px 0 0 12px',
+            backgroundColor: '#d6e1f7',
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', paddingBottom: 5, paddingLeft: 5, paddingRight: 5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', mb: 3, mt: 2 }}>
+              <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
+                Welcome User
+              </Typography>
+              <Typography align="left">
+                Create your account.
+              </Typography>
+            </Box>
+
+            <CustomFirstNameField onChange={handleChange} />
+            <CustomLastNameField onChange={handleChange} />
+            <CustomEmailField onChange={handleChange} />
+            <CustomPasswordField onChange={handleChange} name="password" label="Password" />
+            <CustomPasswordField onChange={handleChange} name="confirmPassword" label="Confirm Password" />
+            
+            {error && <Typography color="error" align="center">{error}</Typography>}
+            {success && <Typography color="success.main" align="center">{success}</Typography>}
+            
+            <CustomButton />
+            <GoogleButton />
+            <SignInLink />
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxWidth: 700,
+            minWidth: 450,
+            height: 670,
+            padding: 4,
+            borderRadius: '0px 12px 12px 0px',
+            backgroundColor: '#1f295a',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
+        </Box>
       </Box>
-    </Box>
     </AppProvider>
   );
 };
