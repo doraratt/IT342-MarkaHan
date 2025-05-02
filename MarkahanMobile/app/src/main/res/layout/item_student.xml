@@ -1,0 +1,55 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="10dp"
+    android:paddingHorizontal="12dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/txtStudentName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="Full Name"
+        android:textColor="#000"
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg" />
+
+    <TextView
+        android:id="@+id/txtStudentSection"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.3"
+        android:text="Section"
+        android:textColor="#000"
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg" />
+
+    <TextView
+        android:id="@+id/txtGradeLevel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Grade"
+        android:textColor="#000"
+        android:textSize="14sp"
+        android:fontFamily="@font/lexend_reg" />
+
+    <ImageView
+        android:id="@+id/btnEditStudent"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/edit"
+        android:contentDescription="Edit"
+        android:tint="#1f295a" />
+
+    <ImageView
+        android:id="@+id/btnArchiveStudent"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/archivestudent"
+        android:contentDescription="Archive"
+        android:tint="#808080" />
+</LinearLayout>
