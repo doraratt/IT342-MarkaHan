@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragments.AttendanceActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#d6e1f7">
+
+        <!-- Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#d6e1f7"
+            app:title="Attendance"
+            app:titleTextColor="#1f295a"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+        <!-- Sections Header -->
+        <TextView
+            android:id="@+id/sectionsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sections"
+            android:textColor="#1f295a"
+            android:textSize="26sp"
+            android:fontFamily="@font/lexend_bold"
+            android:layout_below="@id/toolbar"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="25dp" />
+
+        <!-- Sections Tabs and Date in same row -->
+        <LinearLayout
+            android:id="@+id/sectionRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sectionsLabel"
+            android:layout_marginTop="8dp"
+            android:paddingHorizontal="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewSections"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                tools:listitem="@layout/item_section" />
+
+            <TextView
+                android:id="@+id/txtDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="05/10/22"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
+                android:fontFamily="@font/lexend_med"
+                android:layout_marginStart="16dp"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <ImageView
+                android:id="@+id/iconSheets"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/sheet"
+                android:layout_marginStart="8dp"
+                android:tint="#1f295a"/>
+        </LinearLayout>
+
+        <!-- ProgressBar for Loading -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sectionRow"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- No Students Message -->
+        <TextView
+            android:id="@+id/noStudentsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sectionRow"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="60dp"
+            android:text="No students found"
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:visibility="gone" />
+
+        <!-- Column Headers -->
+        <LinearLayout
+            android:id="@+id/columnHeaders"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/noStudentsText"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.25"
+                android:text="Student"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
+                android:fontFamily="@font/lexend_bold"
+                android:layout_marginLeft="24dp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Status"
+                android:textColor="#1f295a"
+                android:textSize="16sp"
+                android:fontFamily="@font/lexend_bold"/>
+        </LinearLayout>
+
+        <!-- Student List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/attendanceRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_below="@id/columnHeaders"
+            android:layout_above="@id/btnSubmitAttendance"
+            android:layout_marginTop="8dp"
+            android:padding="16dp"
+            android:clipToPadding="false" />
+
+        <!-- Submit Button at bottom -->
+        <Button
+            android:id="@+id/btnSubmitAttendance"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="230dp"
+            android:layout_marginBottom="25dp"
+            android:text="Submit"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:background="@drawable/border_blu"
+            android:textAllCaps="false"/>
+    </RelativeLayout>
+
+    <!-- Navigation Drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@drawable/drawer_bg"
+        app:menu="@menu/drawer_menu"
+        app:headerLayout="@layout/nav_header"
+        app:itemTextAppearance="@style/DrawerMenuItemTextStyle"
+        app:itemIconTint="#fff">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <include layout="@layout/nav_logout" />
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
+</androidx.drawerlayout.widget.DrawerLayout>
