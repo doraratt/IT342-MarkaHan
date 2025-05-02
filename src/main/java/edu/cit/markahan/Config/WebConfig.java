@@ -13,12 +13,12 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOrigins("https://it-342-marka-han-9yjc.vercel.app")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("*")
+                        .allowedMethods("*")
                         .allowedHeaders("*")
-                        .allowCredentials(true)
-                        .maxAge(3600);
+                        .exposedHeaders("*")
+                        .allowCredentials(false);
             }
         };
     }
