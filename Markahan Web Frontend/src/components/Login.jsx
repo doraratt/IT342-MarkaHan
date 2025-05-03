@@ -137,7 +137,7 @@ const Login = () => {
       const response = await axios.post(`${API_URL}/api/user/login`, {
         email: formData.email, // Changed from username to email to match UserEntity
         password: formData.password,
-      },s); // Added withCredentials for auth support
+      }); // Added withCredentials for auth support
       setUser(response.data); // Save user in context
       setSuccess('Login successful!');
       setError('');
