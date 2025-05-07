@@ -14,6 +14,7 @@ import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Grade
 import com.example.markahanmobile.data.Student
+import com.example.markahanmobile.data.User
 
 class EditGradesActivity : AppCompatActivity() {
 
@@ -171,7 +172,7 @@ class EditGradesActivity : AppCompatActivity() {
 
         val remarks = if (average >= 75) "PASSED" else "FAILED"
 
-        val userId = DataStore.getLoggedInUser()?.userId ?: run {
+        val user = DataStore.getLoggedInUser() ?: run {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -181,7 +182,9 @@ class EditGradesActivity : AppCompatActivity() {
         val updatedGrade = Grade(
             gradeId = student.grade?.gradeId ?: 0,
             studentId = student.studentId,
-            userId = userId,
+            userId = user.userId,
+            student = student.copy(grade = null), // Include student object without grade to avoid circular reference
+            user = user,
             filipino = newGrades["Filipino"] ?: 0.0,
             english = newGrades["English"] ?: 0.0,
             mathematics = newGrades["Math"] ?: 0.0,

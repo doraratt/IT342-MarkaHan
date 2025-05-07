@@ -21,8 +21,9 @@
     <color name="student_names_column_background">#334596</color>
     <color name="header_background">#1f295a</color>
 
-    <color name="green">#4CAF50</color>
-    <color name="red">#F44336</color>
+    <color name="remarks_passed">#00a707</color> <!-- Green for PASSED -->
+    <color name="remarks_failed">#F44336</color> <!-- Red for FAILED -->
+    <color name="remarks_none">#757575</color> <!-- Gray for no remarks -->
 
     <color name="unarchive_tint">#4CAF50</color> <!-- Green for unarchive -->
     <color name="delete_tint">#F44336</color> <!-- Red for delete -->

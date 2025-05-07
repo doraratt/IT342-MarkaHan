@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@android:color/white"
+    android:fitsSystemWindows="true">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#fff"
+        app:title="Student Grades"
+        app:titleTextColor="#1f295a"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     <!-- ProgressBar for Loading -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
         android:layout_centerInParent="true"
         android:visibility="gone" />
 
@@ -17,6 +30,7 @@
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
         android:fillViewport="true"
         android:padding="12dp">
 
@@ -24,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="40dp">
+            android:layout_marginTop="16dp">
 
             <!-- Student Info Header -->
             <LinearLayout
@@ -38,7 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="#1f295a"
-                    android:textSize="20sp"
+                    android:textSize="26sp"
                     android:fontFamily="@font/lexend_bold"/>
 
                 <LinearLayout
@@ -52,7 +66,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="#666"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:fontFamily="@font/lexend_med"/>
 
                     <View
                         android:layout_width="1dp"
@@ -65,7 +80,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="#666"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:fontFamily="@font/lexend_med"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -84,7 +100,7 @@
                     android:layout_weight="1.7"
                     android:text="LEARNING AREAS"
                     android:textColor="#1f295a"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
                     android:layout_marginLeft="10dp"/>
 
@@ -95,7 +111,7 @@
                     android:layout_weight="1"
                     android:text="FINAL GRADE"
                     android:textColor="#1f295a"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
                     android:gravity="end"/>
 
@@ -106,7 +122,7 @@
                     android:layout_weight="1"
                     android:text="REMARKS"
                     android:textColor="#1f295a"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
                     android:layout_marginRight="8dp"
                     android:gravity="end"/>
@@ -149,10 +165,10 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.7"
+                    android:layout_weight="2"
                     android:text="AVERAGE"
                     android:textColor="#1f295a"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
                     android:layout_marginLeft="8dp"/>
 
@@ -162,7 +178,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="#1f295a"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
                     android:gravity="end"/>
 
@@ -172,8 +188,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="#4CAF50"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:fontFamily="@font/lexend_bold"
+                    android:layout_marginRight="10dp"
                     android:gravity="end"/>
             </LinearLayout>
 

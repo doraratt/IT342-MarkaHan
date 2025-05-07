@@ -6,9 +6,10 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".fragments.GradesActivity">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#d6e1f7">
@@ -20,7 +21,10 @@
             android:background="#d6e1f7"
             app:title="Grades"
             app:titleTextColor="#1f295a"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
             android:id="@+id/sectionsLabel"
@@ -30,19 +34,22 @@
             android:textColor="#1f295a"
             android:textSize="26sp"
             android:fontFamily="@font/lexend_bold"
-            android:layout_below="@id/toolbar"
             android:layout_marginTop="20dp"
-            android:layout_marginStart="25dp" />
+            android:layout_marginStart="25dp"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <LinearLayout
             android:id="@+id/sectionRow"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/sectionsLabel"
             android:layout_marginTop="8dp"
             android:paddingHorizontal="16dp"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toBottomOf="@id/sectionsLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewSections"
@@ -69,38 +76,15 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- ProgressBar for Loading -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/sectionRow"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
-
-        <!-- No Students Message -->
-        <TextView
-            android:id="@+id/noStudentsText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/sectionRow"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="60dp"
-            android:text="No students found"
-            android:textColor="#1f295a"
-            android:textSize="16sp"
-            android:fontFamily="@font/lexend_reg"
-            android:visibility="gone" />
-
-        <!-- Column Headers -->
         <LinearLayout
             android:id="@+id/columnHeaders"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/noStudentsText"
+            android:layout_marginTop="30dp"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp">
+            app:layout_constraintTop_toBottomOf="@id/sectionRow"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:layout_width="0dp"
@@ -108,9 +92,9 @@
                 android:layout_weight="1.2"
                 android:text="Student"
                 android:textColor="#1f295a"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:fontFamily="@font/lexend_bold"
-                android:layout_marginLeft="24dp"/>
+                android:layout_marginStart="24dp"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -118,7 +102,7 @@
                 android:layout_weight="1.25"
                 android:text="Remarks"
                 android:textColor="#1f295a"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:fontFamily="@font/lexend_bold"/>
 
             <View
@@ -127,15 +111,47 @@
                 android:layout_weight="0"/>
         </LinearLayout>
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/columnHeaders"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/noStudentsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="54dp"
+            android:text="No students found."
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/columnHeaders"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/studentRecyclerView"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_below="@id/columnHeaders"
-            android:layout_marginTop="8dp"
-            android:padding="16dp"
-            android:clipToPadding="false" />
-    </RelativeLayout>
+            android:layout_marginTop="0dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clipToPadding="false"
+            android:minHeight="200dp"
+            app:layout_constraintTop_toBottomOf="@id/columnHeaders"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"

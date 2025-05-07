@@ -6,6 +6,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".fragments.StudentsListActivity">
 
     <RelativeLayout
@@ -34,11 +35,24 @@
             android:layout_marginTop="20dp"
             android:layout_marginStart="25dp" />
 
+        <TextView
+            android:id="@+id/noSectionsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sectionsLabel"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="25dp"
+            android:text="No sections available"
+            android:textColor="#1f295a"
+            android:textSize="16sp"
+            android:fontFamily="@font/lexend_reg"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/sectionRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/sectionsLabel"
+            android:layout_below="@id/noSectionsText"
             android:layout_marginTop="8dp"
             android:paddingHorizontal="20dp"
             android:orientation="horizontal"
@@ -82,7 +96,7 @@
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:src="@drawable/archive"
-                    android:contentDescription="Search Student"
+                    android:contentDescription="View Archived Students"
                     android:tint="#1f295a" />
 
             </LinearLayout>
@@ -102,7 +116,7 @@
                 android:layout_weight="1.2"
                 android:text="Student"
                 android:textColor="#1f295a"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:fontFamily="@font/lexend_bold"
                 android:layout_marginLeft="28dp"/>
 
@@ -112,7 +126,7 @@
                 android:layout_weight=".80"
                 android:text="Section"
                 android:textColor="#1f295a"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:fontFamily="@font/lexend_bold"/>
 
             <TextView
@@ -121,7 +135,7 @@
                 android:layout_weight="1"
                 android:text="Grade"
                 android:textColor="#1f295a"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:fontFamily="@font/lexend_bold"/>
 
             <View
@@ -137,8 +151,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/headerRow"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
+            android:layout_marginTop="48dp"
+        android:visibility="gone" />
 
         <!-- No Students Message -->
         <TextView
@@ -147,21 +161,24 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/headerRow"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
-            android:text="No students found"
-            android:textColor="#1f295a"
-            android:textSize="16sp"
-            android:fontFamily="@font/lexend_reg"
-            android:visibility="gone" />
+            android:layout_marginTop="54dp"
+        android:text="No students found"
+        android:textColor="#1f295a"
+        android:textSize="16sp"
+        android:fontFamily="@font/lexend_reg"
+        android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/studentRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_below="@id/noStudentsText"
+            android:layout_below="@id/headerRow"
             android:layout_alignParentBottom="true"
-            android:layout_marginTop="8dp"
-            android:padding="16dp"
+            android:layout_marginTop="0dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:clipToPadding="false" />
     </RelativeLayout>
 

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -16,12 +17,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.AttendanceRecord
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
-import com.example.markahanmobile.helper.SectionAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -44,6 +49,11 @@ class AttendanceSheetActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_attendance_sheet)
+
+        // Set up the Toolbar
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // Enable the back arrow
 
         selectedSection = intent.getStringExtra("SELECTED_SECTION") ?: ""
 
@@ -84,15 +94,17 @@ class AttendanceSheetActivity : AppCompatActivity() {
             // TODO: Implement printing functionality
         }
 
-        findViewById<ImageView>(R.id.iconTable).setOnClickListener {
-            val intent = Intent(this, AttendanceActivity::class.java)
-            intent.putExtra("SELECTED_SECTION", selectedSection)
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault())
-            chosenDate?.let { intent.putExtra("SELECTED_DATE", it.format(formatter)) }
-            startActivity(intent)
-        }
-
         loadAttendanceData()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed() // Handle back button press
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun updateMonthDisplay() {
@@ -185,133 +197,175 @@ class AttendanceSheetActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         noStudentsText.visibility = View.GONE
 
-        DataStore.syncStudents(userId, includeArchived = false) { success ->
-            if (success) {
-                DataStore.syncAttendanceRecords(userId) { attendanceSuccess ->
-                    progressBar.visibility = View.GONE
-                    if (attendanceSuccess) {
-                        val students = DataStore.getStudents(selectedSection, includeArchived = false)
-                        val startDate = LocalDate.of(selectedMonth.year, selectedMonth.month, 1)
-                        val endDate = startDate.plusDays(daysInMonth - 1L)
-                        val attendanceRecords = DataStore.getAttendanceRecords(selectedSection, startDate, endDate)
-
-                        if (students.isEmpty()) {
-                            noStudentsText.visibility = View.VISIBLE
-                            Toast.makeText(this, "No students found for section $selectedSection", Toast.LENGTH_SHORT).show()
-                            return@syncAttendanceRecords
-                        }
-
-                        val maleStudents = students.filter { it.gender == "Male" }
-                            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
-                        val femaleStudents = students.filter { it.gender == "Female" }
-                            .sortedWith(compareBy({ it.lastName }, { it.firstName }))
-
-                        var rowIndex = 0
-
-                        if (maleStudents.isNotEmpty()) {
-                            studentNamesContainer.addView(
-                                TextView(this).apply {
-                                    layoutParams = LinearLayout.LayoutParams(
-                                        ViewGroup.LayoutParams.MATCH_PARENT,
-                                        48.dpToPx()
-                                    )
-                                    text = "Male Students"
-                                    textSize = 16f
-                                    gravity = Gravity.CENTER_VERTICAL
-                                    setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
-                                    setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
-                                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
-                                    setTypeface(typeface, Typeface.BOLD)
-                                }
-                            )
-
-                            val maleHeaderRow = LinearLayout(this).apply {
-                                layoutParams = LinearLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                                    48.dpToPx()
-                                )
-                                orientation = LinearLayout.HORIZONTAL
-                                background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
-                            }
-                            dates.forEach {
-                                maleHeaderRow.addView(TextView(this).apply {
-                                    layoutParams = LinearLayout.LayoutParams(
-                                        60.dpToPx(),
-                                        ViewGroup.LayoutParams.MATCH_PARENT
-                                    ).apply {
-                                        marginStart = 1.dpToPx()
-                                    }
-                                })
-                            }
-                            attendanceDataContainer.addView(maleHeaderRow)
-                            rowIndex++
-
-                            maleStudents.forEach { student ->
-                                addStudentRow(student, dates, attendanceRecords, rowIndex)
-                                rowIndex++
-                            }
-                        }
-
-                        if (femaleStudents.isNotEmpty()) {
-                            studentNamesContainer.addView(
-                                TextView(this).apply {
-                                    layoutParams = LinearLayout.LayoutParams(
-                                        ViewGroup.LayoutParams.MATCH_PARENT,
-                                        48.dpToPx()
-                                    )
-                                    text = "Female Students"
-                                    textSize = 16f
-                                    gravity = Gravity.CENTER_VERTICAL
-                                    setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
-                                    setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
-                                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
-                                    setTypeface(typeface, Typeface.BOLD)
-                                }
-                            )
-
-                            val femaleHeaderRow = LinearLayout(this).apply {
-                                layoutParams = LinearLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                                    48.dpToPx()
-                                )
-                                orientation = LinearLayout.HORIZONTAL
-                                background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
-                            }
-                            dates.forEach {
-                                femaleHeaderRow.addView(TextView(this).apply {
-                                    layoutParams = LinearLayout.LayoutParams(
-                                        60.dpToPx(),
-                                        ViewGroup.LayoutParams.MATCH_PARENT
-                                    ).apply {
-                                        marginStart = 1.dpToPx()
-                                    }
-                                })
-                            }
-                            attendanceDataContainer.addView(femaleHeaderRow)
-                            rowIndex++
-
-                            femaleStudents.forEach { student ->
-                                addStudentRow(student, dates, attendanceRecords, rowIndex)
-                                rowIndex++
-                            }
-                        }
-
-                        chosenDate?.let { date ->
-                            val dayIndex = dates.indexOfFirst { it == date }
-                            if (dayIndex != -1) {
-                                scrollDates.post {
-                                    scrollDates.scrollTo(dayIndex * 61.dpToPx(), 0) // 60dp + 1dp margin
-                                }
-                            }
-                        }
-                    } else {
-                        progressBar.visibility = View.GONE
-                        Toast.makeText(this, "Error syncing attendance records", Toast.LENGTH_SHORT).show()
+        CoroutineScope(Dispatchers.Main).launch {
+            var studentSuccess = false
+            var attendanceSuccess = false
+            withContext(Dispatchers.IO) {
+                // Sync students with retry logic
+                var attempts = 0
+                val maxAttempts = 2
+                while (attempts < maxAttempts && !studentSuccess) {
+                    attempts++
+                    val studentDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    DataStore.syncStudents(userId, includeArchived = false) { success ->
+                        studentDeferred.complete(success)
+                    }
+                    studentSuccess = kotlinx.coroutines.withTimeoutOrNull(10000L) { studentDeferred.await() } ?: false
+                    if (!studentSuccess) {
+                        android.util.Log.w("AttendanceSheetActivity", "syncStudents: Attempt $attempts failed")
                     }
                 }
-            } else {
-                progressBar.visibility = View.GONE
-                Toast.makeText(this, "Error loading students", Toast.LENGTH_SHORT).show()
+
+                if (studentSuccess) {
+                    // Sync attendance records with retry logic
+                    attempts = 0
+                    while (attempts < maxAttempts && !attendanceSuccess) {
+                        attempts++
+                        val attendanceDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                        DataStore.syncAttendanceRecords(userId) { success ->
+                            attendanceDeferred.complete(success)
+                        }
+                        attendanceSuccess = kotlinx.coroutines.withTimeoutOrNull(10000L) { attendanceDeferred.await() } ?: false
+                        if (!attendanceSuccess) {
+                            android.util.Log.w("AttendanceSheetActivity", "syncAttendanceRecords: Attempt $attempts failed")
+                        }
+                    }
+                }
+            }
+
+            progressBar.visibility = View.GONE
+
+            if (!studentSuccess) {
+                Toast.makeText(this@AttendanceSheetActivity, "Error loading students", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            if (!attendanceSuccess) {
+                Toast.makeText(this@AttendanceSheetActivity, "Error syncing attendance records", Toast.LENGTH_SHORT).show()
+            }
+
+            val students = DataStore.getStudents(selectedSection, includeArchived = false)
+            val startDate = LocalDate.of(selectedMonth.year, selectedMonth.month, 1)
+            val endDate = startDate.plusDays(daysInMonth - 1L)
+            val attendanceRecords = DataStore.getAttendanceRecords(selectedSection, startDate, endDate)
+
+            // Debug log to verify fetched data
+            android.util.Log.d("AttendanceSheetActivity", "Fetched ${attendanceRecords.size} attendance records for section $selectedSection, from $startDate to $endDate")
+            attendanceRecords.forEach { record ->
+                android.util.Log.d("AttendanceSheetActivity", "Record: studentId=${record.studentId}, date=${record.date}, status=${record.status}, section=${record.section}")
+            }
+            students.forEach { student ->
+                android.util.Log.d("AttendanceSheetActivity", "Student: studentId=${student.studentId}, name=${student.lastName}, ${student.firstName}")
+            }
+
+            if (students.isEmpty()) {
+                noStudentsText.visibility = View.VISIBLE
+                Toast.makeText(this@AttendanceSheetActivity, "No students found for section $selectedSection", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            val maleStudents = students.filter { it.gender == "Male" }
+                .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+            val femaleStudents = students.filter { it.gender == "Female" }
+                .sortedWith(compareBy({ it.lastName }, { it.firstName }))
+
+            var rowIndex = 0
+
+            if (maleStudents.isNotEmpty()) {
+                studentNamesContainer.addView(
+                    TextView(this@AttendanceSheetActivity).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            48.dpToPx()
+                        )
+                        text = "Male Students"
+                        textSize = 16f
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
+                        setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
+                        background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                        setTypeface(typeface, Typeface.BOLD)
+                    }
+                )
+
+                val maleHeaderRow = LinearLayout(this@AttendanceSheetActivity).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        48.dpToPx()
+                    )
+                    orientation = LinearLayout.HORIZONTAL
+                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                }
+                dates.forEach {
+                    maleHeaderRow.addView(TextView(this@AttendanceSheetActivity).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            60.dpToPx(),
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        ).apply {
+                            marginStart = 1.dpToPx()
+                        }
+                    })
+                }
+                attendanceDataContainer.addView(maleHeaderRow)
+                rowIndex++
+
+                maleStudents.forEach { student ->
+                    addStudentRow(student, dates, attendanceRecords, rowIndex)
+                    rowIndex++
+                }
+            }
+
+            if (femaleStudents.isNotEmpty()) {
+                studentNamesContainer.addView(
+                    TextView(this@AttendanceSheetActivity).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            48.dpToPx()
+                        )
+                        text = "Female Students"
+                        textSize = 16f
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(8.dpToPx(), 0, 8.dpToPx(), 0)
+                        setTextColor(ContextCompat.getColor(this@AttendanceSheetActivity, R.color.white))
+                        background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                        setTypeface(typeface, Typeface.BOLD)
+                    }
+                )
+
+                val femaleHeaderRow = LinearLayout(this@AttendanceSheetActivity).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        48.dpToPx()
+                    )
+                    orientation = LinearLayout.HORIZONTAL
+                    background = ContextCompat.getDrawable(this@AttendanceSheetActivity, R.color.header_background)
+                }
+                dates.forEach {
+                    femaleHeaderRow.addView(TextView(this@AttendanceSheetActivity).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            60.dpToPx(),
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        ).apply {
+                            marginStart = 1.dpToPx()
+                        }
+                    })
+                }
+                attendanceDataContainer.addView(femaleHeaderRow)
+                rowIndex++
+
+                femaleStudents.forEach { student ->
+                    addStudentRow(student, dates, attendanceRecords, rowIndex)
+                    rowIndex++
+                }
+            }
+
+            chosenDate?.let { date ->
+                val dayIndex = dates.indexOfFirst { it == date }
+                if (dayIndex != -1) {
+                    scrollDates.post {
+                        scrollDates.scrollTo(dayIndex * 61.dpToPx(), 0) // 60dp + 1dp margin
+                    }
+                }
             }
         }
     }
@@ -351,7 +405,7 @@ class AttendanceSheetActivity : AppCompatActivity() {
                 it.studentId == student.studentId && it.date == date
             }
 
-            val status = record?.status ?: ""
+            val status = record?.status?.capitalize() ?: ""
 
             attendanceRow.addView(TextView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(

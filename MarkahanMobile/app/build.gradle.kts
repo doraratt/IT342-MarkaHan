@@ -11,24 +11,29 @@ android {
     defaultConfig {
         applicationId = "com.example.markahanmobile"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     buildTypes {
+        debug {
+            isDebuggable = true // Explicitly enable debug mode
+            buildConfigField("String", "BACKEND_URL", "\"https://rendeer-ya43.onrender.com/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BACKEND_URL", "\"https://rendeer-ya43.onrender.com/\"")
         }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -67,6 +72,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity)
+    implementation(libs.generativeai)
 
     // Testing
     testImplementation(libs.junit)
@@ -75,5 +81,9 @@ dependencies {
 
     coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    implementation ("com.google.code.gson:gson:2.9.0")
+    implementation (libs.gson)
+
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    implementation ("androidx.gridlayout:gridlayout:1.0.0")
 }
