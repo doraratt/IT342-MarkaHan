@@ -20,6 +20,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 import { useUser } from '../UserContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 // EventModal
 const EventModal = ({ open, onClose, date, event, onSave, onChange, isEditMode, eventId }) => (
   <Modal open={open} onClose={onClose} aria-labelledby="event-modal">
@@ -236,7 +238,7 @@ function Calendar() {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/eventcalendar/getEventByUser?userId=${user.userId}`);
+      const response = await axios.get(`${API_URL}/api/eventcalendar/getEventByUser?userId=${user.userId}`);
       const eventsMap = response.data.reduce((acc, event) => {
         const date = event.date;
         if (!acc[date]) {
@@ -291,7 +293,7 @@ function Calendar() {
     };
 
     try {
-      const response = await axios.post('http://localhost:8080/api/eventcalendar/addEventCal', eventData);
+      const response = await axios.post(`${API_URL}/api/eventcalendar/addEventCal`, eventData);
       setEvents(prev => ({
         ...prev,
         [selectedDate]: [
@@ -327,7 +329,7 @@ function Calendar() {
 
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/eventcalendar/updateEventCal/${editingEventId}`,
+        `${API_URL}/api/eventcalendar/updateEventCal/${editingEventId}`,
         eventData,
         {
           headers: {
@@ -384,7 +386,7 @@ function Calendar() {
 
   const handleDeleteEvent = async () => {
     try {
-      await axios.delete(`http://localhost:8080/api/eventcalendar/deleteEventCal/${selectedEvent.calendarId}`);
+      await axios.delete(`${API_URL}/api/eventcalendar/deleteEventCal/${selectedEvent.calendarId}`);
       setEvents(prev => {
         const updated = { ...prev };
         updated[selectedEvent.date] = updated[selectedEvent.date].filter(event => event.calendarId !== selectedEvent.calendarId);

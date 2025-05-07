@@ -18,7 +18,10 @@ import { useUser } from '../UserContext'; // Ensure path is correct
 import GoogleButton from './GoogleButton';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import logo2 from "../assets/logo1.png";
-import logo1 from "../assets/logo2.png"
+import logo1 from "../assets/logo2.png";
+
+// Base API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
 
 function CustomEmailField({ onChange }) {
   return (
@@ -131,10 +134,10 @@ const Login = () => {
     setSuccess(''); // Reset success
 
     try {
-      const response = await axios.post('http://localhost:8080/api/user/login', {
+      const response = await axios.post(`${API_URL}/api/user/login`, {
         email: formData.email, // Changed from username to email to match UserEntity
         password: formData.password,
-      });
+      }); 
       setUser(response.data); // Save user in context
       setSuccess('Login successful!');
       setError('');
@@ -149,83 +152,83 @@ const Login = () => {
 
   return (
     <AppProvider theme={theme}>
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundImage: 'linear-gradient(45deg, #4259c1, #1f295a)',
-      }}
-    >
       <Box
-        component="form"
-        onSubmit={handleSubmit}
         sx={{
           display: 'flex',
-          flexDirection: 'column',
-          maxWidth: 500,
-          minWidth: 450,
-          height: 670,
-          padding: 4,
-          borderRadius: '12px 0 0 12px',
-          backgroundColor: '#d6e1f7',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: 'linear-gradient(45deg, #4259c1, #1f295a)',
         }}
       >
         <Box
+          component="form"
+          onSubmit={handleSubmit}
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            paddingBottom: 5,
-            paddingLeft: 5,
-            paddingRight: 5,
+            maxWidth: 500,
+            minWidth: 450,
+            height: 670,
+            padding: 4,
+            borderRadius: '12px 0 0 12px',
+            backgroundColor: '#d6e1f7',
           }}
         >
-          <img src={logo2} alt="Logo" style={{ height: '130px', marginBottom: '20px', alignSelf: 'center' }} />
           <Box
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              mb: 4,
+              paddingBottom: 5,
+              paddingLeft: 5,
+              paddingRight: 5,
             }}
           >
-            <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
-              Welcome back
-            </Typography>
-            <Typography align="left" sx={{ mb: 2 }}>
-              We are happy to see you again.
-            </Typography>
+            <img src={logo2} alt="Logo" style={{ height: '130px', marginBottom: '20px', alignSelf: 'center' }} />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                mb: 4,
+              }}
+            >
+              <Typography variant="h4" align="left" sx={{ color: '#1f295a', fontWeight: 'bold' }}>
+                Welcome back
+              </Typography>
+              <Typography align="left" sx={{ mb: 2 }}>
+                We are happy to see you again.
+              </Typography>
+            </Box>
+
+            <CustomEmailField onChange={handleChange} />
+            <CustomPasswordField onChange={handleChange} />
+            <CustomButton />
+            <GoogleButton />
+            <SignUpLink />
+
+            {error && <Typography color="error" sx={{ mt: 2 }} align="center">{error}</Typography>}
+            {success && <Typography color="primary" sx={{ mt: 2 }} align="center">{success}</Typography>}
           </Box>
+        </Box>
 
-          <CustomEmailField onChange={handleChange} />
-          <CustomPasswordField onChange={handleChange} />
-          <CustomButton />
-          <GoogleButton />
-          <SignUpLink />
-
-          {error && <Typography color="error" sx={{ mt: 2 }} align="center">{error}</Typography>}
-          {success && <Typography color="primary" sx={{ mt: 2 }} align="center">{success}</Typography>}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxWidth: 700,
+            minWidth: 450,
+            height: 670,
+            padding: 4,
+            borderRadius: '0px 12px 12px 0px',
+            backgroundColor: '#4259c1',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
         </Box>
       </Box>
-
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          maxWidth: 700,
-          minWidth: 450,
-          height: 670,
-          padding: 4,
-          borderRadius: '0px 12px 12px 0px',
-          backgroundColor: '#4259c1',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-      <img src={logo1} alt="Logo" style={{ height: '180px', marginBottom: '20px', alignSelf: 'center' }} />
-      </Box>
-    </Box>
     </AppProvider>
   );
 };

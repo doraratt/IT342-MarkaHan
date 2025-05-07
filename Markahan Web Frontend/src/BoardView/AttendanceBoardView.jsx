@@ -9,6 +9,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 function AttendanceBoardView() {
   const { user } = useUser();
   const [attendanceData, setAttendanceData] = useState([
@@ -30,7 +32,7 @@ function AttendanceBoardView() {
   // Fetch students to get sections
   const fetchStudents = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+      const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
       const fetchedStudents = response.data;
       setStudents(fetchedStudents);
       const uniqueSections = [...new Set(fetchedStudents.map(s => s.section))].sort();
@@ -46,7 +48,7 @@ function AttendanceBoardView() {
     try {
       const today = new Date().toISOString().split('T')[0];
       const response = await axios.get(
-        `http://localhost:8080/api/attendance/getAttendanceByUser?userId=${user.userId}`
+        `${API_URL}/api/attendance/getAttendanceByUser?userId=${user.userId}`
       );
 
       const todayRecords = response.data.filter(record => record.date === today);

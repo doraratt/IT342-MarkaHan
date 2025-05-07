@@ -8,6 +8,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 export default function NumberOfStudents() {
   const { user } = useUser();
   const [maleCount, setMaleCount] = useState(0);
@@ -24,7 +26,7 @@ export default function NumberOfStudents() {
     if (user) {
       const fetchStudents = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/student/getStudentsByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/student/getStudentsByUser?userId=${user.userId}`);
           const fetchedStudents = response.data;
           setStudents(fetchedStudents);
           const uniqueSections = [...new Set(fetchedStudents.map(s => s.section))].sort();

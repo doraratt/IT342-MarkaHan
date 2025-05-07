@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useUser } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Fallback for local dev
+
 export default function EventBoardView() {
   const { user } = useUser();
   const [events, setEvents] = useState([]);
@@ -18,7 +20,7 @@ export default function EventBoardView() {
     if (user) {
       const fetchEvents = async () => {
         try {
-          const response = await axios.get(`http://localhost:8080/api/eventcalendar/getEventByUser?userId=${user.userId}`);
+          const response = await axios.get(`${API_URL}/api/eventcalendar/getEventByUser?userId=${user.userId}`);
           const parsedEvents = response.data.map(event => ({
             calendarId: event.calendarId,
             title: event.eventDescription, // Rename eventDescription to title
