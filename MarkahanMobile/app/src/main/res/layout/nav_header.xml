@@ -6,9 +6,9 @@
     android:background="#1f295a">
 
     <ImageView
-        android:layout_width="160dp"
+        android:layout_width="150dp"
         android:layout_height="100dp"
-        android:layout_marginTop="70dp"
+        android:layout_marginTop="120dp"
         android:layout_marginBottom="20dp"
         android:layout_marginLeft="10dp"
         android:src="@drawable/mh"
@@ -16,15 +16,15 @@
         android:scaleX="1.5"
         android:scaleY="1.5" />
 
-<!--    <TextView-->
-<!--        android:id="@+id/header_email"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Welcome, Teacher Cathy"-->
-<!--        android:textColor="#fff"-->
-<!--        android:textSize="12sp"-->
-<!--        android:layout_marginBottom="15dp"-->
-<!--        android:layout_marginLeft="17dp"-->
-<!--        android:layout_gravity="left"-->
-<!--        android:fontFamily="@font/lexend_bold"/>-->
+    <TextView
+        android:id="@+id/header_firstname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome, Teacher Cathy!"
+        android:textColor="#fff"
+        android:textSize="16sp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="17dp"
+        android:layout_gravity="left"
+        android:fontFamily="@font/lexend_bold"/>
 </LinearLayout>

@@ -22,10 +22,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Journal
+import com.example.markahanmobile.helper.ApiClient.apiService
 import com.example.markahanmobile.helper.JournalAdapter
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -75,6 +80,17 @@ class JournalActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
+        // Update header with user's first name
+        val headerView = navView.getHeaderView(0)
+        val headerFirstName = headerView.findViewById<TextView>(R.id.header_firstname)
+        val user = DataStore.getLoggedInUser()
+        if (user != null && user.firstName!!.isNotEmpty()) {
+            headerFirstName.text = "Welcome, Teacher ${user.firstName}!"
+        } else {
+            headerFirstName.text = "Welcome, Teacher!"
+            Log.w(TAG, "No user or first name found")
+        }
+
         val logoutView = navView.findViewById<TextView>(R.id.nav_logout)
         logoutView?.setOnClickListener {
             AlertDialog.Builder(this)
@@ -311,11 +327,11 @@ class JournalActivity : AppCompatActivity() {
             .setMessage("Are you sure you want to delete this entry?")
             .setPositiveButton("Delete") { _, _ ->
                 DataStore.deleteJournal(journal.journalId) { success ->
+                    loadJournals() // Always refresh the UI
                     if (success) {
-                        loadJournals()
                         Toast.makeText(this, "Journal deleted successfully", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this, "Failed to delete journal", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Journal deleted, but refresh may have failed", Toast.LENGTH_SHORT).show()
                     }
                 }
             }

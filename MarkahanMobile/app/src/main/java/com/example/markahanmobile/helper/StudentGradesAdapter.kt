@@ -5,8 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.markahanmobile.R
+import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
 
 class StudentGradesAdapter(
@@ -42,18 +44,24 @@ class StudentGradesAdapter(
             }
             is StudentViewHolder -> {
                 val student = items[position] as Student
-                Log.d("StudentGradesAdapter", "Binding student at position $position: ${student.firstName} ${student.lastName}, Section=${student.section}")
-                holder.studentName.text = "${student.lastName}, ${student.firstName}"
-                val remarks = student.grade?.remarks ?: "No Remarks"
+                Log.d("StudentGradesAdapter", "Binding student at position $position: ${student.firstName} ${student.lastName}, Section=${student.section}, Grade=${student.grade?.gradeId}")
+                // Fetch the latest grade for the student
+                val grade = DataStore.getGradeByStudent(student.studentId)
+                val updatedStudent = student.copy(grade = grade)
+                holder.studentName.text = "${updatedStudent.lastName}, ${updatedStudent.firstName}"
+                val remarks = updatedStudent.grade?.remarks ?: "No Remarks"
                 holder.studentRemarks.text = remarks
+                // Set color based on remarks value
+                val context = holder.itemView.context
                 holder.studentRemarks.setTextColor(
-                    if (student.grade?.finalGrade ?: 0.0 >= 75)
-                        android.graphics.Color.GREEN
-                    else
-                        android.graphics.Color.RED
+                    when (remarks) {
+                        "PASSED" -> ContextCompat.getColor(context, R.color.remarks_passed)
+                        "FAILED" -> ContextCompat.getColor(context, R.color.remarks_failed)
+                        else -> ContextCompat.getColor(context, R.color.remarks_none) // Covers "No Remarks" or unexpected values
+                    }
                 )
                 holder.viewGradesBtn.setOnClickListener {
-                    onViewGrades(student)
+                    onViewGrades(updatedStudent)
                 }
             }
         }

@@ -7,6 +7,7 @@ import com.example.markahanmobile.data.Journal
 import com.example.markahanmobile.data.LoginResponse
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.data.User
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -33,7 +34,6 @@ interface ApiService {
     @GET("api/user/me")
     suspend fun getCurrentUser(): Map<String, Any>
 
-
     // Student Endpoints
     @POST("api/student/add")
     suspend fun addStudent(@Body student: Student): Student
@@ -50,15 +50,8 @@ interface ApiService {
     @PUT("api/student/update/{id}")
     suspend fun updateStudent(@Path("id") id: Int, @Body student: Student): Student
 
-    @PUT("api/student/archive/{id}")
-    suspend fun archiveStudent(
-        @Path("id") id: Int,
-        @Query("isArchived") isArchived: Boolean
-    ): Student
-
     @DELETE("api/student/delete/{id}")
     suspend fun deleteStudent(@Path("id") id: Int): String
-
 
     // Attendance Endpoints
     @POST("api/attendance/postAttendance")
@@ -75,7 +68,6 @@ interface ApiService {
 
     @DELETE("api/attendance/deleteAttendance/{id}")
     suspend fun deleteAttendance(@Path("id") id: Int): String
-
 
     // Grade Endpoints
     @POST("api/grade/postGrade")
@@ -96,10 +88,9 @@ interface ApiService {
     @GET("api/grade/getGradesByStudent")
     suspend fun getGradesByStudent(@Query("studentId") studentId: Int): Grade?
 
-
     // Journal Endpoints
     @POST("api/journal/post")
-    suspend fun postJournal(@Body journal: Journal): Journal
+    suspend fun postJournal(@Body journal: Journal): Response<Journal>
 
     @GET("api/journal/getAll")
     suspend fun getAllJournals(): List<Journal>
@@ -111,12 +102,11 @@ interface ApiService {
     suspend fun updateJournal(@Path("id") id: Int, @Body journal: Journal): Journal
 
     @DELETE("api/journal/delete/{id}")
-    suspend fun deleteJournal(@Path("id") id: Int): String
-
+    suspend fun deleteJournal(@Path("id") id: Int): Response<String>
 
     // Calendar Endpoints
     @POST("api/eventcalendar/addEventCal")
-    suspend fun addEvent(@Body event: Calendar): Calendar
+    suspend fun addEvent(@Body event: CalendarRequest): Calendar
 
     @GET("api/eventcalendar/getEventByUser")
     suspend fun getEventsByUser(@Query("userId") userId: Int): List<Calendar>
@@ -135,13 +125,24 @@ interface ApiService {
     ): List<Calendar>
 
     @PUT("api/eventcalendar/updateEventCal/{calendarId}")
-    suspend fun updateEvent(@Path("calendarId") id: Int, @Body event: Calendar): Calendar
+    suspend fun updateEvent(@Path("calendarId") id: Int, @Body event: CalendarRequest): Response<Calendar>
 
     @DELETE("api/eventcalendar/deleteEventCal/{calendarId}")
-    suspend fun deleteEvent(@Path("calendarId") id: Int): String
+    suspend fun deleteEvent(@Path("calendarId") id: Int): Response<ResponseBody>
 }
 
 data class LoginRequest(
     val email: String,
     val password: String
 )
+
+data class CalendarRequest(
+    val calendarId: Int,
+    val user: User?,
+    val eventDescription: String,
+    val date: String
+) {
+    data class User(
+        val userId: Int
+    )
+}

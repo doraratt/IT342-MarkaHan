@@ -7,4 +7,4 @@
     android:fontFamily="@font/lexend_bold"
     android:background="#5163aa"
     android:textColor="#fff"
-    android:layout_marginTop="14dp"/>
+    android:layout_marginTop="8dp"/>

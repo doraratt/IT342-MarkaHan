@@ -14,10 +14,6 @@ class SectionAdapter(
 
     private var selectedPosition = 0
 
-    companion object{
-        const val ALL_SECTIONS = "All"
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SectionViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_section, parent, false)
         return SectionViewHolder(view)
@@ -43,6 +39,10 @@ class SectionAdapter(
 
     fun updateSections(newSections: List<String>) {
         sections = newSections
+        if (sections.isNotEmpty() && selectedPosition >= sections.size) {
+            selectedPosition = 0
+            onSectionClick(sections[0])
+        }
         notifyDataSetChanged()
     }
 
@@ -50,10 +50,13 @@ class SectionAdapter(
         val sectionName: TextView = itemView.findViewById(R.id.sectionName)
     }
 
-    fun setSelectedPosition(position: Int){
+    fun setSelectedPosition(position: Int) {
         val previousSelected = selectedPosition
         selectedPosition = position
         notifyItemChanged(previousSelected)
         notifyItemChanged(position)
+        if (position in 0 until sections.size) {
+            onSectionClick(sections[position])
+        }
     }
 }

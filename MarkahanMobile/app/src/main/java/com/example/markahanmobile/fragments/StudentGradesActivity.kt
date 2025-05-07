@@ -11,13 +11,19 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class StudentGradesActivity : AppCompatActivity() {
 
+    private lateinit var toolbar: Toolbar
     private lateinit var studentNameText: TextView
     private lateinit var sectionText: TextView
     private lateinit var gradeLevelText: TextView
@@ -36,11 +42,13 @@ class StudentGradesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_student_grades)
 
         initializeViews()
+        setupToolbar()
         loadData()
         setupListeners()
     }
 
     private fun initializeViews() {
+        toolbar = findViewById(R.id.toolbar)
         studentNameText = findViewById(R.id.studentName)
         sectionText = findViewById(R.id.studentSection)
         gradeLevelText = findViewById(R.id.studentGradeLevel)
@@ -50,6 +58,15 @@ class StudentGradesActivity : AppCompatActivity() {
         printGradesButton = findViewById(R.id.btnPrintGrades)
         progressBar = findViewById(R.id.progressBar)
         scrollView = findViewById(R.id.scrollView)
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 
     private fun loadData() {
@@ -70,50 +87,81 @@ class StudentGradesActivity : AppCompatActivity() {
             return
         }
 
-        DataStore.syncGrades(userId) { success ->
-            progressBar.visibility = View.GONE
-            scrollView.visibility = View.VISIBLE
-            if (success) {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    DataStore.syncGrades(userId) { success ->
+                        if (success) {
+                            Log.d(TAG, "loadData: Grades synced for userId=$userId")
+                        } else {
+                            Log.e(TAG, "loadData: Failed to sync grades")
+                        }
+                    }
+                }
+                // Fetch the latest grade for the student
                 val grade = DataStore.getGradeByStudent(student.studentId)
+                if (grade == null) {
+                    Log.w(TAG, "loadData: No grade found for studentId=${student.studentId}")
+                } else {
+                    Log.d(TAG, "loadData: Fetched grade for studentId=${student.studentId}, GradeId=${grade.gradeId}, FinalGrade=${grade.finalGrade}")
+                }
                 student = student.copy(grade = grade)
-                setupUI()
-            } else {
-                Toast.makeText(this, "Error loading grades", Toast.LENGTH_SHORT).show()
-                setupUI()
+                runOnUiThread {
+                    progressBar.visibility = View.GONE
+                    scrollView.visibility = View.VISIBLE
+                    setupUI()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    progressBar.visibility = View.GONE
+                    scrollView.visibility = View.VISIBLE
+                    Log.e(TAG, "loadData: Error syncing grades: ${e.message}", e)
+                    Toast.makeText(this@StudentGradesActivity, "Error loading grades", Toast.LENGTH_SHORT).show()
+                    setupUI()
+                }
             }
         }
     }
 
     private fun setupUI() {
+        // Always display learning area rows with subject labels
+        bindGradeRow(R.id.rowFilipino, "Filipino")
+        bindGradeRow(R.id.rowEnglish, "English")
+        bindGradeRow(R.id.rowMath, "Math")
+        bindGradeRow(R.id.rowScience, "Science")
+        bindGradeRow(R.id.rowAP, "AP")
+        bindGradeRow(R.id.rowESP, "ESP")
+        bindGradeRow(R.id.rowMAPEH, "MAPEH")
+        bindGradeRow(R.id.rowComputer, "Computer")
+
         student.grade?.let { grade ->
-            bindGradeRow(R.id.rowFilipino, "Filipino")
-            bindGradeRow(R.id.rowEnglish, "English")
-            bindGradeRow(R.id.rowMath, "Math")
-            bindGradeRow(R.id.rowScience, "Science")
-            bindGradeRow(R.id.rowAP, "AP")
-            bindGradeRow(R.id.rowESP, "ESP")
-            bindGradeRow(R.id.rowMAPEH, "MAPEH")
-            bindGradeRow(R.id.rowComputer, "Computer")
+            Log.d(TAG, "setupUI: Displaying grades for studentId=${student.studentId}, GradeId=${grade.gradeId}, FinalGrade=${grade.finalGrade}")
+            updateGradeRow(R.id.rowFilipino, grade.filipino, grade.subjectGrades["Filipino"]?.remarks ?: "")
+            updateGradeRow(R.id.rowEnglish, grade.english, grade.subjectGrades["English"]?.remarks ?: "")
+            updateGradeRow(R.id.rowMath, grade.mathematics, grade.subjectGrades["Math"]?.remarks ?: "")
+            updateGradeRow(R.id.rowScience, grade.science, grade.subjectGrades["Science"]?.remarks ?: "")
+            updateGradeRow(R.id.rowAP, grade.ap, grade.subjectGrades["AP"]?.remarks ?: "")
+            updateGradeRow(R.id.rowESP, grade.esp, grade.subjectGrades["ESP"]?.remarks ?: "")
+            updateGradeRow(R.id.rowMAPEH, grade.mapeh, grade.subjectGrades["MAPEH"]?.remarks ?: "")
+            updateGradeRow(R.id.rowComputer, grade.computer, grade.subjectGrades["Computer"]?.remarks ?: "")
 
             averageGradeText.text = if (grade.finalGrade > 0) String.format("%.2f", grade.finalGrade) else "-"
             averageRemarksText.text = grade.remarks.ifEmpty { "-" }
             averageRemarksText.setTextColor(
                 ContextCompat.getColor(
                     this,
-                    if (grade.finalGrade >= 75) R.color.green else R.color.red
+                    when (grade.remarks) {
+                        "PASSED" -> R.color.remarks_passed
+                        "FAILED" -> R.color.remarks_failed
+                        else -> R.color.remarks_none // Covers "-" or empty remarks
+                    }
                 )
             )
         } ?: run {
-            Toast.makeText(this, "No grades available for this student", Toast.LENGTH_SHORT).show()
-            arrayOf(
-                R.id.rowFilipino, R.id.rowEnglish, R.id.rowMath, R.id.rowScience,
-                R.id.rowAP, R.id.rowESP, R.id.rowMAPEH, R.id.rowComputer
-            ).forEach { rowId ->
-                findViewById<LinearLayout>(rowId)?.visibility = View.GONE
-            }
+            Log.w(TAG, "setupUI: No grades available for studentId=${student.studentId}")
             averageGradeText.text = "-"
             averageRemarksText.text = "-"
-            averageRemarksText.setTextColor(ContextCompat.getColor(this, R.color.red))
+            averageRemarksText.setTextColor(ContextCompat.getColor(this, R.color.remarks_none))
         }
     }
 
@@ -123,22 +171,30 @@ class StudentGradesActivity : AppCompatActivity() {
         val gradeText = row.findViewById<TextView>(R.id.txtGrade)
         val remarksText = row.findViewById<TextView>(R.id.txtRemarks)
 
-        student.grade?.subjectGrades?.get(subject)?.let { subjectGrade ->
-            subjectText.text = subject
-            gradeText.text = if (subjectGrade.grade > 0) String.format("%.2f", subjectGrade.grade) else "-"
-            remarksText.text = subjectGrade.remarks.ifEmpty { "-" }
-            remarksText.setTextColor(
-                ContextCompat.getColor(
-                    this,
-                    if (subjectGrade.grade >= 75) R.color.green else R.color.red
-                )
+        subjectText.text = subject
+        gradeText.text = "-"
+        remarksText.text = "-"
+        remarksText.setTextColor(ContextCompat.getColor(this, R.color.remarks_none))
+        row.visibility = View.VISIBLE
+    }
+
+    private fun updateGradeRow(rowId: Int, grade: Double, remarks: String) {
+        val row = findViewById<LinearLayout>(rowId)
+        val gradeText = row.findViewById<TextView>(R.id.txtGrade)
+        val remarksText = row.findViewById<TextView>(R.id.txtRemarks)
+
+        gradeText.text = if (grade > 0) String.format("%.2f", grade) else "-"
+        remarksText.text = remarks.ifEmpty { "-" }
+        remarksText.setTextColor(
+            ContextCompat.getColor(
+                this,
+                when (remarks) {
+                    "PASSED" -> R.color.remarks_passed
+                    "FAILED" -> R.color.remarks_failed
+                    else -> R.color.remarks_none // Covers "-" or empty remarks
+                }
             )
-        } ?: run {
-            subjectText.text = subject
-            gradeText.text = "-"
-            remarksText.text = "-"
-            remarksText.setTextColor(ContextCompat.getColor(this, R.color.red))
-        }
+        )
     }
 
     private fun setupListeners() {

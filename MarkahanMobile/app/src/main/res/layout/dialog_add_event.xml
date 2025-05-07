@@ -2,7 +2,8 @@
     android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:elevation="4dp">
 
     <!-- Title -->
     <TextView
@@ -15,15 +16,13 @@
         android:textColor="#1f295a"
         android:layout_marginBottom="20dp" />
 
-    <!-- Input -->
     <EditText
         android:id="@+id/eventNameInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter event name"
         android:inputType="text"
         android:padding="10dp"
-        android:textColor="#000"/>
+        android:textColor="#000" />
 
     <!-- Buttons -->
     <LinearLayout

@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/attendance_sheet_background"
+    android:fitsSystemWindows="true"
     tools:context=".fragments.AttendanceSheetActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -55,19 +56,11 @@
             android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <ImageView
-            android:id="@+id/iconTable"
-            android:layout_width="21dp"
-            android:layout_height="20dp"
-            android:src="@drawable/table"
-            android:layout_marginStart="16dp"
-            android:tint="#1f295a"/>
-
-        <ImageView
             android:id="@+id/iconCalendar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:src="@drawable/calendar"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:tint="#1f295a"/>
     </LinearLayout>
 
