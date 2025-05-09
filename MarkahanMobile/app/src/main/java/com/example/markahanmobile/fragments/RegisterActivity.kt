@@ -49,12 +49,13 @@ class RegisterActivity : AppCompatActivity() {
                     firstName = firstName,
                     lastName = lastName,
                     email = email,
+                    password = password
                 )
 
                 DataStore.signup(user) { createdUser, success ->
                     if (success && createdUser != null) {
                         Toast.makeText(this, "Account successfully created", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this, LoginActivity::class.java)
+                        val intent = Intent(this, DashboardActivity::class.java)
                         startActivity(intent)
                         finish()
                     } else {

@@ -25,7 +25,7 @@
         android:layout_weight="2"
         android:text="Event Name"
         android:textColor="#000"
-        android:textSize="14sp"
+        android:textSize="16sp"
         android:fontFamily="@font/lexend_reg"
         android:layout_marginLeft="25dp"/>
 

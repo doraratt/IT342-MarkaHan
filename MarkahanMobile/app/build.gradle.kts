@@ -21,6 +21,7 @@ android {
     buildTypes {
         debug {
             isDebuggable = true // Explicitly enable debug mode
+//            buildConfigField("String", "BACKEND_URL", "\"http://10.0.2.2:8080/\"")
             buildConfigField("String", "BACKEND_URL", "\"https://rendeer-ya43.onrender.com/\"")
         }
         release {
@@ -86,4 +87,6 @@ dependencies {
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     implementation ("androidx.gridlayout:gridlayout:1.0.0")
+
+    implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }

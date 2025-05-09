@@ -183,8 +183,8 @@ class EditGradesActivity : AppCompatActivity() {
             gradeId = student.grade?.gradeId ?: 0,
             studentId = student.studentId,
             userId = user.userId,
-            student = student.copy(grade = null), // Include student object without grade to avoid circular reference
-            user = user,
+            student = student,
+            user = User(userId = user.userId),
             filipino = newGrades["Filipino"] ?: 0.0,
             english = newGrades["English"] ?: 0.0,
             mathematics = newGrades["Math"] ?: 0.0,

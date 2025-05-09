@@ -200,19 +200,25 @@ class AttendanceSheetActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             var studentSuccess = false
             var attendanceSuccess = false
+            var errorMessage = ""
             withContext(Dispatchers.IO) {
                 // Sync students with retry logic
                 var attempts = 0
-                val maxAttempts = 2
+                val maxAttempts = 3 // Increased to 3 attempts
                 while (attempts < maxAttempts && !studentSuccess) {
                     attempts++
-                    val studentDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
-                    DataStore.syncStudents(userId, includeArchived = false) { success ->
-                        studentDeferred.complete(success)
-                    }
-                    studentSuccess = kotlinx.coroutines.withTimeoutOrNull(10000L) { studentDeferred.await() } ?: false
-                    if (!studentSuccess) {
-                        android.util.Log.w("AttendanceSheetActivity", "syncStudents: Attempt $attempts failed")
+                    try {
+                        val studentDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                        DataStore.syncStudents(userId, includeArchived = false) { success ->
+                            studentDeferred.complete(success)
+                        }
+                        studentSuccess = kotlinx.coroutines.withTimeoutOrNull(15000L) { studentDeferred.await() } ?: false
+                        if (!studentSuccess) {
+                            android.util.Log.w("AttendanceSheetActivity", "syncStudents: Attempt $attempts failed")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AttendanceSheetActivity", "syncStudents: Attempt $attempts error: ${e.message}", e)
+                        errorMessage = "Error syncing students: ${e.message}"
                     }
                 }
 
@@ -221,13 +227,18 @@ class AttendanceSheetActivity : AppCompatActivity() {
                     attempts = 0
                     while (attempts < maxAttempts && !attendanceSuccess) {
                         attempts++
-                        val attendanceDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
-                        DataStore.syncAttendanceRecords(userId) { success ->
-                            attendanceDeferred.complete(success)
-                        }
-                        attendanceSuccess = kotlinx.coroutines.withTimeoutOrNull(10000L) { attendanceDeferred.await() } ?: false
-                        if (!attendanceSuccess) {
-                            android.util.Log.w("AttendanceSheetActivity", "syncAttendanceRecords: Attempt $attempts failed")
+                        try {
+                            val attendanceDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                            DataStore.syncAttendanceRecords(userId) { success ->
+                                attendanceDeferred.complete(success)
+                            }
+                            attendanceSuccess = kotlinx.coroutines.withTimeoutOrNull(15000L) { attendanceDeferred.await() } ?: false
+                            if (!attendanceSuccess) {
+                                android.util.Log.w("AttendanceSheetActivity", "syncAttendanceRecords: Attempt $attempts failed")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("AttendanceSheetActivity", "syncAttendanceRecords: Attempt $attempts error: ${e.message}", e)
+                            errorMessage = "Error syncing attendance: ${e.message}"
                         }
                     }
                 }

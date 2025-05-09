@@ -10,6 +10,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class StudentGradesAdapter(
     private val onViewGrades: (Student) -> Unit,
@@ -44,12 +50,9 @@ class StudentGradesAdapter(
             }
             is StudentViewHolder -> {
                 val student = items[position] as Student
-                Log.d("StudentGradesAdapter", "Binding student at position $position: ${student.firstName} ${student.lastName}, Section=${student.section}, Grade=${student.grade?.gradeId}")
-                // Fetch the latest grade for the student
-                val grade = DataStore.getGradeByStudent(student.studentId)
-                val updatedStudent = student.copy(grade = grade)
-                holder.studentName.text = "${updatedStudent.lastName}, ${updatedStudent.firstName}"
-                val remarks = updatedStudent.grade?.remarks ?: "No Remarks"
+                Log.d("StudentGradesAdapter", "Binding student at position $position: ${student.firstName} ${student.lastName}, Section=${student.section}, GradeId=${student.grade?.gradeId}, Remarks=${student.grade?.remarks}")
+                holder.studentName.text = "${student.lastName}, ${student.firstName}"
+                val remarks = student.grade?.remarks ?: "No Remarks"
                 holder.studentRemarks.text = remarks
                 // Set color based on remarks value
                 val context = holder.itemView.context
@@ -61,7 +64,27 @@ class StudentGradesAdapter(
                     }
                 )
                 holder.viewGradesBtn.setOnClickListener {
-                    onViewGrades(updatedStudent)
+                    // Sync grades before navigating to ensure the latest data
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                val gradeDeferred = CompletableDeferred<Boolean>()
+                                DataStore.syncGrades(student.userId) { success ->
+                                    Log.d("StudentGradesAdapter", "viewGrades: Grade sync success=$success for studentId=${student.studentId}")
+                                    gradeDeferred.complete(success)
+                                }
+                                withTimeoutOrNull(5000L) { gradeDeferred.await() }
+                            }
+                            // Fetch the latest grade after sync
+                            val updatedGrade = DataStore.getGradeByStudent(student.studentId)
+                            val updatedStudent = student.copy(grade = updatedGrade)
+                            Log.d("StudentGradesAdapter", "viewGrades: Fetched grade for studentId=${student.studentId}, GradeId=${updatedGrade?.gradeId}, Remarks=${updatedGrade?.remarks}")
+                            onViewGrades(updatedStudent)
+                        } catch (e: Exception) {
+                            Log.e("StudentGradesAdapter", "viewGrades: Error syncing grades for studentId=${student.studentId}: ${e.message}", e)
+                            onViewGrades(student) // Proceed with existing data
+                        }
+                    }
                 }
             }
         }
