@@ -20,6 +20,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
@@ -40,6 +41,7 @@ class GradesActivity : AppCompatActivity() {
     private lateinit var iconSearchStudent: ImageView
     private lateinit var progressBar: ProgressBar
     private lateinit var noStudentsText: TextView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var sectionAdapter: SectionAdapter
     private lateinit var studentAdapter: StudentGradesAdapter
     private val sectionList = mutableListOf<String>()
@@ -65,6 +67,7 @@ class GradesActivity : AppCompatActivity() {
         navView = findViewById(R.id.nav_view)
         progressBar = findViewById(R.id.progressBar)
         noStudentsText = findViewById(R.id.noStudentsText)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -73,11 +76,63 @@ class GradesActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        // Fetch userId early
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        userId = DataStore.getLoggedInUser()?.userId ?: sharedPreferences.getInt("userId", -1)
+        if (userId == -1) {
+            Log.e(TAG, "onCreate: Invalid userId: $userId, redirecting to login")
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+        Log.d(TAG, "onCreate: userId set to $userId")
+
         setupNavigation()
         setupRecyclerViews()
         setupButtons()
+        setupSwipeRefresh()
 
-        loadStudents()
+        // Sync data before loading students
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val studentDeferred = CompletableDeferred<Boolean>()
+                    DataStore.syncStudents(userId, includeArchived = false) { success ->
+                        Log.d(TAG, "onCreate: Students synced for userId=$userId, success=$success")
+                        studentDeferred.complete(success)
+                    }
+                    val studentSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { studentDeferred.await() } ?: false
+
+                    val gradeDeferred = CompletableDeferred<Boolean>()
+                    DataStore.syncGrades(userId) { success ->
+                        Log.d(TAG, "onCreate: Grades synced for userId=$userId, success=$success")
+                        gradeDeferred.complete(success)
+                    }
+                    val gradeSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { gradeDeferred.await() } ?: false
+
+                    if (studentSuccess && gradeSuccess) {
+                        allStudents.clear()
+                        allStudents.addAll(DataStore.getStudents(includeArchived = false))
+                        Log.d(TAG, "onCreate: Loaded ${allStudents.size} students: ${allStudents.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Remarks=${it.grade?.remarks}" }}")
+                    } else {
+                        Log.w(TAG, "onCreate: Sync failed - studentSuccess=$studentSuccess, gradeSuccess=$gradeSuccess")
+                    }
+                }
+                loadStudents()
+            } catch (e: Exception) {
+                Log.e(TAG, "onCreate: Error syncing data", e)
+                Toast.makeText(this@GradesActivity, "Error loading data", Toast.LENGTH_SHORT).show()
+                loadStudents() // Proceed to load UI even if sync fails
+            }
+        }
+    }
+
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            loadStudents()
+            swipeRefreshLayout.isRefreshing = false
+        }
     }
 
     override fun onResume() {
@@ -165,21 +220,14 @@ class GradesActivity : AppCompatActivity() {
         Log.d(TAG, "filterStudentsBySection: Starting filter for section: '$section', allStudents.size=${allStudents.size}, sectionList=$sectionList")
 
         try {
-            val uniqueSections = allStudents.map { it.section }.distinct()
-            Log.d(TAG, "filterStudentsBySection: Unique sections in allStudents: $uniqueSections")
-            findViewById<TextView>(R.id.sectionsLabel).text = "Sections"
-            studentList.clear()
-
             val filtered = allStudents.filter { it.section.equals(section, ignoreCase = true) && !it.isArchived }
+            studentList.clear()
             studentList.addAll(filtered)
-            Log.d(TAG, "filterStudentsBySection: Filtered ${studentList.size} students for section '$section': ${studentList.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Section=${it.section}, isArchived=${it.isArchived}" }}")
+            Log.d(TAG, "filterStudentsBySection: Filtered ${studentList.size} students for section '$section': ${studentList.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Remarks=${it.grade?.remarks}" }}")
 
-            studentAdapter = StudentGradesAdapter(::viewGrades) // Reset adapter
-            val studentRecyclerView = findViewById<RecyclerView>(R.id.studentRecyclerView)
-            studentRecyclerView.adapter = studentAdapter
             studentAdapter.updateList(studentList)
-            studentRecyclerView.requestLayout()
-            studentRecyclerView.invalidate()
+            val studentRecyclerView = findViewById<RecyclerView>(R.id.studentRecyclerView)
+            studentRecyclerView.adapter?.notifyDataSetChanged() // Force refresh
             Log.d(TAG, "filterStudentsBySection: RecyclerView visibility=${studentRecyclerView.visibility}, itemCount=${studentAdapter.itemCount}, studentList.size=${studentList.size}")
             updateNoStudentsVisibility()
 
@@ -202,36 +250,11 @@ class GradesActivity : AppCompatActivity() {
 
     private fun viewGrades(student: Student) {
         try {
-            Log.d(TAG, "viewGrades: Opening grades for student ${student.studentId}: ${student.firstName} ${student.lastName}, Grade=${student.grade}")
-            // Ensure grades are synced before viewing
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    withContext(Dispatchers.IO) {
-                        DataStore.syncGrades(userId) { success ->
-                            if (success) {
-                                Log.d(TAG, "viewGrades: Grades synced for userId=$userId")
-                            } else {
-                                Log.e(TAG, "viewGrades: Failed to sync grades")
-                            }
-                        }
-                    }
-                    // Fetch the latest grade for the student
-                    val grade = DataStore.getGradeByStudent(student.studentId)
-                    val updatedStudent = student.copy(grade = grade)
-                    Log.d(TAG, "viewGrades: Fetched grade for studentId=${student.studentId}, Grade=$grade")
-                    val intent = Intent(this@GradesActivity, StudentGradesActivity::class.java).apply {
-                        putExtra("student", updatedStudent as android.os.Parcelable)
-                    }
-                    startActivityForResult(intent, VIEW_GRADES_REQUEST)
-                } catch (e: Exception) {
-                    Log.e(TAG, "viewGrades: Error syncing grades before opening", e)
-                    Toast.makeText(this@GradesActivity, "Error loading grades", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this@GradesActivity, StudentGradesActivity::class.java).apply {
-                        putExtra("student", student as android.os.Parcelable)
-                    }
-                    startActivityForResult(intent, VIEW_GRADES_REQUEST)
-                }
+            Log.d(TAG, "viewGrades: Opening grades for student ${student.studentId}: ${student.firstName} ${student.lastName}, GradeId=${student.grade?.gradeId}, Remarks=${student.grade?.remarks}")
+            val intent = Intent(this@GradesActivity, StudentGradesActivity::class.java).apply {
+                putExtra("student", student as android.os.Parcelable)
             }
+            startActivityForResult(intent, VIEW_GRADES_REQUEST)
         } catch (e: Exception) {
             Log.e(TAG, "viewGrades: Error opening StudentGradesActivity", e)
             Toast.makeText(this, "Error opening grade details", Toast.LENGTH_SHORT).show()
@@ -244,20 +267,43 @@ class GradesActivity : AppCompatActivity() {
             data?.getParcelableExtra<Student>("updatedStudent")?.let { updatedStudent ->
                 try {
                     Log.d(TAG, "onActivityResult: Received updated student: ${updatedStudent.studentId}, Grade=${updatedStudent.grade}")
-                    val index = allStudents.indexOfFirst { it.studentId == updatedStudent.studentId }
-                    if (index != -1) {
-                        allStudents[index] = updatedStudent
-                    } else {
-                        Log.w(TAG, "onActivityResult: Updated student ${updatedStudent.studentId} not found in allStudents")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                // Sync both students and grades to ensure latest data
+                                val studentDeferred = CompletableDeferred<Boolean>()
+                                DataStore.syncStudents(userId, includeArchived = false) { success ->
+                                    Log.d(TAG, "onActivityResult: Students synced for userId=$userId, success=$success")
+                                    studentDeferred.complete(success)
+                                }
+                                val studentSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { studentDeferred.await() } ?: false
+
+                                val gradeDeferred = CompletableDeferred<Boolean>()
+                                DataStore.syncGrades(userId) { success ->
+                                    Log.d(TAG, "onActivityResult: Grades synced for userId=$userId, success=$success")
+                                    gradeDeferred.complete(success)
+                                }
+                                val gradeSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { gradeDeferred.await() } ?: false
+
+                                if (studentSuccess && gradeSuccess) {
+                                    allStudents.clear()
+                                    allStudents.addAll(DataStore.getStudents(includeArchived = false))
+                                    Log.d(TAG, "onActivityResult: Refreshed allStudents with ${allStudents.size} students")
+                                }
+                            }
+                            if (sectionList.isNotEmpty()) {
+                                filterStudentsBySection(selectedSection ?: sectionList.firstOrNull() ?: "")
+                            } else {
+                                studentList.clear()
+                                studentAdapter.updateList(studentList)
+                                updateNoStudentsVisibility()
+                            }
+                            Toast.makeText(this@GradesActivity, "Grades updated successfully", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "onActivityResult: Error syncing data after update", e)
+                            Toast.makeText(this@GradesActivity, "Error refreshing data", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                    if (sectionList.isNotEmpty()) {
-                        filterStudentsBySection(selectedSection ?: sectionList.firstOrNull() ?: "")
-                    } else {
-                        studentList.clear()
-                        studentAdapter.updateList(studentList)
-                        updateNoStudentsVisibility()
-                    }
-                    Toast.makeText(this, "Grades updated successfully", Toast.LENGTH_SHORT).show()
                 } catch (e: IllegalArgumentException) {
                     Log.e(TAG, "onActivityResult: Error updating student", e)
                     Toast.makeText(this, e.message ?: "Failed to update grades", Toast.LENGTH_SHORT).show()
@@ -343,8 +389,6 @@ class GradesActivity : AppCompatActivity() {
         }
         isLoading = true
 
-        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
-        userId = DataStore.getLoggedInUser()?.userId ?: sharedPreferences.getInt("userId", -1)
         if (userId == -1) {
             Log.e(TAG, "loadStudents: Invalid userId: $userId, redirecting to login")
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
@@ -368,27 +412,41 @@ class GradesActivity : AppCompatActivity() {
                     val studentDeferred = CompletableDeferred<Boolean>()
                     DataStore.syncStudents(userId, includeArchived = false) { success ->
                         Log.d(TAG, "syncStudents: Callback received, success=$success")
-                        val students = DataStore.getStudents(includeArchived = false)
-                        Log.d(TAG, "syncStudents: Post-sync, retrieved ${students.size} students: ${students.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Section=${it.section}, isArchived=${it.isArchived}" }}")
                         studentDeferred.complete(success)
                     }
                     studentSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { studentDeferred.await() } ?: false
 
-                    // Sync grades
-                    val gradeDeferred = CompletableDeferred<Boolean>()
-                    DataStore.syncGrades(userId) { success ->
-                        Log.d(TAG, "syncGrades: Callback received, success=$success")
-                        gradeDeferred.complete(success)
+                    // Sync grades with retry logic
+                    val maxRetries = 2
+                    var retryCount = 0
+                    while (retryCount <= maxRetries && !gradeSuccess) {
+                        try {
+                            val gradeDeferred = CompletableDeferred<Boolean>()
+                            DataStore.syncGrades(userId) { success ->
+                                Log.d(TAG, "syncGrades: Callback received, success=$success")
+                                gradeDeferred.complete(success)
+                            }
+                            gradeSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { gradeDeferred.await() } ?: false
+                            if (!gradeSuccess && retryCount < maxRetries) {
+                                Log.w(TAG, "syncGrades: Failed, retrying ($retryCount/$maxRetries)")
+                                kotlinx.coroutines.delay(1000L)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "syncGrades: Exception on attempt ${retryCount + 1}: ${e.message}", e)
+                            if (retryCount == maxRetries) gradeSuccess = false
+                        }
+                        retryCount++
                     }
-                    gradeSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { gradeDeferred.await() } ?: false
                 }
                 Log.d(TAG, "loadStudents: Sync completed with studentSuccess=$studentSuccess, gradeSuccess=$gradeSuccess")
 
                 allStudents.clear()
                 val students = DataStore.getStudents(includeArchived = false)
-                Log.d(TAG, "loadStudents: Retrieved ${students.size} students from DataStore: ${students.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Section=${it.section}, isArchived=${it.isArchived}, Grade=${it.grade?.gradeId}" }}")
                 allStudents.addAll(students)
-                Log.d(TAG, "loadStudents: Loaded ${allStudents.size} students into allStudents")
+                Log.d(TAG, "loadStudents: Retrieved ${students.size} students from DataStore")
+                allStudents.forEach { student ->
+                    Log.d(TAG, "loadStudents: Student ${student.studentId}, Name=${student.firstName} ${student.lastName}, Section=${student.section}, GradeId=${student.grade?.gradeId}, Remarks=${student.grade?.remarks}")
+                }
 
                 if (allStudents.isEmpty()) {
                     Log.w(TAG, "loadStudents: No students retrieved. Check database for userId=$userId, archived=false")
@@ -396,13 +454,9 @@ class GradesActivity : AppCompatActivity() {
                 } else {
                     val uniqueSections = allStudents.map { it.section }.distinct()
                     Log.d(TAG, "loadStudents: Unique sections in allStudents: $uniqueSections")
-                    Log.d(TAG, "loadStudents: Comparing with sectionList: $sectionList")
-                    allStudents.forEach { student ->
-                        Log.d(TAG, "loadStudents: Student ${student.studentId}, Section='${student.section}', Length=${student.section.length}, Chars=${student.section.toCharArray().joinToString(",") { it.code.toString() }}, Grade=${student.grade?.gradeId}")
-                    }
                 }
 
-                loadSections() // Single call to load sections
+                loadSections()
                 if (sectionList.isEmpty()) {
                     Log.w(TAG, "loadStudents: No sections available after reload, clearing student list")
                     studentList.clear()
@@ -418,9 +472,8 @@ class GradesActivity : AppCompatActivity() {
                 Toast.makeText(this@GradesActivity, "Error loading data: ${e.message}", Toast.LENGTH_LONG).show()
                 allStudents.clear()
                 val students = DataStore.getStudents(includeArchived = false)
-                Log.d(TAG, "loadStudents: Exception fallback - Retrieved ${students.size} students from DataStore: ${students.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Section=${it.section}, isArchived=${it.isArchived}" }}")
                 allStudents.addAll(students)
-                loadSections() // Single call to load sections in catch
+                loadSections()
                 if (sectionList.isEmpty()) {
                     studentList.clear()
                     studentAdapter.updateList(studentList)

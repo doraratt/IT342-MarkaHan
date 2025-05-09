@@ -357,58 +357,78 @@ class AttendanceActivity : AppCompatActivity() {
         }
         Log.d(TAG, "Records to save: ${recordsToSave.map { "studentId=${it.studentId}, status=${it.attendanceStatus}" }}")
 
-        AlertDialog.Builder(this)
-            .setTitle("Confirm Attendance")
-            .setMessage("Save attendance for $sectionToShow on $dateStr?\n\n$summary")
-            .setPositiveButton("Save") { _, _ ->
-                val user = DataStore.getLoggedInUser()
-                val userId = user?.userId ?: 0
-                if (userId <= 0) {
-                    Toast.makeText(this, "No valid user logged in", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
+        CoroutineScope(Dispatchers.Main).launch {
+            progressBar.visibility = View.VISIBLE
+            var syncSuccess = false
+            withContext(Dispatchers.IO) {
+                val syncDeferred = CompletableDeferred<Boolean>()
+                DataStore.syncStudents(userId, includeArchived = false) { success ->
+                    Log.d(TAG, "saveAttendanceRecords: Sync success=$success")
+                    syncDeferred.complete(success)
                 }
+                syncSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { syncDeferred.await() } ?: false
+            }
 
-                // Sync students to ensure valid IDs
-                CoroutineScope(Dispatchers.Main).launch {
-                    var syncSuccess = false
-                    withContext(Dispatchers.IO) {
-                        val syncDeferred = CompletableDeferred<Boolean>()
-                        DataStore.syncStudents(userId, includeArchived = false) { success ->
-                            Log.d(TAG, "saveAttendanceRecords: Sync success=$success")
-                            syncDeferred.complete(success)
-                        }
-                        syncSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { syncDeferred.await() } ?: false
-                    }
+            if (!syncSuccess) {
+                progressBar.visibility = View.GONE
+                Snackbar.make(recyclerView, "Failed to sync students. Retry?", Snackbar.LENGTH_LONG)
+                    .setAction("Retry") { saveAttendanceRecords() }
+                    .show()
+                isLoading = false
+                loadStudents()
+                return@launch
+            }
 
-                    if (!syncSuccess) {
-                        Snackbar.make(recyclerView, "Failed to sync students. Retry?", Snackbar.LENGTH_LONG)
-                            .setAction("Retry") { saveAttendanceRecords() }
-                            .show()
-                        isLoading = false
-                        loadStudents()
-                        return@launch
-                    }
+            // Refresh student list
+            allStudents.clear()
+            val students = DataStore.getStudents(includeArchived = false)
+            allStudents.addAll(students)
+            Log.d(TAG, "saveAttendanceRecords: Synced ${allStudents.size} students")
+            val updatedValidStudentIds = allStudents.map { it.studentId }.toSet()
 
-                    // Refresh student list
-                    allStudents.clear()
-                    val students = DataStore.getStudents(includeArchived = false)
-                    allStudents.addAll(students)
-                    Log.d(TAG, "saveAttendanceRecords: Synced ${allStudents.size} students")
-                    val updatedValidStudentIds = allStudents.map { it.studentId }.toSet()
+            // Re-validate records
+            val validatedRecordsToSave = recordsToSave.filter { student ->
+                student.studentId in updatedValidStudentIds && !knownInvalidStudentIds.contains(student.studentId)
+            }
+            if (validatedRecordsToSave.isEmpty()) {
+                progressBar.visibility = View.GONE
+                Snackbar.make(recyclerView, "No valid students after sync. Retry?", Snackbar.LENGTH_LONG)
+                    .setAction("Retry") { saveAttendanceRecords() }
+                    .show()
+                loadStudents()
+                return@launch
+            }
 
-                    // Re-validate records
-                    val validatedRecordsToSave = recordsToSave.filter { student ->
-                        student.studentId in updatedValidStudentIds && !knownInvalidStudentIds.contains(student.studentId)
-                    }
-                    if (validatedRecordsToSave.isEmpty()) {
-                        Snackbar.make(recyclerView, "No valid students after sync. Retry?", Snackbar.LENGTH_LONG)
-                            .setAction("Retry") { saveAttendanceRecords() }
-                            .show()
-                        loadStudents()
-                        return@launch
-                    }
+            // Log validated records
+            val newRecordsForLogging = validatedRecordsToSave.map { student ->
+                AttendanceRecord(
+                    attendanceId = 0,
+                    studentId = student.studentId,
+                    userId = userId,
+                    date = selectedDate,
+                    status = student.attendanceStatus,
+                    section = student.section ?: "",
+                    user = User(userId = userId),
+                    student = Student(
+                        studentId = student.studentId,
+                        userId = userId,
+                        firstName = student.firstName,
+                        lastName = student.lastName,
+                        gender = student.gender,
+                        section = student.section,
+                        gradeLevel = student.gradeLevel
+                    )
+                )
+            }
+            val jsonPayloadForLogging = DataStore.getGson().toJson(newRecordsForLogging)
+            Log.d(TAG, "Saving ${newRecordsForLogging.size} records with payload: $jsonPayloadForLogging")
 
-                    // Create AttendanceRecord objects with minimal student and user data
+            // Show confirmation dialog
+            AlertDialog.Builder(this@AttendanceActivity)
+                .setTitle("Confirm Attendance")
+                .setMessage("Save attendance for $sectionToShow on $dateStr?\n\n$summary")
+                .setPositiveButton("Save") { _, _ ->
+                    // Create AttendanceRecord objects
                     val newRecords = validatedRecordsToSave.map { student ->
                         AttendanceRecord(
                             attendanceId = 0,
@@ -416,8 +436,8 @@ class AttendanceActivity : AppCompatActivity() {
                             userId = userId,
                             date = selectedDate,
                             status = student.attendanceStatus,
-                            section = student.section,
-                            user = User(userId = userId), // Minimal user object with only userId
+                            section = student.section ?: "",
+                            user = User(userId = userId),
                             student = Student(
                                 studentId = student.studentId,
                                 userId = userId,
@@ -426,13 +446,15 @@ class AttendanceActivity : AppCompatActivity() {
                                 gender = student.gender,
                                 section = student.section,
                                 gradeLevel = student.gradeLevel
-                            ) // Minimal student object with required fields
+                            )
                         )
                     }
-                    Log.d(TAG, "Saving ${newRecords.size} records: ${newRecords.map { "studentId=${it.studentId}, status=${it.status}" }}")
+                    val jsonPayload = DataStore.getGson().toJson(newRecords)
+                    Log.d(TAG, "Saving ${newRecords.size} records with payload: $jsonPayload")
 
                     // Send records to backend
                     DataStore.addAttendanceRecords(newRecords) { success ->
+                        progressBar.visibility = View.GONE
                         if (success) {
                             Toast.makeText(this@AttendanceActivity, "Attendance saved", Toast.LENGTH_SHORT).show()
                             knownInvalidStudentIds.clear()
@@ -441,15 +463,20 @@ class AttendanceActivity : AppCompatActivity() {
                             val invalidIds = newRecords.map { it.studentId }.toSet()
                             knownInvalidStudentIds.addAll(invalidIds)
                             Log.w(TAG, "saveAttendanceRecords: Invalid IDs: $invalidIds")
-                            Snackbar.make(recyclerView, "Invalid student IDs detected. Retry?", Snackbar.LENGTH_LONG)
-                                .setAction("Retry") { saveAttendanceRecords() }
+                            Snackbar.make(recyclerView, "Failed to save attendance. Sync students and retry?", Snackbar.LENGTH_LONG)
+                                .setAction("Sync & Retry") {
+                                    loadStudents()
+                                    saveAttendanceRecords()
+                                }
                                 .show()
                         }
                     }
                 }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+                .setNegativeButton("Cancel") { _, _ ->
+                    progressBar.visibility = View.GONE
+                }
+                .show()
+        }
     }
 
     private fun updateNoStudentsVisibility() {

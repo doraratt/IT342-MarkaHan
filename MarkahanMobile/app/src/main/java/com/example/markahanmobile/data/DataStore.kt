@@ -7,6 +7,7 @@ import com.example.markahanmobile.helper.ApiClient
 import com.example.markahanmobile.helper.ApiService
 import com.example.markahanmobile.helper.CalendarRequest
 import com.example.markahanmobile.helper.LoginRequest
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
@@ -14,6 +15,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
@@ -43,6 +45,8 @@ object DataStore {
         })
         .create()
 
+    fun getGson(): Gson = gson
+
     fun init(context: Context) {
         this.context = context
         ApiClient.init(context)
@@ -58,9 +62,23 @@ object DataStore {
                     Log.d(TAG, "User signed up: ${createdUser.userId}, ${createdUser.email}")
                     onComplete(createdUser, true)
                 }
+            } catch (e: retrofit2.HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                withContext(Dispatchers.Main) {
+                    Log.e(TAG, "Failed to sign up: HTTP ${e.code()} - ${e.message()}")
+                    Log.e(TAG, "Error body: $errorBody")
+                    val errorMessage = when {
+                        errorBody?.contains("email") == true -> "Email is already registered"
+                        errorBody?.contains("password") == true -> "Invalid password format"
+                        else -> "Failed to create account: $errorBody"
+                    }
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                    onComplete(null, false)
+                }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e(TAG, "Failed to sign up: ${e.message}", e)
+                    Toast.makeText(context, "Failed to create account: ${e.message}", Toast.LENGTH_LONG).show()
                     onComplete(null, false)
                 }
             }
@@ -302,6 +320,9 @@ object DataStore {
             filteredStudents.toList()
         }
         Log.d(TAG, "Fetched students: ${result.size} for section: $section")
+        result.forEach { student ->
+            Log.d(TAG, "getStudents: Student ${student.studentId}, Name=${student.firstName} ${student.lastName}, GradeId=${student.grade?.gradeId}, Remarks=${student.grade?.remarks}")
+        }
         return result
     }
 
@@ -309,6 +330,7 @@ object DataStore {
         val sections = students.filter { if (includeArchived) true else !it.isArchived }
             .map { it.section }
             .distinct()
+            .filter { it.isNotEmpty() }
             .toMutableList()
         Log.d(TAG, "Fetched sections: $sections")
         return sections
@@ -317,26 +339,42 @@ object DataStore {
     fun syncAttendanceRecords(userId: Int, onComplete: (Boolean) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                Log.d(TAG, "syncAttendanceRecords: Fetching for userId=$userId")
                 val response = apiService.getAttendanceByUser(userId)
+                Log.d(TAG, "syncAttendanceRecords: Fetched ${response.size} records for userId=$userId")
+                response.forEach { record ->
+                    Log.d(TAG, "syncAttendanceRecords: Record: studentId=${record.studentId}, date=${record.date}, status=${record.status}, section=${record.section}")
+                }
                 attendanceRecords.clear()
-                val updatedRecords = response.map { record ->
+                val updatedRecords = response.mapNotNull { record ->
                     val student = students.firstOrNull { it.studentId == record.studentId }
                     if (student != null) {
-                        record.copy(section = student.section, student = student)
+                        record.copy(section = student.section ?: "", student = student)
                     } else {
-                        Log.w(TAG, "No student found for studentId=${record.studentId}")
+                        Log.w(TAG, "syncAttendanceRecords: No student found for studentId=${record.studentId}")
                         null
                     }
-                }.filterNotNull()
+                }
                 attendanceRecords.addAll(updatedRecords)
                 withContext(Dispatchers.Main) {
                     Log.d(TAG, "Synced ${attendanceRecords.size} attendance records")
+                    updatedRecords.forEach { record ->
+                        Log.d(TAG, "syncAttendanceRecords: Stored: studentId=${record.studentId}, date=${record.date}, status=${record.status}, section=${record.section}")
+                    }
+                    // Debug: Log all stored records
+                    attendanceRecords.forEach { record ->
+                        Log.d(TAG, "syncAttendanceRecords: All Stored: attendanceId=${record.attendanceId}, studentId=${record.studentId}, date=${record.date}, status=${record.status}, section=${record.section}")
+                    }
                     onComplete(true)
+                }
+            } catch (e: retrofit2.HttpException) {
+                val errorBody = e.response()?.errorBody()?.string() ?: "No error body"
+                withContext(Dispatchers.Main) {
+                    Log.e(TAG, "syncAttendanceRecords: HTTP ${e.code()} error for userId=$userId, errorBody: $errorBody", e)
+                    onComplete(false)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Log.e(TAG, "Failed to sync attendance records: ${e.message}", e)
+                    Log.e(TAG, "syncAttendanceRecords: Failed for userId=$userId, error: ${e.message}", e)
                     onComplete(false)
                 }
             }
@@ -348,32 +386,51 @@ object DataStore {
             try {
                 val addedRecords = mutableListOf<AttendanceRecord>()
                 val invalidStudentIds = mutableListOf<Int>()
-                for (record in records) {
-                    if (record.studentId <= 0 || record.userId <= 0) {
-                        Log.e(TAG, "Invalid record: studentId=${record.studentId}, userId=${record.userId}")
-                        invalidStudentIds.add(record.studentId)
-                        continue
+                var retries = 0
+                val maxRetries = 2
+
+                while (retries <= maxRetries) {
+                    try {
+                        for (record in records) {
+                            if (record.studentId <= 0 || record.userId <= 0) {
+                                Log.e(TAG, "Invalid record: studentId=${record.studentId}, userId=${record.userId}")
+                                invalidStudentIds.add(record.studentId)
+                                continue
+                            }
+                            if (record.status !in listOf("Present", "Absent", "Late")) {
+                                Log.e(TAG, "Invalid status: ${record.status} for studentId=${record.studentId}")
+                                invalidStudentIds.add(record.studentId)
+                                continue
+                            }
+                            val student = students.firstOrNull { it.studentId == record.studentId }
+                            if (student == null) {
+                                Log.e(TAG, "No student found for studentId=${record.studentId}")
+                                invalidStudentIds.add(record.studentId)
+                                continue
+                            }
+                            val validatedRecord = record.copy(
+                                student = student,
+                                section = student.section ?: ""
+                            )
+                            val jsonPayload = gson.toJson(validatedRecord)
+                            Log.d(TAG, "addAttendanceRecords: Sending payload for studentId=${validatedRecord.studentId}: $jsonPayload")
+                            val response = apiService.postAttendance(validatedRecord)
+                            val updatedResponse = response.copy(section = student.section ?: "")
+                            Log.d(TAG, "addAttendanceRecords: Received response for studentId=${updatedResponse.studentId}, section=${updatedResponse.section}")
+                            addedRecords.add(updatedResponse)
+                        }
+                        break
+                    } catch (e: retrofit2.HttpException) {
+                        if (e.code() == 500 && retries < maxRetries) {
+                            Log.w(TAG, "HTTP 500 error, retrying (${retries + 1}/$maxRetries)")
+                            retries++
+                            delay(1000L * retries)
+                            continue
+                        }
+                        throw e
                     }
-                    if (record.status !in listOf("Present", "Absent", "Late")) {
-                        Log.e(TAG, "Invalid status: ${record.status} for studentId=${record.studentId}")
-                        invalidStudentIds.add(record.studentId)
-                        continue
-                    }
-                    val student = students.firstOrNull { it.studentId == record.studentId }
-                    if (student == null) {
-                        Log.e(TAG, "No student found for studentId=${record.studentId}")
-                        invalidStudentIds.add(record.studentId)
-                        continue
-                    }
-                    val validatedRecord = record.copy(
-                        student = student,
-                        section = student.section
-                    )
-                    val jsonPayload = gson.toJson(validatedRecord)
-                    Log.d(TAG, "addAttendanceRecords: Sending payload for studentId=${validatedRecord.studentId}: $jsonPayload")
-                    val response = apiService.postAttendance(validatedRecord)
-                    addedRecords.add(response)
                 }
+
                 if (invalidStudentIds.isNotEmpty()) {
                     withContext(Dispatchers.Main) {
                         Log.e(TAG, "Invalid student IDs: $invalidStudentIds")
@@ -396,6 +453,17 @@ object DataStore {
                     }
                 }
                 attendanceRecords.addAll(addedRecords)
+                val userId = getLoggedInUser()?.userId ?: -1
+                if (userId != -1) {
+                    val syncDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    syncAttendanceRecords(userId) { success ->
+                        syncDeferred.complete(success)
+                    }
+                    val syncSuccess = kotlinx.coroutines.withTimeoutOrNull(15000L) { syncDeferred.await() } ?: false
+                    if (!syncSuccess) {
+                        Log.w(TAG, "addAttendanceRecords: Post-save sync failed")
+                    }
+                }
                 withContext(Dispatchers.Main) {
                     Log.d(TAG, "Added ${addedRecords.size} attendance records")
                     onComplete(true)
@@ -407,15 +475,25 @@ object DataStore {
                     onComplete(false)
                 }
             } catch (e: retrofit2.HttpException) {
-                val errorBody = e.response()?.errorBody()?.string()
+                val errorBody = e.response()?.errorBody()?.string() ?: "No error body"
                 withContext(Dispatchers.Main) {
                     Log.e(TAG, "Failed to add attendance records: HTTP ${e.code()} - ${e.message()}")
                     Log.e(TAG, "Error body: $errorBody")
-                    if (errorBody?.contains("AttendanceEntity.getStudent()") == true) {
-                        Toast.makeText(context, "Invalid student ID. Please sync students.", Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(context, "Server error: Failed to save attendance", Toast.LENGTH_SHORT).show()
+                    val errorMessage = when {
+                        errorBody.contains("AttendanceEntity.getStudent()") -> {
+                            "Invalid student ID. Please sync students and try again."
+                        }
+                        errorBody.contains("AttendanceEntity.getUser()") -> {
+                            "Invalid user ID. Please log in again."
+                        }
+                        errorBody.contains("Cannot invoke") -> {
+                            "Server error: Invalid data sent. Please sync students and try again."
+                        }
+                        else -> {
+                            "Server error: Failed to save attendance ($errorBody)"
+                        }
                     }
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     onComplete(false)
                 }
             } catch (e: Exception) {
@@ -434,7 +512,13 @@ object DataStore {
                     (it.date.isAfter(startDate) || it.date.isEqual(startDate)) &&
                     (it.date.isBefore(endDate) || it.date.isEqual(endDate))
         }
-        Log.d(TAG, "Fetched ${records.size} attendance records")
+        Log.d(TAG, "getAttendanceRecords: Returning ${records.size} records for section=$section, from $startDate to $endDate")
+        records.forEach { record ->
+            Log.d(TAG, "getAttendanceRecords: Record: studentId=${record.studentId}, date=${record.date}, status=${record.status}, section=${record.section}")
+        }
+        if (section != null && attendanceRecords.any { it.section.isEmpty() }) {
+            Log.w(TAG, "getAttendanceRecords: Found ${attendanceRecords.count { it.section.isEmpty() }} records with empty section")
+        }
         return records
     }
 
@@ -443,15 +527,33 @@ object DataStore {
             try {
                 Log.d(TAG, "syncGrades: Fetching for userId=$userId")
                 val response = apiService.getGradesByUser(userId)
+                Log.d(TAG, "syncGrades: Raw response: $response")
                 grades.clear()
                 grades.addAll(response)
-                students.forEach { student ->
-                    val grade = grades.firstOrNull { it.studentId == student.studentId }
+                Log.d(TAG, "syncGrades: Fetched ${response.size} grades")
+                response.forEach { grade ->
+                    Log.d(TAG, "syncGrades: Grade gradeId=${grade.gradeId}, studentId=${grade.studentId}, userId=${grade.userId}, finalGrade=${grade.finalGrade}, remarks=${grade.remarks}, student.studentId=${grade.student?.studentId}")
+                }
+
+                // Update students with their corresponding grades
+                students.forEachIndexed { index, student ->
+                    Log.d(TAG, "syncGrades: Attempting to match grade for student ${student.studentId}: ${student.firstName} ${student.lastName}")
+                    val grade = grades.firstOrNull { grade ->
+                        val effectiveStudentId = grade.student?.studentId ?: grade.studentId
+                        Log.d(TAG, "syncGrades: Checking grade gradeId=${grade.gradeId}, effectiveStudentId=$effectiveStudentId against student.studentId=${student.studentId}")
+                        effectiveStudentId == student.studentId && grade.userId == userId
+                    }
                     if (grade != null) {
-                        val index = students.indexOf(student)
-                        students[index] = student.copy(grade = grade)
+                        val updatedStudent = student.copy(grade = grade)
+                        students[index] = updatedStudent
+                        Log.d(TAG, "syncGrades: Assigned grade to student ${student.studentId}: ${student.firstName} ${student.lastName}, gradeId=${grade.gradeId}, remarks=${grade.remarks}")
+                    } else {
+                        val updatedStudent = student.copy(grade = null)
+                        students[index] = updatedStudent
+                        Log.w(TAG, "syncGrades: No grade found for student ${student.studentId}: ${student.firstName} ${student.lastName}")
                     }
                 }
+
                 withContext(Dispatchers.Main) {
                     Log.d(TAG, "Synced ${grades.size} grades")
                     onComplete(true)
@@ -468,7 +570,6 @@ object DataStore {
     fun updateGrade(grade: Grade, onComplete: (Boolean) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Validate Grade object
                 if (grade.student == null || grade.student.studentId == 0) {
                     withContext(Dispatchers.Main) {
                         Log.e(TAG, "Invalid grade: student is null or has invalid studentId")
@@ -493,16 +594,13 @@ object DataStore {
                     }
                     return@launch
                 }
-                // Log the JSON payload
                 val jsonPayload = gson.toJson(grade)
                 Log.d(TAG, "updateGrade: Sending payload for studentId=${grade.studentId}, gradeId=${grade.gradeId}: $jsonPayload")
-                // Send request
                 val updatedGrade = if (grade.gradeId == 0) {
                     apiService.postGrade(grade)
                 } else {
                     apiService.putGrade(grade.gradeId, grade)
                 }
-                // Update local data
                 val index = grades.indexOfFirst { it.gradeId == updatedGrade.gradeId || (it.gradeId == 0 && it.studentId == updatedGrade.studentId) }
                 if (index != -1) {
                     grades[index] = updatedGrade
@@ -512,6 +610,18 @@ object DataStore {
                 val studentIndex = students.indexOfFirst { it.studentId == updatedGrade.studentId }
                 if (studentIndex != -1) {
                     students[studentIndex] = students[studentIndex].copy(grade = updatedGrade)
+                }
+                // Sync grades to ensure local cache is updated
+                val userId = getLoggedInUser()?.userId ?: -1
+                if (userId != -1) {
+                    val syncDeferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    syncGrades(userId) { success ->
+                        syncDeferred.complete(success)
+                    }
+                    val syncSuccess = kotlinx.coroutines.withTimeoutOrNull(15000L) { syncDeferred.await() } ?: false
+                    if (!syncSuccess) {
+                        Log.w(TAG, "updateGrade: Post-update sync failed")
+                    }
                 }
                 withContext(Dispatchers.Main) {
                     Log.d(TAG, "Updated grade for studentId: ${updatedGrade.studentId}")

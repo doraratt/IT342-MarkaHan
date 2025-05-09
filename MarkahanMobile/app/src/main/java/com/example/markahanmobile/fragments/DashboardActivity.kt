@@ -8,12 +8,14 @@ import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.github.mikephil.charting.data.PieData
@@ -27,6 +29,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private var sections: List<String> = listOf()
     private var currentSectionIndex: Int = 0
 
@@ -41,6 +44,7 @@ class DashboardActivity : AppCompatActivity() {
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -52,7 +56,8 @@ class DashboardActivity : AppCompatActivity() {
         setupNavigation()
         setupDynamicSections()
         setupPieChart()
-        setupArrowListeners() // Add listeners for arrow buttons
+        setupArrowListeners()
+        setupSwipeRefresh()
         updateDashboardData()
     }
 
@@ -164,6 +169,31 @@ class DashboardActivity : AppCompatActivity() {
                 updatePieChart()
             }
         }
+    }
+
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            Log.d("DashboardActivity", "Pull-to-refresh triggered")
+            Toast.makeText(this, "Refreshing dashboard...", Toast.LENGTH_SHORT).show()
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+            updateDashboardData()
+            // Timeout after 10 seconds
+            swipeRefreshLayout.postDelayed({
+                if (swipeRefreshLayout.isRefreshing) {
+                    swipeRefreshLayout.isRefreshing = false
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                    Toast.makeText(this, "Refresh timed out", Toast.LENGTH_SHORT).show()
+                }
+            }, 10000)
+        }
+        swipeRefreshLayout.setOnChildScrollUpCallback { _, _ ->
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            false
+        }
+        swipeRefreshLayout.setColorSchemeResources(
+            R.color.colorPrimary,
+            R.color.colorAccent
+        )
     }
 
     private fun updateArrowButtons() {
@@ -298,63 +328,79 @@ class DashboardActivity : AppCompatActivity() {
         val userId = DataStore.getLoggedInUser()?.userId ?: -1
         if (userId == -1) {
             Log.e("DashboardActivity", "No logged-in user found, cannot sync data")
+            runOnUiThread {
+                swipeRefreshLayout.isRefreshing = false
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                Toast.makeText(this, "Error: Please log in again", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
         DataStore.syncStudents(userId) { studentsSuccess ->
             if (studentsSuccess) {
                 updateStudentCounts()
-                updatePieChart() // Update pie chart after syncing students
+                updatePieChart()
                 DataStore.syncJournals(userId) { journalsSuccess ->
                     if (journalsSuccess) {
                         val journalText = findViewById<TextView>(R.id.journal_text)
                         val journalDate = findViewById<TextView>(R.id.journal_date)
                         val journals = DataStore.getJournals()
                         Log.d("DashboardActivity", "Journals fetched: ${journals.size}")
-                        if (journals.isNotEmpty()) {
-                            val latestJournal = journals[0]
-                            journalText.text = latestJournal.entry
-                            journalDate.text = "Date: ${latestJournal.date}"
-                        } else {
-                            journalText.text = "No journal entries available"
-                            journalDate.text = "Date: N/A"
+                        runOnUiThread {
+                            if (journals.isNotEmpty()) {
+                                val latestJournal = journals[0]
+                                journalText.text = latestJournal.entry
+                                journalDate.text = "Date: ${latestJournal.date}"
+                            } else {
+                                journalText.text = "No journal entries available"
+                                journalDate.text = "Date: N/A"
+                            }
                         }
                     } else {
                         Log.e("DashboardActivity", "Failed to sync journals")
                     }
-                }
-                DataStore.syncEvents(userId) { eventsSuccess ->
-                    if (eventsSuccess) {
-                        val event1 = findViewById<TextView>(R.id.event1)
-                        val event2 = findViewById<TextView>(R.id.event2)
-                        val events = DataStore.getLatestEvents(2) // Get up to 2 latest events
-                        if (events.isNotEmpty()) {
-                            event1.text = "${events[0].eventDescription} (${events[0].date})"
-                            event1.visibility = View.VISIBLE
-                            if (events.size > 1) {
-                                event2.text = "${events[1].eventDescription} (${events[1].date})"
-                                event2.visibility = View.VISIBLE
-                            } else {
-                                event2.visibility = View.GONE
-                            }
-                        } else {
-                            event1.text = "No events available"
-                            event1.visibility = View.VISIBLE
-                            event2.visibility = View.GONE
-                        }
-                    } else {
-                        Log.e("DashboardActivity", "Failed to sync events")
+                    DataStore.syncEvents(userId) { eventsSuccess ->
                         runOnUiThread {
-                            val event1 = findViewById<TextView>(R.id.event1)
-                            val event2 = findViewById<TextView>(R.id.event2)
-                            event1.text = "Failed to load events"
-                            event1.visibility = View.VISIBLE
-                            event2.visibility = View.GONE
+                            swipeRefreshLayout.isRefreshing = false
+                            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                            if (eventsSuccess) {
+                                val event1 = findViewById<TextView>(R.id.event1)
+                                val event2 = findViewById<TextView>(R.id.event2)
+                                val events = DataStore.getLatestEvents(2)
+                                if (events.isNotEmpty()) {
+                                    event1.text = "${events[0].eventDescription} (${events[0].date})"
+                                    event1.visibility = View.VISIBLE
+                                    if (events.size > 1) {
+                                        event2.text = "${events[1].eventDescription} (${events[1].date})"
+                                        event2.visibility = View.VISIBLE
+                                    } else {
+                                        event2.visibility = View.GONE
+                                    }
+                                } else {
+                                    event1.text = "No events available"
+                                    event1.visibility = View.VISIBLE
+                                    event2.visibility = View.GONE
+                                }
+                                Toast.makeText(this, "Dashboard refreshed", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Log.e("DashboardActivity", "Failed to sync events")
+                                val event1 = findViewById<TextView>(R.id.event1)
+                                val event2 = findViewById<TextView>(R.id.event2)
+                                event1.text = "Failed to load events"
+                                event1.visibility = View.VISIBLE
+                                event2.visibility = View.GONE
+                                Toast.makeText(this, "Failed to refresh dashboard", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
             } else {
                 Log.e("DashboardActivity", "Failed to sync students")
+                runOnUiThread {
+                    swipeRefreshLayout.isRefreshing = false
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                    Toast.makeText(this, "Failed to refresh dashboard", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

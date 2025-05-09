@@ -10,17 +10,17 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create an Account"
-        android:textSize="34sp"
+        android:text="Welcome User"
+        android:textSize="36sp"
         android:textColor="#1f295a"
         android:fontFamily="@font/lexend_bold"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="80dp"
         android:layout_marginStart="30dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Join Markahan today"
+        android:text="Create your account."
         android:textSize="18sp"
         android:textColor="#5163aa"
         android:fontFamily="@font/lexend_med"
@@ -44,7 +44,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:minHeight="50dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="40dp"
             android:layout_centerHorizontal="true"/>
 
         <!-- Last Name -->
@@ -103,7 +103,7 @@
             android:id="@+id/checkbox_show_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="250dp"
+            android:layout_marginTop="260dp"
             android:layout_marginLeft="340dp"/>
 
         <!-- Confirm Password -->
@@ -128,7 +128,7 @@
             android:id="@+id/checkbox_show_confirm_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="320dp"
+            android:layout_marginTop="330dp"
             android:layout_marginLeft="340dp"/>
     </RelativeLayout>
 
@@ -140,7 +140,7 @@
         android:paddingEnd="20dp"
         android:minHeight="50dp"
         android:gravity="center"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="50dp"
         android:layout_gravity="center"
         android:orientation="horizontal">
 
@@ -185,9 +185,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Already have an account? "
-            android:textSize="12sp"
+            android:textSize="15sp"
             android:textColor="#5163aa"
-            android:fontFamily="@font/lexend_light"
+            android:fontFamily="@font/lexend_reg"
             android:layout_marginTop="20dp"/>
 
         <!-- Bold Text -->
@@ -196,7 +196,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign in"
-            android:textSize="12sp"
+            android:textSize="15sp"
             android:textColor="#1f295a"
             android:fontFamily="@font/lexend_med"
             android:layout_marginTop="20dp"/>

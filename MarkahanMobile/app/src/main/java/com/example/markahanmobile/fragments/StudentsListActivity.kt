@@ -21,6 +21,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.markahanmobile.R
 import com.example.markahanmobile.data.DataStore
 import com.example.markahanmobile.data.Student
@@ -29,6 +30,12 @@ import com.example.markahanmobile.helper.GenderSpinnerAdapter
 import com.example.markahanmobile.helper.SectionAdapter
 import com.example.markahanmobile.helper.StudentAdapter
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class StudentsListActivity : AppCompatActivity() {
 
@@ -43,12 +50,15 @@ class StudentsListActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var noStudentsText: TextView
     private lateinit var noSectionsText: TextView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private val sectionList = mutableListOf<String>()
     private val studentList = mutableListOf<Student>()
     private var selectedSection: String = ""
     private var isShowingSearchResults = false
-    private var isUpdating = false // Flag to prevent recursive calls
+    private var isUpdating = false
+    private var isLoading = false // Flag to prevent multiple loadStudents calls
     private val TAG = "StudentsListActivity"
+    private val SYNC_TIMEOUT = 15000L // 15 seconds timeout for sync operations
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +72,7 @@ class StudentsListActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         noStudentsText = findViewById(R.id.noStudentsText)
         noSectionsText = findViewById(R.id.noSectionsText)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -73,12 +84,19 @@ class StudentsListActivity : AppCompatActivity() {
         setupNavigation()
         setupRecyclerViews()
         setupButtons()
+        setupSwipeRefresh()
 
         loadStudents()
     }
 
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            loadStudents()
+            swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
     private fun setupNavigation() {
-        // Update header with user's first name
         val headerView = navView.getHeaderView(0)
         val headerFirstName = headerView.findViewById<TextView>(R.id.header_firstname)
         val user = DataStore.getLoggedInUser()
@@ -89,7 +107,6 @@ class StudentsListActivity : AppCompatActivity() {
             Log.w(TAG, "No user or first name found")
         }
 
-        // Logout setup
         val logoutView = navView.findViewById<TextView>(R.id.nav_logout)
         logoutView?.setOnClickListener {
             AlertDialog.Builder(this)
@@ -125,7 +142,7 @@ class StudentsListActivity : AppCompatActivity() {
         sectionRecyclerView = findViewById(R.id.recyclerViewSections)
         sectionRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         sectionAdapter = SectionAdapter(sectionList) { section ->
-            if (!isUpdating) { // Prevent recursion from setSelectedPosition
+            if (!isUpdating) {
                 selectedSection = section
                 isShowingSearchResults = false
                 filterStudentsBySection(section)
@@ -152,6 +169,10 @@ class StudentsListActivity : AppCompatActivity() {
     }
 
     private fun filterStudentsBySection(section: String) {
+        if (section.isEmpty()) {
+            Log.w(TAG, "filterStudentsBySection: Section is empty, skipping filter")
+            return
+        }
         findViewById<TextView>(R.id.sectionsLabel).text = "Sections"
         studentList.clear()
         val students = DataStore.getStudents(section, includeArchived = false)
@@ -162,7 +183,7 @@ class StudentsListActivity : AppCompatActivity() {
         Log.d(TAG, "Filtered students for section '$section': ${students.size} students, students=$students")
 
         val position = sectionList.indexOf(section)
-        if (position != -1 && !isUpdating) { // Only set position if not in a recursive update
+        if (position != -1 && !isUpdating) {
             isUpdating = true
             try {
                 sectionAdapter.setSelectedPosition(position)
@@ -187,25 +208,33 @@ class StudentsListActivity : AppCompatActivity() {
                         val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
                         val userId = sharedPreferences.getInt("userId", -1)
                         if (userId != -1) {
-                            DataStore.syncStudents(userId, includeArchived = false) { syncSuccess ->
-                                if (syncSuccess) {
-                                    Log.d(TAG, "Student list refreshed after archiving")
-                                    loadSections()
-                                    if (sectionList.isNotEmpty()) {
-                                        if (!sectionList.contains(selectedSection)) {
-                                            selectedSection = sectionList[0]
+                            CoroutineScope(Dispatchers.Main).launch {
+                                withContext(Dispatchers.IO) {
+                                    DataStore.syncStudents(userId, includeArchived = false) { syncSuccess ->
+                                        if (syncSuccess) {
+                                            Log.d(TAG, "Student list refreshed after archiving")
+                                            loadSections()
+                                            if (sectionList.isNotEmpty()) {
+                                                if (!sectionList.contains(selectedSection)) {
+                                                    selectedSection = sectionList[0]
+                                                }
+                                                filterStudentsBySection(selectedSection)
+                                            } else {
+                                                studentList.clear()
+                                                studentAdapter.updateList(studentList)
+                                                updateNoStudentsVisibility()
+                                                updateNoSectionsVisibility()
+                                            }
+                                            runOnUiThread {
+                                                Toast.makeText(this@StudentsListActivity, "Student archived successfully", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            Log.e(TAG, "Failed to refresh student list after archiving")
+                                            runOnUiThread {
+                                                Toast.makeText(this@StudentsListActivity, "Failed to refresh student list", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
-                                        filterStudentsBySection(selectedSection)
-                                    } else {
-                                        studentList.clear()
-                                        studentAdapter.updateList(studentList)
-                                        updateNoStudentsVisibility()
-                                        updateNoSectionsVisibility()
                                     }
-                                    Toast.makeText(this, "Student archived successfully", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Log.e(TAG, "Failed to refresh student list after archiving")
-                                    Toast.makeText(this, "Failed to refresh student list", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         } else {
@@ -317,6 +346,7 @@ class StudentsListActivity : AppCompatActivity() {
                         if (success) {
                             Log.d(TAG, "Student added successfully: $firstName $lastName")
                             loadSections()
+                            selectedSection = section
                             filterStudentsBySection(section)
                             dialog.dismiss()
                             Toast.makeText(this, "Student added successfully", Toast.LENGTH_SHORT).show()
@@ -372,7 +402,8 @@ class StudentsListActivity : AppCompatActivity() {
                     if (success) {
                         Log.d(TAG, "Student ${updatedStudent.studentId} updated successfully")
                         loadSections()
-                        filterStudentsBySection(selectedSection)
+                        selectedSection = newSection
+                        filterStudentsBySection(newSection)
                         parentDialog.dismiss()
                         Toast.makeText(this, "Student updated successfully", Toast.LENGTH_SHORT).show()
                     } else {
@@ -461,10 +492,16 @@ class StudentsListActivity : AppCompatActivity() {
         sectionList.addAll(sections)
         sectionAdapter.updateSections(sectionList)
         updateNoSectionsVisibility()
-        Log.d(TAG, "Loaded sections: $sections")
+        Log.d(TAG, "Loaded sections: $sectionList")
     }
 
     private fun loadStudents() {
+        if (isLoading) {
+            Log.d(TAG, "loadStudents: Already loading, skipping")
+            return
+        }
+        isLoading = true
+
         val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
         val userId = sharedPreferences.getInt("userId", -1)
 
@@ -473,6 +510,7 @@ class StudentsListActivity : AppCompatActivity() {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
+            isLoading = false
             return
         }
 
@@ -480,41 +518,76 @@ class StudentsListActivity : AppCompatActivity() {
         noStudentsText.visibility = View.GONE
         noSectionsText.visibility = View.GONE
 
-        DataStore.syncStudents(userId, includeArchived = false) { success ->
-            if (success) {
-                DataStore.syncGrades(userId) { gradeSuccess ->
-                    progressBar.visibility = View.GONE
-                    if (gradeSuccess) {
-                        Log.d(TAG, "syncStudents and syncGrades successful")
-                        loadSections()
-                        if (sectionList.isNotEmpty()) {
-                            if (!sectionList.contains(selectedSection)) {
-                                selectedSection = sectionList[0]
-                            }
-                            sectionAdapter.setSelectedPosition(sectionList.indexOf(selectedSection))
-                            filterStudentsBySection(selectedSection)
-                        } else {
-                            studentList.clear()
-                            studentAdapter.updateList(studentList)
-                            updateNoStudentsVisibility()
-                            updateNoSectionsVisibility()
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                Log.d(TAG, "loadStudents: Starting sync for userId: $userId")
+                var studentSuccess = false
+                var gradeSuccess = false
+                withContext(Dispatchers.IO) {
+                    // Sync students
+                    val studentDeferred = CompletableDeferred<Boolean>()
+                    DataStore.syncStudents(userId, includeArchived = false) { success ->
+                        Log.d(TAG, "syncStudents: Callback received, success=$success")
+                        val students = DataStore.getStudents(includeArchived = false)
+                        Log.d(TAG, "syncStudents: Post-sync, retrieved ${students.size} students: ${students.map { "${it.studentId}, ${it.firstName} ${it.lastName}, Section=${it.section}, isArchived=${it.isArchived}" }}")
+                        studentDeferred.complete(success)
+                    }
+                    studentSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { studentDeferred.await() } ?: false
+
+                    // Sync grades
+                    val gradeDeferred = CompletableDeferred<Boolean>()
+                    DataStore.syncGrades(userId) { success ->
+                        Log.d(TAG, "syncGrades: Callback received, success=$success")
+                        gradeDeferred.complete(success)
+                    }
+                    gradeSuccess = withTimeoutOrNull(SYNC_TIMEOUT) { gradeDeferred.await() } ?: false
+                }
+                Log.d(TAG, "loadStudents: Sync completed with studentSuccess=$studentSuccess, gradeSuccess=$gradeSuccess")
+
+                if (studentSuccess) {
+                    loadSections()
+                    if (sectionList.isNotEmpty()) {
+                        if (selectedSection.isEmpty() || !sectionList.contains(selectedSection)) {
+                            selectedSection = sectionList[0]
+                            Log.d(TAG, "loadStudents: Set selectedSection to first available: $selectedSection")
                         }
+                        sectionAdapter.setSelectedPosition(sectionList.indexOf(selectedSection))
+                        filterStudentsBySection(selectedSection)
                     } else {
-                        Log.e(TAG, "Error syncing grades")
-                        Toast.makeText(this, "Error syncing grades", Toast.LENGTH_SHORT).show()
-                        loadSections()
-                        if (sectionList.isNotEmpty()) {
-                            filterStudentsBySection(selectedSection)
-                        } else {
-                            updateNoSectionsVisibility()
-                        }
+                        Log.w(TAG, "loadStudents: No sections available after sync")
+                        studentList.clear()
+                        studentAdapter.updateList(studentList)
+                        updateNoStudentsVisibility()
+                        updateNoSectionsVisibility()
+                    }
+                } else {
+                    Log.e(TAG, "loadStudents: Failed to sync students")
+                    Toast.makeText(this@StudentsListActivity, "Error loading students", Toast.LENGTH_SHORT).show()
+                    loadSections()
+                    if (sectionList.isNotEmpty()) {
+                        filterStudentsBySection(selectedSection)
+                    } else {
+                        updateNoSectionsVisibility()
                     }
                 }
-            } else {
+
+                if (!gradeSuccess) {
+                    Log.e(TAG, "loadStudents: Failed to sync grades")
+                    Toast.makeText(this@StudentsListActivity, "Error syncing grades", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "loadStudents: Exception during sync: ${e.message}", e)
+                Toast.makeText(this@StudentsListActivity, "Error loading data: ${e.message}", Toast.LENGTH_LONG).show()
+                loadSections()
+                if (sectionList.isNotEmpty()) {
+                    filterStudentsBySection(selectedSection)
+                } else {
+                    updateNoSectionsVisibility()
+                }
+            } finally {
                 progressBar.visibility = View.GONE
-                Log.e(TAG, "Error syncing students")
-                Toast.makeText(this, "Error loading students", Toast.LENGTH_SHORT).show()
-                updateNoSectionsVisibility()
+                isLoading = false
+                Log.d(TAG, "loadStudents: Completed, progressBar hidden")
             }
         }
     }

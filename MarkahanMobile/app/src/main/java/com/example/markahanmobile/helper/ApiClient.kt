@@ -5,7 +5,6 @@ import android.util.Log
 import com.example.markahanmobile.BuildConfig
 import com.example.markahanmobile.data.AttendanceRecord
 import com.example.markahanmobile.data.Calendar
-import com.example.markahanmobile.data.Grade
 import com.example.markahanmobile.data.Student
 import com.example.markahanmobile.data.User
 import com.google.gson.GsonBuilder
@@ -47,7 +46,7 @@ object ApiClient {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
-        val formatter = DateTimeFormatter.ISO_LOCAL_DATE // "yyyy-MM-dd"
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE
         val formatterFallback = DateTimeFormatter.ofPattern("MM/dd/yyyy")
 
         val localDateAdapter = object : TypeAdapter<LocalDate>() {
@@ -143,6 +142,7 @@ object ApiClient {
                     out.name("userId").value(value.user.userId)
                     out.endObject()
                 }
+                // Avoid serializing the grade field to prevent circular reference
                 out.endObject()
             }
 
@@ -197,6 +197,7 @@ object ApiClient {
                             )
                             userId = userIdFromUser
                         }
+                        "grade" -> `in`.skipValue() // Skip grade to avoid circular reference
                         else -> `in`.skipValue()
                     }
                 }
@@ -223,31 +224,37 @@ object ApiClient {
                     return
                 }
                 out.beginObject()
+                Log.d(TAG, "Serializing AttendanceRecord: attendanceId=${value.attendanceId}")
                 out.name("attendanceId").value(value.attendanceId)
+                Log.d(TAG, "Serializing AttendanceRecord: studentId=${value.studentId}")
                 out.name("studentId").value(value.studentId)
+                Log.d(TAG, "Serializing AttendanceRecord: userId=${value.userId}")
                 out.name("userId").value(value.userId)
-                out.name("date").value(value.date.format(formatter))
+                val dateString = value.date.format(formatter)
+                Log.d(TAG, "Serializing AttendanceRecord: date=$dateString")
+                out.name("date").value(dateString)
+                Log.d(TAG, "Serializing AttendanceRecord: status=${value.status}")
                 out.name("status").value(value.status)
+                Log.d(TAG, "Serializing AttendanceRecord: section=${value.section}")
                 out.name("section").value(value.section)
-                // Always include student field with at least studentId
-                out.name("student")
-                out.beginObject()
-                out.name("studentId").value(value.studentId)
-                // Include additional student fields if available
+                if (value.user != null) {
+                    Log.d(TAG, "Serializing AttendanceRecord: user.userId=${value.user.userId}")
+                    out.name("user")
+                    out.beginObject()
+                    out.name("userId").value(value.user.userId)
+                    out.endObject()
+                }
                 if (value.student != null) {
+                    Log.d(TAG, "Serializing AttendanceRecord: student.studentId=${value.student.studentId}")
+                    out.name("student")
+                    out.beginObject()
+                    out.name("studentId").value(value.student.studentId)
+                    out.name("userId").value(value.student.userId)
                     out.name("firstName").value(value.student.firstName)
                     out.name("lastName").value(value.student.lastName)
                     out.name("gender").value(value.student.gender)
                     out.name("section").value(value.student.section)
                     out.name("gradeLevel").value(value.student.gradeLevel)
-                    out.name("attendanceStatus").value(value.student.attendanceStatus)
-                    out.name("archived").value(value.student.isArchived)
-                }
-                out.endObject()
-                if (value.user != null) {
-                    out.name("user")
-                    out.beginObject()
-                    out.name("userId").value(value.user.userId)
                     out.endObject()
                 }
                 out.endObject()
@@ -267,51 +274,14 @@ object ApiClient {
                 while (`in`.hasNext()) {
                     when (`in`.nextName()) {
                         "attendanceId" -> attendanceId = `in`.nextInt()
-                        "student" -> {
-                            if (`in`.peek() == JsonToken.NUMBER) {
-                                studentId = `in`.nextInt()
-                            } else {
-                                `in`.beginObject()
-                                var studentIdFromStudent = 0
-                                var firstName: String? = null
-                                var lastName: String? = null
-                                var gender: String? = null
-                                var sectionStudent: String? = null
-                                var gradeLevel: String? = null
-                                var attendanceStatus: String? = null
-                                var isArchived = false
-                                while (`in`.hasNext()) {
-                                    when (`in`.nextName()) {
-                                        "studentId" -> studentIdFromStudent = `in`.nextInt()
-                                        "firstName" -> firstName = `in`.nextStringOrNull()
-                                        "lastName" -> lastName = `in`.nextStringOrNull()
-                                        "gender" -> gender = `in`.nextStringOrNull()
-                                        "section" -> sectionStudent = `in`.nextStringOrNull()
-                                        "gradeLevel" -> gradeLevel = `in`.nextStringOrNull()
-                                        "attendanceStatus" -> attendanceStatus = `in`.nextStringOrNull()
-                                        "archived" -> isArchived = `in`.nextBoolean()
-                                        else -> `in`.skipValue()
-                                    }
-                                }
-                                `in`.endObject()
-                                student = Student(
-                                    studentId = studentIdFromStudent,
-                                    userId = 0,
-                                    user = null,
-                                    firstName = firstName ?: "",
-                                    lastName = lastName ?: "",
-                                    gender = gender ?: "",
-                                    section = sectionStudent ?: "",
-                                    gradeLevel = gradeLevel ?: "",
-                                    attendanceStatus = attendanceStatus ?: "",
-                                    isArchived = isArchived
-                                )
-                                studentId = studentIdFromStudent
-                            }
-                        }
                         "studentId" -> studentId = `in`.nextInt()
                         "userId" -> userId = `in`.nextInt()
-                        "date" -> date = LocalDate.parse(`in`.nextString(), formatter)
+                        "date" -> date = try {
+                            LocalDate.parse(`in`.nextString(), formatter)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to parse date with ISO_LOCAL_DATE, trying fallback")
+                            LocalDate.parse(`in`.nextString(), formatterFallback)
+                        }
                         "status" -> status = `in`.nextString() ?: ""
                         "section" -> section = `in`.nextString() ?: ""
                         "user" -> {
@@ -341,6 +311,44 @@ object ApiClient {
                             )
                             userId = userIdFromUser
                         }
+                        "student" -> {
+                            `in`.beginObject()
+                            var studentIdFromStudent = 0
+                            var userIdFromStudent = 0
+                            var firstName = ""
+                            var lastName = ""
+                            var gender = ""
+                            var sectionFromStudent = ""
+                            var gradeLevel = ""
+                            var isArchived = false
+                            while (`in`.hasNext()) {
+                                when (`in`.nextName()) {
+                                    "studentId" -> studentIdFromStudent = `in`.nextInt()
+                                    "userId" -> userIdFromStudent = `in`.nextInt()
+                                    "firstName" -> firstName = `in`.nextString() ?: ""
+                                    "lastName" -> lastName = `in`.nextString() ?: ""
+                                    "gender" -> gender = `in`.nextString() ?: ""
+                                    "section" -> sectionFromStudent = `in`.nextString() ?: ""
+                                    "gradeLevel" -> gradeLevel = `in`.nextString() ?: ""
+                                    "archived" -> isArchived = `in`.nextBoolean()
+                                    "grade" -> `in`.skipValue() // Skip grade to avoid circular reference
+                                    else -> `in`.skipValue()
+                                }
+                            }
+                            `in`.endObject()
+                            student = Student(
+                                studentId = studentIdFromStudent,
+                                userId = userIdFromStudent,
+                                firstName = firstName,
+                                lastName = lastName,
+                                gender = gender,
+                                section = sectionFromStudent,
+                                gradeLevel = gradeLevel,
+                                isArchived = isArchived
+                            )
+                            studentId = studentIdFromStudent
+                            section = sectionFromStudent
+                        }
                         else -> `in`.skipValue()
                     }
                 }
@@ -358,185 +366,14 @@ object ApiClient {
             }
         }
 
-        val gradeAdapter = object : TypeAdapter<Grade>() {
-            override fun write(out: JsonWriter, value: Grade?) {
-                if (value == null) {
-                    out.nullValue()
-                    return
-                }
-                out.beginObject()
-                out.name("gradeId").value(value.gradeId)
-                out.name("studentId").value(value.studentId)
-                out.name("userId").value(value.userId)
-                out.name("filipino").value(value.filipino)
-                out.name("english").value(value.english)
-                out.name("mathematics").value(value.mathematics)
-                out.name("science").value(value.science)
-                out.name("ap").value(value.ap)
-                out.name("esp").value(value.esp)
-                out.name("mapeh").value(value.mapeh)
-                out.name("computer").value(value.computer)
-                out.name("finalGrade").value(value.finalGrade)
-                out.name("remarks").value(value.remarks)
-                // Include student field with at least studentId
-                out.name("student")
-                out.beginObject()
-                out.name("studentId").value(value.studentId)
-                if (value.student != null) {
-                    out.name("firstName").value(value.student.firstName)
-                    out.name("lastName").value(value.student.lastName)
-                    out.name("gender").value(value.student.gender)
-                    out.name("section").value(value.student.section)
-                    out.name("gradeLevel").value(value.student.gradeLevel)
-                    out.name("attendanceStatus").value(value.student.attendanceStatus)
-                    out.name("archived").value(value.student.isArchived)
-                }
-                out.endObject()
-                // Include user field with at least userId
-                out.name("user")
-                out.beginObject()
-                out.name("userId").value(value.userId)
-                if (value.user != null) {
-                    out.name("email").value(value.user.email)
-                    out.name("firstName").value(value.user.firstName)
-                    out.name("lastName").value(value.user.lastName)
-                    out.name("oauthId").value(value.user.oauthId)
-                }
-                out.endObject()
-                out.endObject()
-            }
-
-            override fun read(`in`: JsonReader): Grade {
-                var gradeId = 0
-                var studentId = 0
-                var userId = 0
-                var filipino = 0.0
-                var english = 0.0
-                var mathematics = 0.0
-                var science = 0.0
-                var ap = 0.0
-                var esp = 0.0
-                var mapeh = 0.0
-                var computer = 0.0
-                var finalGrade = 0.0
-                var remarks = ""
-                var student: Student? = null
-                var user: User? = null
-
-                `in`.beginObject()
-                while (`in`.hasNext()) {
-                    when (`in`.nextName()) {
-                        "gradeId" -> gradeId = `in`.nextInt()
-                        "studentId" -> studentId = `in`.nextInt()
-                        "userId" -> userId = `in`.nextInt()
-                        "filipino" -> filipino = `in`.nextDouble()
-                        "english" -> english = `in`.nextDouble()
-                        "mathematics" -> mathematics = `in`.nextDouble()
-                        "science" -> science = `in`.nextDouble()
-                        "ap" -> ap = `in`.nextDouble()
-                        "esp" -> esp = `in`.nextDouble()
-                        "mapeh" -> mapeh = `in`.nextDouble()
-                        "computer" -> computer = `in`.nextDouble()
-                        "finalGrade" -> finalGrade = `in`.nextDouble()
-                        "remarks" -> remarks = `in`.nextString() ?: ""
-                        "student" -> {
-                            `in`.beginObject()
-                            var studentIdFromStudent = 0
-                            var firstName: String? = null
-                            var lastName: String? = null
-                            var gender: String? = null
-                            var section: String? = null
-                            var gradeLevel: String? = null
-                            var attendanceStatus: String? = null
-                            var isArchived = false
-                            while (`in`.hasNext()) {
-                                when (`in`.nextName()) {
-                                    "studentId" -> studentIdFromStudent = `in`.nextInt()
-                                    "firstName" -> firstName = `in`.nextStringOrNull()
-                                    "lastName" -> lastName = `in`.nextStringOrNull()
-                                    "gender" -> gender = `in`.nextStringOrNull()
-                                    "section" -> section = `in`.nextStringOrNull()
-                                    "gradeLevel" -> gradeLevel = `in`.nextStringOrNull()
-                                    "attendanceStatus" -> attendanceStatus = `in`.nextStringOrNull()
-                                    "archived" -> isArchived = `in`.nextBoolean()
-                                    else -> `in`.skipValue()
-                                }
-                            }
-                            `in`.endObject()
-                            student = Student(
-                                studentId = studentIdFromStudent,
-                                userId = 0,
-                                user = null,
-                                firstName = firstName ?: "",
-                                lastName = lastName ?: "",
-                                gender = gender ?: "",
-                                section = section ?: "",
-                                gradeLevel = gradeLevel ?: "",
-                                attendanceStatus = attendanceStatus ?: "",
-                                isArchived = isArchived
-                            )
-                            studentId = studentIdFromStudent
-                        }
-                        "user" -> {
-                            `in`.beginObject()
-                            var userIdFromUser = 0
-                            var email: String? = null
-                            var firstNameUser: String? = null
-                            var lastNameUser: String? = null
-                            var oauthId: String? = null
-                            while (`in`.hasNext()) {
-                                when (`in`.nextName()) {
-                                    "userId" -> userIdFromUser = `in`.nextInt()
-                                    "email" -> email = `in`.nextStringOrNull()
-                                    "firstName" -> firstNameUser = `in`.nextStringOrNull()
-                                    "lastName" -> lastNameUser = `in`.nextStringOrNull()
-                                    "oauthId" -> oauthId = `in`.nextStringOrNull()
-                                    else -> `in`.skipValue()
-                                }
-                            }
-                            `in`.endObject()
-                            user = User(
-                                userId = userIdFromUser,
-                                email = email,
-                                firstName = firstNameUser,
-                                lastName = lastNameUser,
-                                oauthId = oauthId
-                            )
-                            userId = userIdFromUser
-                        }
-                        else -> `in`.skipValue()
-                    }
-                }
-                `in`.endObject()
-                return Grade(
-                    gradeId = gradeId,
-                    studentId = studentId,
-                    userId = userId,
-                    student = student,
-                    user = user,
-                    filipino = filipino,
-                    english = english,
-                    mathematics = mathematics,
-                    science = science,
-                    ap = ap,
-                    esp = esp,
-                    mapeh = mapeh,
-                    computer = computer,
-                    finalGrade = finalGrade,
-                    remarks = remarks
-                )
-            }
-        }
-
         val gson = GsonBuilder()
             .registerTypeAdapter(LocalDate::class.java, localDateAdapter)
             .registerTypeAdapter(Calendar::class.java, calendarAdapter)
             .registerTypeAdapter(Student::class.java, studentAdapter)
             .registerTypeAdapter(AttendanceRecord::class.java, attendanceRecordAdapter)
-            .registerTypeAdapter(Grade::class.java, gradeAdapter)
             .create()
 
-        Log.d(TAG, "Gson configured with LocalDate, Calendar, Student, AttendanceRecord, and Grade adapters")
+        Log.d(TAG, "Gson configured with LocalDate, Calendar, Student, and AttendanceRecord adapters")
 
         retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)

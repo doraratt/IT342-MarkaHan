@@ -32,64 +32,30 @@
             android:name=".fragments.AttendanceSheetActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-<!--             <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--             </intent-filter>-->
-<!--       </activity>-->
         <activity
             android:name=".fragments.GradesActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <!--<intent-filter>-->
-        <!--    <action android:name="android.intent.action.MAIN" />-->
-        <!--     <category android:name="android.intent.category.LAUNCHER" />-->
-        <!--</intent-filter>-->
-        <!--</activity>-->
         <activity
             android:name=".fragments.JournalActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
-        <!-- <action android:name="android.intent.action.MAIN" /> -->
-        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
-        <!-- </intent-filter> -->
-        <!-- </activity> -->
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".fragments.AttendanceActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-<!--        <intent-filter>-->
-<!--         <action android:name="android.intent.action.MAIN" />-->
-<!--         <category android:name="android.intent.category.LAUNCHER" />-->
-<!--         </intent-filter>-->
-<!--    </activity>-->
         <activity
             android:name=".fragments.StudentsListActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
         <activity
             android:name=".fragments.CalendarActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
-        <!-- <action android:name="android.intent.action.MAIN" /> -->
-        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
-        <!-- </intent-filter> -->
-        <!-- </activity> -->
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".fragments.DashboardActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
         <activity
             android:name=".fragments.ResetPassActivity"
             android:exported="true"
@@ -105,11 +71,7 @@
         <activity
             android:name=".fragments.VerificationActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- <intent-filter> -->
-        <!-- <action android:name="android.intent.action.MAIN" /> -->
-        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
-        <!-- </intent-filter> -->
-        <!-- </activity> -->
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".fragments.RegisterActivity"
             android:exported="true"
@@ -127,12 +89,5 @@
             android:name=".fragments.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
     </application>
-
 </manifest>
