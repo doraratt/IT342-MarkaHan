@@ -6,7 +6,7 @@ MarkaHan is a digital platform designed to help basic education teachers efficie
 
 * Web Frontend: [https://it-342-marka-han-9yjc.vercel.app/](https://it-342-marka-han-9yjc.vercel.app/)
 * Web Backend (API): [https://rendeer-ya43.onrender.com](https://rendeer-ya43.onrender.com)
-* Mobile APK: [Markahan.apk](https://github.com/doraratt/IT342-MarkaHan/releases)
+* Mobile APK: [Markahan.apk](https://github.com/doraratt/IT342-MarkaHan/tree/main/releases)
 
 ---
 
