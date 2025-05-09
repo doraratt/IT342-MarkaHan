@@ -1,4 +1,4 @@
-# 📖 MarkaHan
+# 📖 About MarkaHan
 
 MarkaHan is a digital platform designed to help basic education teachers efficiently manage class records, track student progress, and monitor academic performance. It allows teachers to input and organize student grades by quarter and generate clear, accurate grade slips.
 
@@ -24,12 +24,11 @@ Clone the project:
 ```bash
 git clone https://github.com/doraratt/IT342-MarkaHan.git
 ```
-
 ---
 
 ## 🛠️ Installation & Setup
 
-### 🗔 Backend Setup
+### ⚙️ Backend Setup
 
 1. Navigate to the backend directory:
 
@@ -55,7 +54,7 @@ git clone https://github.com/doraratt/IT342-MarkaHan.git
 
    The backend server will be available at: `http://localhost:8080`
 
-### 🌐 Frontend Setup
+### 🖼️ Frontend Setup
 
 1. Navigate to the frontend directory:
 
@@ -79,10 +78,6 @@ git clone https://github.com/doraratt/IT342-MarkaHan.git
 
 ### 📱 Mobile Setup
 
-* Developed with Kotlin using Android Studio Koala (2024.1.1)
-* `compileSdkVersion`: 35
-* `targetSdkVersion`: 35
-
 The mobile app is available as a pre-built APK and can be installed on Android devices directly. Source code is included in this repository.
 
 To build the app from source:
@@ -91,20 +86,9 @@ To build the app from source:
 2. Connect a device or emulator.
 3. Click Run ▶️ or Build ➤ Build Bundle(s)/APK(s).
 
-#### Mobile Libraries & Frameworks Used
-
-* Android Jetpack (Core KTX, AppCompat, Lifecycle, ConstraintLayout, RecyclerView, etc.)
-* Material Components for Android
-* Retrofit & OkHttp for networking
-* Gson for JSON parsing
-* Kotlin Coroutines
-* MPAndroidChart (for charting)
-* AndroidX GridLayout and SwipeRefreshLayout
-* Core library desugaring for Java 8+ support on lower Android versions
-
 ---
 
-## 🧰 Built With
+## ⚒️ Built With
 
 ### Frontend
 
@@ -130,11 +114,11 @@ To build the app from source:
 
 ---
 
-## 👥 Development Team
+## 💪 Development Team
 
 A sub-unit of a capstone group, composed of members specializing in different areas of full-stack development.
 
-### Mike Francis Alon
+### 👤 Mike Francis Alon
 
 * Role: Backend Developer
 * GitHub: [@makieu](https://github.com/makieu)
@@ -143,16 +127,16 @@ A sub-unit of a capstone group, composed of members specializing in different ar
 >  Hi, I'm Mike. I'm an easygoing and dependable person who enjoys playing mobile and ball games. Watching movies is one of my favorite ways to unwind in my free time. As an IT student, I'm passionate about technology and always eager to learn new skills. I'm excited to grow in the field and make an impact in the tech world.
 
 
-### Josh Kyle Cervantes
+### 👤 Josh Kyle Cervantes
 
-* Role: Frontend Developer / UI/UX Designer
+* Role: Frontend Developer / UI/UX Designer / Team Lead
 * GitHub: [@JaeNotFound](https://github.com/JaeNotFound)
 * Course/Year: BSIT 3
 
 >  Hi, I'm Josh. I'm a creative type of person who loves to think outside the box. I'm 21 and I'm passionate about exploring various fields in IT that spark my creativity. The people who guide me and inspire me are the ones I'm thankful for. I'm excited for the challenges this year will bring and the opportunities to innovate.
 
 
-### Melena Rafaella Semilla
+### 👤 Melena Rafaella Semilla
 
 * Role: Mobile Developer
 * GitHub: [@doraratt](https://github.com/doraratt)
